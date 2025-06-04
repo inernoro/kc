@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, Mic, Bot, User, Lightbulb, Copy, ThumbsUp, ThumbsDown } from 'lucide-react';
-import ModelSelector from './ModelSelector';
+import { Customer } from '../types/customer';
+import KnowledgeSelector from './KnowledgeSelector';
+import { aiAPI } from '../services/api'; // 使用统一的API服务
 
 interface Message {
   id: string;
@@ -11,30 +13,43 @@ interface Message {
 }
 
 interface ChatAreaProps {
-  selectedCustomer: any;
+  selectedCustomer: Customer | null;
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: 'ai',
-      content: '您好！我是米多智库AI助手。我可以帮您查询客户信息、分析客户需求、提供解决方案建议等。请问有什么可以帮助您的吗？',
-      timestamp: new Date(),
-      suggestions: ['查询客户档案',"一杆枪群历史反馈", '分析客户需求', '生成解决方案', '查看历史记录', '查看历史反馈', '分析销售趋势', '制定促销策略']
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('Pro/deepseek-ai/DeepSeek-V3');
+  const [selectedKnowledge, setSelectedKnowledge] = useState('general');
+  const [conversationId, setConversationId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+  // 初始化欢迎消息
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length === 0) {
+      const knowledgeTypeMap: { [key: string]: string } = {
+        'general': '通用知识库',
+        'product': '产品知识库', 
+        'customer': '客户知识库',
+        'sales': '销售知识库',
+        'solution': '解决方案',
+        'technical': '技术知识库'
+      };
+      
+      const welcomeMessage: Message = {
+        id: 'welcome',
+        type: 'ai',
+        content: `您好！我是米多智库AI助手，当前已连接${knowledgeTypeMap[selectedKnowledge]}。我可以帮您查询客户信息、分析客户需求、提供解决方案建议等。请问有什么可以帮助您的吗？`,
+        timestamp: new Date(),
+        suggestions: ['查询客户档案', '一键群发消息', '分析客户需求', '生成解决方案', '查看历史记录']
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, [selectedKnowledge]); // 当选择的知识库改变时更新欢迎消息
+
+  // 滚动到底部
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -43,89 +58,102 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputValue,
+      content: inputValue.trim(),
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
-    const messageContent = inputValue;
     setInputValue('');
     setIsTyping(true);
 
     try {
-      // 调用后端AI API
-      const response = await fetch('http://localhost:3001/api/ai/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: messageContent,
-          model: selectedModel,
+      // 根据选择的知识库类型调用对应的API
+      let response;
+      if (selectedKnowledge === 'general' || selectedKnowledge === 'product') {
+        // 使用知识库搜索API
+        response = await aiAPI.searchKnowledge({
+          query: inputValue.trim(),
+          knowledgeType: selectedKnowledge,
           customerId: selectedCustomer?.id
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          type: 'ai',
-          content: data.data.response,
-          timestamp: new Date(),
-          suggestions: data.data.suggestions
-        };
-        setMessages(prev => [...prev, aiResponse]);
+        });
       } else {
-        throw new Error(data.error || 'AI服务响应异常');
+        // 使用普通对话API
+        response = await aiAPI.chat({
+          message: inputValue.trim(),
+          conversationId,
+          knowledgeBase: selectedKnowledge,
+          customerId: selectedCustomer?.id
+        });
       }
-    } catch (error) {
-      console.error('AI调用失败:', error);
-      // 降级到本地回复
-      const aiResponse: Message = {
+
+      const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: generateAIResponse(messageContent, selectedCustomer),
+        content: response.reply || response.answer || '抱歉，我暂时无法回答这个问题。',
         timestamp: new Date(),
-        suggestions: generateSuggestions(messageContent)
+        suggestions: generateSuggestions(inputValue.trim())
       };
-      setMessages(prev => [...prev, aiResponse]);
+
+      setMessages(prev => [...prev, aiMessage]);
+      
+      if (response.conversationId) {
+        setConversationId(response.conversationId);
+      }
+    } catch (error) {
+      console.error('AI对话出错:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        content: '抱歉，服务出现了问题，请稍后再试。',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
     }
   };
 
-  const generateAIResponse = (input: string, customer: any) => {
-    if (customer) {
-      if (input.includes('客户') || input.includes('档案')) {
-        return `根据您选择的客户 ${customer.name}（${customer.company}），我为您整理了以下信息：\n\n• 客户状态：${customer.status === 'active' ? '活跃客户' : customer.status === 'potential' ? '潜在客户' : '非活跃客户'}\n• 最后联系时间：${customer.lastContact}\n• 客户价值：¥${customer.value.toLocaleString()}\n• 客户级别：${customer.level}级\n• 优先级：${customer.priority === 'high' ? '高' : customer.priority === 'medium' ? '中' : '低'}\n\n建议您重点关注该客户的订货周期和季节性需求变化。`;
-      }
-      if (input.includes('分析') || input.includes('需求')) {
-        return `基于 ${customer.name} 的历史数据分析：\n\n• 该客户主要采购高端白酒产品\n• 节假日期间订货量增长明显\n• 对价格敏感度中等，更注重品质\n• 预计续约概率：85%\n\n建议制定针对性的促销策略和库存管理方案。`;
-      }
-      if (input.includes('历史') || input.includes('反馈')) {
-        return `${customer.name} 的历史反馈汇总：\n\n• 产品质量满意度：4.8/5.0\n• 物流配送及时性：4.5/5.0\n• 售后服务响应：4.7/5.0\n• 价格竞争力：4.2/5.0\n\n主要建议：希望增加更多中端产品选择，优化配送时效。`;
-      }
-    }
-    
-    return '我理解您的需求。基于酒水行业客户成功部门的工作特点，我建议您：\n\n1. 关注客户的季节性采购规律\n2. 定期了解市场价格波动影响\n3. 提供个性化的产品组合建议\n4. 建立客户满意度跟踪机制\n5. 制定节假日促销策略\n\n还有什么具体问题需要我帮助解决吗？';
-  };
-
   const generateSuggestions = (input: string) => {
-    const suggestions = [
-      '生成客户报告',
-      '制定跟进计划',
-      '查看相似案例',
-      '分析市场竞争',
-      '查看历史反馈',
-      '制定促销方案',
-      '分析销售数据',
-      '客户满意度调研',
-      '产品推荐策略',
-      '价格优化建议'
-    ];
-    return suggestions.slice(0, 4); // 随机显示4个建议
+    const suggestionsByKnowledge: { [key: string]: string[] } = {
+      'general': [
+        '酒水行业趋势分析',
+        '品牌对比分析',
+        '市场价格查询',
+        '产品分类说明'
+      ],
+      'product': [
+        '产品规格查询',
+        '价格策略分析',
+        '库存状态检查',
+        '产品推荐方案'
+      ],
+      'customer': [
+        '客户档案查询',
+        '需求分析报告',
+        '沟通记录整理',
+        '客户满意度调研'
+      ],
+      'sales': [
+        '销售技巧分享',
+        '谈判策略建议',
+        '成功案例分析',
+        '销售数据统计'
+      ],
+      'solution': [
+        '解决方案设计',
+        '最佳实践分享',
+        '行业案例研究',
+        '定制化建议'
+      ],
+      'technical': [
+        '技术文档查询',
+        '操作指南获取',
+        '故障排除帮助',
+        '系统使用说明'
+      ]
+    };
+    
+    return suggestionsByKnowledge[selectedKnowledge] || suggestionsByKnowledge['general'];
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -135,26 +163,26 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
   return (
     <div className="h-full flex flex-col">
       {/* 聊天头部 */}
-      <div className="p-4 border-b border-gray-200 bg-white">
+      <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
               <Bot className="w-5 h-5 text-white" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="text-lg font-semibold text-gray-900">米多智库</h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 truncate">
                 {selectedCustomer ? `正在为 ${selectedCustomer.name} 提供服务` : '准备为您提供智能客服支持'}
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <ModelSelector
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
+          <div className="flex items-center space-x-3 flex-shrink-0 ml-4">
+            <KnowledgeSelector
+              selectedKnowledge={selectedKnowledge}
+              onKnowledgeChange={setSelectedKnowledge}
               className="w-48"
             />
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
               在线
             </span>
           </div>
@@ -165,80 +193,75 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-3xl ${message.type === 'user' ? 'order-2' : 'order-1'}`}>
-              <div className={`flex items-start space-x-3 ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  message.type === 'user' 
-                    ? 'bg-primary-500' 
-                    : 'bg-gradient-to-r from-blue-500 to-purple-600'
-                }`}>
-                  {message.type === 'user' ? (
-                    <User className="w-4 h-4 text-white" />
-                  ) : (
-                    <Bot className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                
-                <div className={`flex-1 ${message.type === 'user' ? 'text-right' : ''}`}>
-                  <div className={`inline-block p-3 rounded-lg ${
-                    message.type === 'user'
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}>
-                    <p className="whitespace-pre-line">{message.content}</p>
-                  </div>
-                  
-                  {message.type === 'ai' && (
-                    <div className="flex items-center space-x-2 mt-2">
+            <div className={`flex items-start space-x-3 max-w-[70%] ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                message.type === 'user' 
+                  ? 'bg-primary-500 text-white' 
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+              }`}>
+                {message.type === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+              </div>
+              <div className={`rounded-lg px-4 py-3 ${
+                message.type === 'user' 
+                  ? 'bg-primary-500 text-white' 
+                  : 'bg-white border border-gray-200 text-gray-900'
+              }`}>
+                <div className="text-sm whitespace-pre-wrap break-words">{message.content}</div>
+                {message.type === 'ai' && (
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                    <div className="text-xs text-gray-500">
+                      {message.timestamp.toLocaleTimeString()}
+                    </div>
+                    <div className="flex items-center space-x-2">
                       <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                        <Copy className="w-4 h-4" />
+                        <Copy className="w-3 h-3" />
                       </button>
                       <button className="p-1 text-gray-400 hover:text-green-600 rounded">
-                        <ThumbsUp className="w-4 h-4" />
+                        <ThumbsUp className="w-3 h-3" />
                       </button>
                       <button className="p-1 text-gray-400 hover:text-red-600 rounded">
-                        <ThumbsDown className="w-4 h-4" />
+                        <ThumbsDown className="w-3 h-3" />
                       </button>
-                      <span className="text-xs text-gray-500">
-                        {message.timestamp.toLocaleTimeString()}
-                      </span>
                     </div>
-                  )}
-                  
-                  {message.suggestions && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {message.suggestions.map((suggestion, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleSuggestionClick(suggestion)}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
-                        >
-                          <Lightbulb className="w-3 h-3 mr-1" />
-                          {suggestion}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         ))}
         
+        {/* AI正在输入指示器 */}
         {isTyping && (
           <div className="flex justify-start">
             <div className="flex items-start space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <Bot className="w-4 h-4 text-white" />
               </div>
-              <div className="bg-gray-100 rounded-lg p-3">
-                <div className="flex space-x-1">
+              <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+                <div className="flex items-center space-x-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <span className="text-sm text-gray-500 ml-2">AI正在思考...</span>
                 </div>
               </div>
             </div>
+          </div>
+        )}
+        
+        {/* 建议快捷回复 */}
+        {messages.length > 0 && messages[messages.length - 1].type === 'ai' && messages[messages.length - 1].suggestions && (
+          <div className="flex flex-wrap gap-2 mt-4">
+            {messages[messages.length - 1].suggestions!.map((suggestion, index) => (
+              <button
+                key={index}
+                onClick={() => handleSuggestionClick(suggestion)}
+                className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors flex items-center space-x-1"
+              >
+                <Lightbulb className="w-3 h-3" />
+                <span>{suggestion}</span>
+              </button>
+            ))}
           </div>
         )}
         
@@ -246,7 +269,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
       </div>
 
       {/* 输入区域 */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
         <div className="flex items-start space-x-3">
           <div className="flex-1">
             <div className="relative">

@@ -1,5 +1,5 @@
-// API配置
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:10255/api';
+// API配置 - 从环境变量读取
+const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:10255/api';
 
 // 通用请求函数
 const request = async (url: string, options?: RequestInit) => {
@@ -137,11 +137,24 @@ export const analyticsAPI = {
 // AI相关API
 export const aiAPI = {
   // AI对话
-  chat: (message: string, context?: any) => {
-    return request('/ai/chat', {
-      method: 'POST',
-      body: JSON.stringify({ message, context }),
-    });
+  chat: (params: {
+    message: string;
+    conversationId?: string;
+    knowledgeBase?: string;
+    customerId?: string;
+  } | string, context?: any) => {
+    // 兼容旧的调用方式（传入字符串）和新的调用方式（传入对象）
+    if (typeof params === 'string') {
+      return request('/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message: params, context }),
+      });
+    } else {
+      return request('/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify(params),
+      });
+    }
   },
 
   // 获取AI模型列表
@@ -167,19 +180,38 @@ export const aiAPI = {
     return request(`/ai/knowledge${params}`);
   },
 
-  // 智能知识库搜索
-  searchKnowledge: (query: string, options?: {
+  // 智能知识库搜索 - 支持两种调用方式
+  searchKnowledge: (params: {
+    query: string;
+    knowledgeType: string;
+    customerId?: string;
+    limit?: number;
+  } | string, options?: {
     category?: string;
     limit?: number;
   }) => {
-    return request('/ai/knowledge/search', {
-      method: 'POST',
-      body: JSON.stringify({
-        query,
-        category: options?.category,
-        limit: options?.limit || 10,
-      }),
-    });
+    // 新的调用方式（传入对象）
+    if (typeof params === 'object') {
+      return request('/ai/knowledge/search', {
+        method: 'POST',
+        body: JSON.stringify({
+          query: params.query,
+          category: params.knowledgeType,
+          customerId: params.customerId,
+          limit: params.limit || 10,
+        }),
+      });
+    } else {
+      // 兼容旧的调用方式（传入字符串）
+      return request('/ai/knowledge/search', {
+        method: 'POST',
+        body: JSON.stringify({
+          query: params,
+          category: options?.category,
+          limit: options?.limit || 10,
+        }),
+      });
+    }
   },
 
   // 获取知识库统计信息
