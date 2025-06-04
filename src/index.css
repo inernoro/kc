@@ -2,6 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 真实记分牌样式的翻转动画 - 分阶段防止穿模 */
+
+/* 向上翻转：旧内容向上翻转消失 */
+@keyframes flip-up-out {
+  0% {
+    transform: perspective(1000px) rotateX(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: perspective(1000px) rotateX(-90deg);
+    opacity: 0;
+  }
+}
+
+/* 向上翻转：新内容从下方翻转进来 */
+@keyframes flip-up-in {
+  0% {
+    transform: perspective(1000px) rotateX(90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: perspective(1000px) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+/* 向下翻转：旧内容向下翻转消失 */
+@keyframes flip-down-out {
+  0% {
+    transform: perspective(1000px) rotateX(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: perspective(1000px) rotateX(90deg);
+    opacity: 0;
+  }
+}
+
+/* 向下翻转：新内容从上方翻转进来 */
+@keyframes flip-down-in {
+  0% {
+    transform: perspective(1000px) rotateX(-90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: perspective(1000px) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-flip-up-3d {
+  animation: flip-up-out 0.4s ease-in forwards, flip-up-in 0.4s ease-out 0.4s forwards;
+  transform-style: preserve-3d;
+  transform-origin: center bottom;
+}
+
+.animate-flip-down-3d {
+  animation: flip-down-out 0.4s ease-in forwards, flip-down-in 0.4s ease-out 0.4s forwards;
+  transform-style: preserve-3d;
+  transform-origin: center top;
+}
+
+/* 确保3D变换正常工作 */
+* {
+  transform-style: preserve-3d;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -32,4 +99,9 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 } 

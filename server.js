@@ -10,9 +10,11 @@ require('dotenv').config();
 const customerRoutes = require('./routes/customers');
 const aiRoutes = require('./routes/ai');
 const analyticsRoutes = require('./routes/analytics');
+const productRoutes = require('./routes/products');
+const technicalRoutes = require('./routes/technical');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 10255;
 
 // 安全中间件
 app.use(helmet());
@@ -25,7 +27,7 @@ app.use(morgan('combined'));
 
 // CORS配置
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:10256',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -56,17 +58,36 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 根路径响应
+app.get('/', (req, res) => {
+  res.json({
+    message: '🚀 米多智库后端API服务运行中',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      customers: '/api/customers',
+      ai: '/api/ai',
+      analytics: '/api/analytics'
+    },
+    frontend: 'http://localhost:10256',
+    docs: '请访问前端页面获取完整功能'
+  });
+});
+
 // API路由
 app.use('/api/customers', customerRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/technical', technicalRoutes);
 
-// 404处理
-app.use('*', (req, res) => {
+// 404处理 - 只拦截API路径
+app.use('/api/*', (req, res) => {
   res.status(404).json({
-    error: '接口不存在',
+    error: 'API接口不存在',
     code: 'NOT_FOUND',
-    path: req.originalUrl
+    path: req.originalUrl,
+    availableEndpoints: ['/api/customers', '/api/ai', '/api/analytics']
   });
 });
 

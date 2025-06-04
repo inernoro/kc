@@ -102,7 +102,114 @@ const wineIndustryKnowledge = {
     'A级': '年采购额50-100万，重点客户',
     'B级': '年采购额20-50万，潜力客户',
     'C级': '年采购额20万以下，普通客户'
+  },
+  // 新增：销售策略知识库
+  salesStrategies: {
+    '高端白酒': {
+      target: 'S级、A级客户',
+      approach: '礼品包装、限量版、品牌故事营销',
+      seasonality: '春节、中秋节重点推广',
+      profit_margin: '30-50%'
+    },
+    '中档红酒': {
+      target: 'B级、C级客户',
+      approach: '性价比强调、餐饮搭配推荐',
+      seasonality: '全年稳定销售',
+      profit_margin: '20-35%'
+    }
+  },
+  // 新增：技术文档知识库
+  technicalDocs: {
+    'API接口': {
+      'AI对话': '/api/ai/chat - 发送消息到AI模型',
+      '知识搜索': '/api/ai/knowledge - 搜索知识库内容',
+      '客户管理': '/api/customers - 客户CRUD操作'
+    },
+    '数据库结构': {
+      'customers': '客户信息表',
+      'products': '产品信息表', 
+      'conversations': '对话记录表'
+    }
+  },
+  // 新增：常见问题解答
+  faq: {
+    '客户管理': [
+      {
+        question: '如何升级客户等级？',
+        answer: '根据年采购额调整：C级->B级需达到20万，B级->A级需达到50万，A级->S级需达到100万'
+      },
+      {
+        question: '客户流失预警机制？',
+        answer: '超过30天无采购记录自动标记为潜在流失，需主动联系维护'
+      }
+    ],
+    '产品销售': [
+      {
+        question: '季节性产品推荐策略？',
+        answer: '春节主推高端白酒礼盒，夏季主推啤酒和低度酒，中秋推团圆主题酒品'
+      }
+    ]
   }
+};
+
+// 新增：向量搜索模拟（实际项目中可集成向量数据库）
+const vectorSearch = {
+  // 简单的关键词匹配搜索
+  search: (query, category = null) => {
+    const results = [];
+    const searchTerms = query.toLowerCase().split(/\s+/);
+    
+    const searchInObject = (obj, path = '') => {
+      for (const [key, value] of Object.entries(obj)) {
+        const currentPath = path ? `${path}.${key}` : key;
+        
+        if (typeof value === 'string') {
+          const matched = searchTerms.some(term => 
+            key.toLowerCase().includes(term) || 
+            value.toLowerCase().includes(term)
+          );
+          if (matched) {
+            results.push({
+              path: currentPath,
+              key,
+              content: value,
+              relevance: calculateRelevance(query, key + ' ' + value)
+            });
+          }
+        } else if (typeof value === 'object' && value !== null) {
+          if (!category || currentPath.includes(category)) {
+            searchInObject(value, currentPath);
+          }
+        }
+      }
+    };
+    
+    searchInObject(wineIndustryKnowledge);
+    
+    // 按相关性排序
+    return results
+      .sort((a, b) => b.relevance - a.relevance)
+      .slice(0, 10); // 返回前10个结果
+  }
+};
+
+// 计算搜索相关性
+const calculateRelevance = (query, content) => {
+  const queryTerms = query.toLowerCase().split(/\s+/);
+  const contentLower = content.toLowerCase();
+  let score = 0;
+  
+  queryTerms.forEach(term => {
+    if (contentLower.includes(term)) {
+      score += 1;
+      // 完全匹配加分
+      if (contentLower === term) score += 2;
+      // 开头匹配加分
+      if (contentLower.startsWith(term)) score += 1;
+    }
+  });
+  
+  return score;
 };
 
 // 生成AI提示词
@@ -410,6 +517,147 @@ router.get('/knowledge', (req, res) => {
       success: false,
       error: '获取知识库信息失败',
       code: 'FETCH_KNOWLEDGE_ERROR'
+    });
+  }
+});
+
+// 新增：智能知识库搜索
+router.post('/knowledge/search', (req, res) => {
+  try {
+    const { query, category, limit = 10 } = req.body;
+    
+    if (!query || !query.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: '搜索关键词不能为空',
+        code: 'EMPTY_SEARCH_QUERY'
+      });
+    }
+    
+    // 使用向量搜索
+    const searchResults = vectorSearch.search(query, category);
+    
+    // 限制结果数量
+    const limitedResults = searchResults.slice(0, limit);
+    
+    res.json({
+      success: true,
+      data: {
+        query,
+        category: category || 'all',
+        results: limitedResults,
+        total: searchResults.length,
+        returned: limitedResults.length
+      },
+      message: '知识库搜索完成'
+    });
+    
+  } catch (error) {
+    console.error('知识库搜索失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '知识库搜索失败',
+      code: 'KNOWLEDGE_SEARCH_ERROR'
+    });
+  }
+});
+
+// 新增：获取知识库统计信息
+router.get('/knowledge/stats', (req, res) => {
+  try {
+    const stats = {
+      totalCategories: Object.keys(wineIndustryKnowledge).length,
+      categories: {},
+      lastUpdated: new Date().toISOString()
+    };
+    
+    // 计算每个分类的统计信息
+    Object.entries(wineIndustryKnowledge).forEach(([category, data]) => {
+      if (Array.isArray(data)) {
+        stats.categories[category] = {
+          type: 'array',
+          count: data.length,
+          items: data.slice(0, 3) // 预览前3个项目
+        };
+      } else if (typeof data === 'object') {
+        const itemCount = Object.keys(data).length;
+        stats.categories[category] = {
+          type: 'object',
+          count: itemCount,
+          keys: Object.keys(data).slice(0, 5) // 预览前5个键
+        };
+      }
+    });
+    
+    res.json({
+      success: true,
+      data: stats,
+      message: '知识库统计信息获取成功'
+    });
+    
+  } catch (error) {
+    console.error('获取知识库统计失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取知识库统计失败',
+      code: 'KNOWLEDGE_STATS_ERROR'
+    });
+  }
+});
+
+// 新增：FAQ智能问答
+router.post('/knowledge/faq', (req, res) => {
+  try {
+    const { question, category } = req.body;
+    
+    if (!question || !question.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: '问题不能为空',
+        code: 'EMPTY_QUESTION'
+      });
+    }
+    
+    let faqResults = [];
+    const searchCategories = category ? [category] : Object.keys(wineIndustryKnowledge.faq);
+    
+    // 在FAQ中搜索相关问题
+    searchCategories.forEach(cat => {
+      if (wineIndustryKnowledge.faq[cat]) {
+        wineIndustryKnowledge.faq[cat].forEach((faq, index) => {
+          const relevance = calculateRelevance(question, faq.question + ' ' + faq.answer);
+          if (relevance > 0) {
+            faqResults.push({
+              category: cat,
+              question: faq.question,
+              answer: faq.answer,
+              relevance,
+              index
+            });
+          }
+        });
+      }
+    });
+    
+    // 按相关性排序
+    faqResults.sort((a, b) => b.relevance - a.relevance);
+    
+    res.json({
+      success: true,
+      data: {
+        question,
+        matches: faqResults.slice(0, 5), // 返回最相关的5个答案
+        total: faqResults.length
+      },
+      message: 'FAQ搜索完成'
+    });
+    
+  } catch (error) {
+    console.error('FAQ搜索失败:', error);
+    res.status(500).json({
+      success: false,
+      error: 'FAQ搜索失败',
+      code: 'FAQ_SEARCH_ERROR'
     });
   }
 });
