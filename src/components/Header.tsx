@@ -1,12 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bell, Settings, User, TrendingUp, Users, DollarSign, Calendar, Code, GitBranch, Bug, Star, Package, Activity, Palette, Megaphone, Award, Layers, Zap, Target } from 'lucide-react';
+import { Bell, Settings, User, TrendingUp, Users, DollarSign, Calendar, Code, GitBranch, Bug, Star, Package, Activity, Palette, Megaphone, Award, Layers, Zap, Target, Trophy } from 'lucide-react';
 
 interface HeaderProps {
   currentDepartment: string;
   onDepartmentChange: (department: string) => void;
+  customerSuccessMode?: 'normal' | 'assessment';
+  onCustomerSuccessModeChange?: (mode: 'normal' | 'assessment') => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentDepartment, onDepartmentChange }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  currentDepartment, 
+  onDepartmentChange,
+  customerSuccessMode = 'normal',
+  onCustomerSuccessModeChange
+}) => {
   // 动画控制状态
   const [displayContent, setDisplayContent] = useState(currentDepartment);
   const [isVisible, setIsVisible] = useState(true);
@@ -227,7 +234,7 @@ const Header: React.FC<HeaderProps> = ({ currentDepartment, onDepartmentChange }
             <h1 className="text-lg font-semibold text-gray-900">米多智库</h1>
           </div>
           
-          {/* 简洁的部门切换器 */}
+          {/* 部门切换器 */}
           <div className="relative flex bg-gray-100/70 backdrop-blur-sm rounded-xl p-1 shadow-inner" style={{ width: '420px' }}>
             {/* 滑动背景 - 使用固定宽度确保完全一致 */}
             <div 
@@ -277,6 +284,78 @@ const Header: React.FC<HeaderProps> = ({ currentDepartment, onDepartmentChange }
               );
             })}
           </div>
+
+          {/* 客户成功部模式切换器 - 仅在客户成功部显示 */}
+          {currentDepartment === '客户成功部' && onCustomerSuccessModeChange && (
+            <div className="relative flex bg-gray-100/70 backdrop-blur-sm rounded-xl p-1 shadow-inner" style={{ width: '240px' }}>
+              {/* 滑动背景 */}
+              <div 
+                className="absolute bg-white rounded-lg shadow-sm transition-all duration-300 ease-out"
+                style={{
+                  top: '2px',
+                  bottom: '2px',
+                  left: `${customerSuccessMode === 'normal' ? 2 : 118}px`,
+                  width: '116px',
+                  transform: 'translateZ(0)',
+                  willChange: 'left'
+                }}
+              />
+              
+              <button
+                onClick={() => onCustomerSuccessModeChange('normal')}
+                className={`
+                  relative z-10 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-lg text-xs font-medium
+                  transition-all duration-300 ease-out
+                  ${customerSuccessMode === 'normal' 
+                    ? 'text-gray-900' 
+                    : 'text-gray-500 hover:text-gray-700'
+                  }
+                `}
+                style={{ 
+                  width: '116px',
+                  minWidth: '116px',
+                  maxWidth: '116px',
+                  textAlign: 'center',
+                  letterSpacing: '0.01em'
+                }}
+              >
+                <Users 
+                  className="w-3 h-3 transition-colors duration-300 flex-shrink-0" 
+                  style={{ color: customerSuccessMode === 'normal' ? '#10B981' : undefined }}
+                />
+                <span className="whitespace-nowrap text-xs font-medium">
+                  正常模式
+                </span>
+              </button>
+
+              <button
+                onClick={() => onCustomerSuccessModeChange('assessment')}
+                className={`
+                  relative z-10 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-lg text-xs font-medium
+                  transition-all duration-300 ease-out
+                  ${customerSuccessMode === 'assessment' 
+                    ? 'text-gray-900' 
+                    : 'text-gray-500 hover:text-gray-700'
+                  }
+                `}
+                style={{ 
+                  width: '116px',
+                  minWidth: '116px',
+                  maxWidth: '116px',
+                  textAlign: 'center',
+                  letterSpacing: '0.01em'
+                }}
+              >
+                <Trophy 
+                  className="w-3 h-3 transition-colors duration-300 flex-shrink-0" 
+                  style={{ color: customerSuccessMode === 'assessment' ? '#3B82F6' : undefined }}
+                />
+                <span className="whitespace-nowrap text-xs font-medium">
+                  考核模式
+                </span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 右侧区域 - 压缩信息密度，将指标融入 */}

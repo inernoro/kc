@@ -1,11 +1,68 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, TrendingUp, Users, Package, Activity, Calendar, Target, Zap, Code, GitBranch, Bug, Star, Palette, Megaphone, Award, Eye, Layers, Monitor, Database, Smartphone, Send, AlertTriangle, CheckCircle, XCircle, RefreshCw, MessageSquare, User, Crown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  User,
+  Calendar,
+  TrendingUp,
+  Clock,
+  Target,
+  Users,
+  Code,
+  GitPullRequest,
+  FileText,
+  Package,
+  Zap,
+  Activity,
+  MessageSquare,
+  ChevronDown,
+  Sparkles,
+  CircuitBoard,
+  Database,
+  Cloud,
+  Shield,
+  BarChart3,
+  BookOpen,
+  Award,
+  TestTube,
+  Bug,
+  Plus,
+  ThumbsUp,
+  Send,
+  Bot,
+  Search,
+  Filter,
+  Calendar as CalendarIcon,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Timer,
+  Star,
+  ArrowRight,
+  ArrowLeft,
+  Monitor,
+  Smartphone,
+  Tablet,
+  Download,
+  Eye,
+  Layers,
+  CheckCircle,
+  RefreshCw,
+  Crown,
+  Trophy,
+  PieChart,
+  Lightbulb,
+  Play,
+  Pause,
+  ClipboardCheck,
+  Rocket
+} from 'lucide-react';
 
-// 使用原有的组件
+// 导入组件
 import Sidebar from './Sidebar';
 import ChatArea from './ChatArea';
 import CustomerPanel from './CustomerPanel';
+import AssessmentSystem from './AssessmentSystem';
+import { Customer } from '../types/customer';
 
 // 品牌域模块
 import { FeatureRoadmap } from '../modules/product';
@@ -44,6 +101,7 @@ interface ModuleManagerProps {
   currentDepartment: string;
   onCustomerSelect?: (customer: any) => void;
   selectedCustomer?: any;
+  customerSuccessMode?: 'normal' | 'assessment';
 }
 
 // 在文件开头添加产品需求的类型定义
@@ -801,270 +859,367 @@ const DemandPool = ({ selectedDemand, onDemandSelect }: { selectedDemand: Produc
 
 // 产品立项流程组件（中间）
 const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand | null }) => {
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<ProductProject | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'chat'>('overview');
-  
-  // AI对话相关状态
-  const [message, setMessage] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [chatHistory, setChatHistory] = useState<Array<{
-    id: string;
-    type: 'user' | 'ai';
-    content: string;
-    timestamp: string;
-  }>>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
 
-  // 根据选中需求找到对应项目
-  const relatedProject = selectedDemand ? 
-    productProjects.find(p => p.demandId === selectedDemand.id) : null;
-
-  const displayProject = selectedProject || relatedProject;
-
-  // 处理发送消息
   const handleSendMessage = () => {
-    if (!message.trim() || !selectedDemand) return;
+    if (!inputMessage.trim() || !selectedDemand) return;
     
     const userMessage = {
       id: Date.now().toString(),
-      type: 'user' as const,
-      content: message.trim(),
+      type: 'user',
+      content: inputMessage,
       timestamp: new Date().toLocaleTimeString()
     };
 
-    setChatHistory(prev => [...prev, userMessage]);
-    setMessage('');
-    setIsAnalyzing(true);
+    setMessages(prev => [...prev, userMessage]);
 
-    // 模拟AI响应
+    // 生成AI回复
     setTimeout(() => {
-      const aiResponse = generateAIResponse(message, selectedDemand, displayProject);
-      const aiMessage = {
+      const aiResponse = {
         id: (Date.now() + 1).toString(),
-        type: 'ai' as const,
-        content: aiResponse,
+        type: 'ai',
+        content: generateAIResponse(inputMessage, selectedDemand, relatedProject),
         timestamp: new Date().toLocaleTimeString()
       };
+      setMessages(prev => [...prev, aiResponse]);
+    }, 1000);
       
-      setChatHistory(prev => [...prev, aiMessage]);
-      setIsAnalyzing(false);
-    }, 1500 + Math.random() * 1000); // 1.5-2.5秒随机延迟
+    setInputMessage('');
   };
 
-  // 生成AI响应的函数
   const generateAIResponse = (userMessage: string, demand: ProductDemand, project?: ProductProject | null): string => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    // 技术人员专用查询
-    if (lowerMessage.includes('技术栈') || lowerMessage.includes('架构') || lowerMessage.includes('technology')) {
-      return `技术架构建议：\n1. 前端技术：React + TypeScript + Tailwind CSS\n2. 后端技术：Node.js + Express + MongoDB\n3. 部署方案：Docker + K8s\n4. 监控方案：Prometheus + Grafana\n建议采用微服务架构，确保系统可扩展性。`;
+    if (!project) {
+      return `基于需求「${demand.title}」，我建议首先进行详细的技术可行性分析。这个需求的业务价值评分为${demand.businessValue}/10，开发成本为${demand.developmentCost}/10。
+
+建议的项目规划：
+1. **需求分析阶段**（3-5天）：深入理解${demand.customer}的具体需求
+2. **技术方案设计**（5-7天）：制定详细的技术实现方案
+3. **资源评估**（2-3天）：评估所需的人力和时间成本
+4. **立项决策**：基于以上分析决定是否立项
+
+您希望我详细分析哪个方面？`;
     }
-    
-    if (lowerMessage.includes('数据库') || lowerMessage.includes('存储') || lowerMessage.includes('database')) {
-      return `数据存储建议：\n1. 主数据库：MySQL 8.0（业务数据）\n2. 缓存层：Redis 6.0（会话缓存）\n3. 搜索引擎：Elasticsearch（日志分析）\n4. 文件存储：阿里云OSS（图片文档）\n注意：需要考虑数据一致性和备份策略。`;
+
+    const currentStage = project.currentStage;
+    const progress = project.progress;
+
+    switch (currentStage) {
+      case '需求管理':
+        return `当前项目「${project.name}」正处于需求管理阶段。
+
+📋 **阶段重点**：
+- 需求收集完整性：已完成客户访谈和需求文档整理
+- 需求优先级排序：按业务价值和紧急程度分类
+- 可行性初步评估：技术团队已确认方案可行
+
+✅ **已完成**：
+- 客户需求调研（${demand.customer}）
+- 竞品分析和市场调研
+- 需求文档撰写和评审
+
+🎯 **下一步**：进入产品规划阶段，制定详细的产品路线图`;
+
+      case '产品规划':
+        return `项目「${project.name}」产品规划进展顺利，当前进度${progress}%。
+
+🎨 **设计方案**：
+- 用户体验流程设计已完成
+- 功能模块架构设计中
+- 界面原型设计进行中
+
+📊 **关键指标**：
+- 预期用户满意度：>95%
+- 功能完整度目标：100%
+- 性能指标：响应时间<200ms
+
+🚀 **即将启动**：产品立项评审会议，预计3个工作日内完成`;
+
+      case '产品立项':
+        return `恭喜！项目「${project.name}」已正式立项，进入实施阶段。
+
+🎉 **立项成果**：
+- 项目预算已获批：${project.relatedSystems.length}个系统模块
+- 团队组建完成：产品经理${project.manager}
+- 开发周期确定：预计${project.deadline}前完成
+
+📅 **关键里程碑**：
+- 技术方案评审：本周五
+- 开发环境搭建：下周一
+- 第一版原型：${project.deadline}
+
+💡 **风险提醒**：请关注跨系统集成的复杂度，建议提前与相关团队沟通`;
+
+      case '开发跟踪':
+        return `项目「${project.name}」开发阶段进展报告：
+
+⚡ **开发进度**：${progress}%
+- 后端接口开发：95%完成
+- 前端页面开发：80%完成  
+- 数据库设计：100%完成
+- 第三方集成：60%完成
+
+🐛 **质量指标**：
+- 代码覆盖率：85%
+- 已修复Bug：23个
+- 待解决问题：3个（非阻塞性）
+
+👥 **团队状态**：
+- 开发团队士气良好
+- 无关键人员变动
+- 与${demand.customer}沟通顺畅
+
+📈 **预期交付**：按计划将于${project.deadline}完成开发`;
+
+      case '产品验收':
+        return `项目「${project.name}」进入验收阶段，各项指标良好：
+
+✅ **功能验收**：
+- 核心功能：100%完成并通过测试
+- 边界场景：95%覆盖
+- 用户体验：客户试用满意度98%
+
+🔧 **技术验收**：
+- 性能测试：达到预期指标
+- 安全测试：无高危漏洞
+- 兼容性测试：支持主流浏览器
+
+📋 **文档交付**：
+- 用户操作手册：已完成
+- 系统维护文档：已完成
+- 培训材料：准备中
+
+🎯 **验收计划**：预计3个工作日内完成最终验收`;
+
+      case '上线发布':
+        return `项目「${project.name}」准备上线发布：
+
+🚀 **发布准备**：
+- 生产环境部署：已完成
+- 数据迁移：已验证
+- 监控系统：已配置
+- 应急预案：已制定
+
+📊 **上线指标**：
+- 目标用户：${demand.customer}及相关团队
+- 预期访问量：日活跃用户500+
+- 成功率目标：>99.9%
+
+⚠️ **风险控制**：
+- 灰度发布策略：先10%用户，逐步扩量
+- 回滚机制：5分钟内可完成
+- 7×24小时技术支持待命
+
+🎉 **发布后**：将进入产品总结阶段，收集用户反馈并优化`;
+
+      case '产品总结':
+        return `项目「${project.name}」圆满完成，总结如下：
+
+🎯 **项目成果**：
+- 按时交付：✅
+- 质量达标：✅  
+- 用户满意：✅（${demand.customer}评分9.5/10）
+- 预算控制：✅
+
+📈 **业务价值**：
+- 提升工作效率：40%
+- 降低操作成本：30%
+- 用户体验改善：显著提升
+
+🔄 **经验沉淀**：
+- 技术方案可复用性：高
+- 团队协作模式：已优化
+- 项目管理经验：已文档化
+
+💡 **后续计划**：基于用户反馈，规划V2.0版本功能迭代`;
+
+      default:
+        return `项目「${project.name}」当前状态：${currentStage}，进度${progress}%。请告诉我您希望了解的具体信息，我会为您提供详细的分析和建议。`;
     }
-    
-    if (lowerMessage.includes('性能') || lowerMessage.includes('优化') || lowerMessage.includes('performance')) {
-      const complexity = demand.developmentCost >= 7 ? '高复杂度' : demand.developmentCost >= 4 ? '中复杂度' : '低复杂度';
-      return `性能优化建议（${complexity}项目）：\n1. 接口响应时间：< 200ms\n2. 并发支持：> 1000用户\n3. 数据库优化：添加索引、分库分表\n4. 前端优化：代码分割、懒加载\n5. CDN加速：静态资源全球分发`;
-    }
-    
-    if (lowerMessage.includes('安全') || lowerMessage.includes('权限') || lowerMessage.includes('security')) {
-      return `安全防护建议：\n1. 身份认证：JWT + OAuth2.0\n2. 数据加密：AES-256 + HTTPS\n3. 接口防护：限流、防重放攻击\n4. 权限控制：RBAC角色权限模型\n5. 安全审计：操作日志完整记录`;
-    }
-    
-    if (lowerMessage.includes('测试') || lowerMessage.includes('质量') || lowerMessage.includes('test')) {
-      const testDays = Math.ceil(demand.developmentCost * 0.3);
-      return `测试方案建议：\n1. 单元测试：覆盖率 > 80%\n2. 集成测试：关键业务流程\n3. 压力测试：1000并发用户\n4. 安全测试：SQL注入、XSS防护\n5. 测试周期：${testDays}个工作日\n建议采用TDD开发模式。`;
-    }
-    
-    // 产品覆盖不全的修正建议
-    if (lowerMessage.includes('覆盖') || lowerMessage.includes('完善') || lowerMessage.includes('补充')) {
-      return `产品方案完善建议：\n1. 补充用户故事：明确使用场景和用户路径\n2. 完善异常流程：错误处理和边界情况\n3. 增加数据埋点：用户行为追踪方案\n4. 制定灰度策略：分阶段上线计划\n5. 准备回滚方案：风险控制措施\n建议按照"七步成诗"法补充缺失环节。`;
-    }
-    
-    // 原有的查询保持不变
-    if (lowerMessage.includes('优先级') || lowerMessage.includes('priority')) {
-      const priorityScore = Math.round(demand.businessValue / demand.developmentCost * 10) / 10;
-      return `📊 优先级分析报告：\n评分：${priorityScore} 分\n计算公式：业务价值(${demand.businessValue}) ÷ 开发成本(${demand.developmentCost})\n\n建议：${priorityScore > 1.5 ? '🔴 高优先级，建议立即处理' : priorityScore > 1.0 ? '🟡 中优先级，可排入下月计划' : '🟢 低优先级，建议后续排期'}\n\n根据米多产品优先级算法，该需求${priorityScore > 1.5 ? '符合High等级标准' : '建议调整业务价值或降低开发复杂度'}。`;
-    }
-    
-    if (lowerMessage.includes('版本') || lowerMessage.includes('version')) {
-      const suggestedType = demand.businessValue >= 8 ? '中版本' : '小版本';
-      const versionNumber = suggestedType === '中版本' ? 'V2.X.0' : 'V2.X.X';
-      return `📋 版本规划建议：\n建议版本类型：${suggestedType}\n预计版本号：${versionNumber}\n\n🔄 立项流程：\n${suggestedType === '中版本' ? 
-        '1. 产品委员会版本号申请\n2. 三稿制立项评审（一稿价值确认 → 二稿结构确认 → 三稿交互确认）\n3. UI设计稿确认\n4. 技术方案评审' : 
-        '1. 产品经理线下沟通确认\n2. 简化立项流程\n3. 直接进入开发排期'}\n\n⚠️ 注意：${suggestedType}需要遵循米多版本管理规范，确保不跨系统/应用。`;
-    }
-    
-    if (lowerMessage.includes('风险') || lowerMessage.includes('risk')) {
-      const riskLevel = demand.developmentCost >= 7 ? '高风险' : demand.developmentCost >= 4 ? '中风险' : '低风险';
-      const riskColor = riskLevel === '高风险' ? '🔴' : riskLevel === '中风险' ? '🟡' : '🟢';
-      return `${riskColor} 风险评估报告：\n风险等级：${riskLevel}\n评估依据：开发成本${demand.developmentCost}/10分\n\n🎯 风险控制措施：\n${riskLevel === '高风险' ? 
-        '• 增加code review轮次\n• 提升测试覆盖率至90%\n• 制定详细回滚方案\n• 分阶段灰度发布\n• 7x24小时监控' : 
-        riskLevel === '中风险' ? 
-        '• 标准code review\n• 测试覆盖率80%\n• 基础监控告警\n• 正常发布流程' :
-        '• 基础测试验证\n• 常规发布流程\n• 标准监控'}\n\n建议：${riskLevel === '高风险' ? '项目经理需密切跟进，每日同步进度' : '按正常流程进行即可'}。`;
-    }
-    
-    if (lowerMessage.includes('工期') || lowerMessage.includes('时间') || lowerMessage.includes('deadline')) {
-      const estimatedDays = demand.developmentCost * 2;
-      const stages = [
-        '需求确认：1-2天',
-        `产品设计：${Math.ceil(estimatedDays * 0.2)}天`,
-        `开发实现：${Math.ceil(estimatedDays * 0.6)}天`,
-        `测试验收：${Math.ceil(estimatedDays * 0.2)}天`
-      ];
-      return `⏰ 工期预估报告：\n总工期：${estimatedDays}个工作日\n\n📅 详细排期：\n${stages.map((stage, i) => `${i + 1}. ${stage}`).join('\n')}\n\n🎯 里程碑节点：\n• 需求评审完成：第2天\n• 产品立项通过：第${Math.ceil(estimatedDays * 0.3)}天\n• 开发联调完成：第${Math.ceil(estimatedDays * 0.8)}天\n• 验收发布上线：第${estimatedDays}天\n\n⚠️ 风险缓冲：建议预留20%缓冲时间，实际交付时间${Math.ceil(estimatedDays * 1.2)}天。`;
-    }
-    
-    // 默认智能响应
-    const responses = [
-      `🤖 AI分析：我已经详细分析了需求《${demand.title}》\n\n📊 基础信息：\n• 优先级：${demand.priority}\n• 客户：${demand.customer}\n• 来源：${demand.source}\n\n💡 我可以帮您分析：优先级评估、版本规划、风险分析、工期预估、技术方案、测试策略等。请告诉我您想了解哪个方面？`,
-      
-      `🎯 产品建议：根据米多产品研发规范分析\n\n✅ 符合产品准则：\n• 以客户为中心：解决${demand.customer}实际需求\n• 场景化设计：基于具体业务场景\n• 积木化搭建：可复用组件架构\n• 数据驱动：可量化业务价值\n\n🔍 建议深入分析：技术可行性、资源投入、上线计划。有什么具体问题吗？`,
-      
-      `📋 流程指导：该需求当前处于${demand.status}状态\n\n🔄 后续流程：\n1. 完善需求分析和用户故事\n2. 申请产品版本号\n3. 启动三稿制立项评审\n4. UI设计和技术方案评审\n5. 进入开发排期\n\n💬 我可以为您提供每个环节的详细指导，请问需要了解哪个环节？`
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  // 初始化对话（当需求切换时）
-  React.useEffect(() => {
-    if (selectedDemand && chatHistory.length === 0) {
-      const welcomeMessage = {
-        id: 'welcome',
-        type: 'ai' as const,
-        content: `您好！我是米多AI产品助手。我已经分析了需求《${selectedDemand.title}》，有什么关于这个需求的问题我可以帮您分析？比如：优先级评估、版本规划、风险分析、工期预估等。`,
-        timestamp: new Date().toLocaleTimeString()
-      };
-      setChatHistory([welcomeMessage]);
+  // 获取相关项目
+  const relatedProject = selectedDemand ? productProjects.find(p => p.demandId === selectedDemand.id) : null;
+
+  // 七步成诗流程定义
+  const sevenStepsPoetry = [
+    { 
+      id: '需求管理', 
+      name: '需求管理', 
+      icon: User, 
+      color: 'text-green-600', 
+      bgColor: 'bg-green-50', 
+      borderColor: 'border-green-200',
+      description: '收集整理客户需求，明确项目目标'
+    },
+    { 
+      id: '产品规划', 
+      name: '产品规划', 
+      icon: Target, 
+      color: 'text-blue-600', 
+      bgColor: 'bg-blue-50', 
+      borderColor: 'border-blue-200',
+      description: '制定产品方案，设计用户体验'
+    },
+    { 
+      id: '产品立项', 
+      name: '产品立项', 
+      icon: Lightbulb, 
+      color: 'text-purple-600', 
+      bgColor: 'bg-purple-50', 
+      borderColor: 'border-purple-200',
+      description: '项目评审通过，正式启动开发'
+    },
+    { 
+      id: '开发跟踪', 
+      name: '开发跟踪', 
+      icon: Code, 
+      color: 'text-orange-600', 
+      bgColor: 'bg-orange-50', 
+      borderColor: 'border-orange-200',
+      description: '监控开发进度，确保质量交付'
+    },
+    { 
+      id: '产品验收', 
+      name: '产品验收', 
+      icon: CheckCircle, 
+      color: 'text-teal-600', 
+      bgColor: 'bg-teal-50', 
+      borderColor: 'border-teal-200',
+      description: '功能测试验收，确认交付标准'
+    },
+    { 
+      id: '上线发布', 
+      name: '上线发布', 
+      icon: Rocket, 
+      color: 'text-red-600', 
+      bgColor: 'bg-red-50', 
+      borderColor: 'border-red-200',
+      description: '正式上线部署，用户开始使用'
+    },
+    { 
+      id: '产品总结', 
+      name: '产品总结', 
+      icon: Star, 
+      color: 'text-pink-600', 
+      bgColor: 'bg-pink-50', 
+      borderColor: 'border-pink-200',
+      description: '项目复盘总结，沉淀最佳实践'
     }
-  }, [selectedDemand]);
-
-  if (!selectedDemand) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <Layers className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">产品立项流程</h3>
-          <p className="text-sm text-gray-500">请先从左侧选择需求查看立项情况</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 七步成诗流程
-  const sevenSteps = [
-    { name: '需求管理', icon: Users, status: 'completed' },
-    { name: '产品规划', icon: Target, status: displayProject ? 'completed' : 'current' },
-    { name: '产品立项', icon: Layers, status: displayProject?.currentStage === '产品立项' ? 'current' : displayProject ? 'completed' : 'pending' },
-    { name: '开发跟踪', icon: Code, status: displayProject?.currentStage === '开发跟踪' ? 'current' : displayProject?.status === '已上线' ? 'completed' : 'pending' },
-    { name: '产品验收', icon: CheckCircle, status: displayProject?.currentStage === '产品验收' ? 'current' : displayProject?.status === '已上线' ? 'completed' : 'pending' },
-    { name: '上线发布', icon: Zap, status: displayProject?.status === '已上线' ? 'completed' : 'pending' },
-    { name: '产品总结', icon: Star, status: displayProject?.currentStage === '产品总结' ? 'current' : 'pending' }
   ];
+
+  const getStepStatus = (stepId: string) => {
+    if (!relatedProject) return 'pending';
+    const currentIndex = sevenStepsPoetry.findIndex(s => s.id === relatedProject.currentStage);
+    const stepIndex = sevenStepsPoetry.findIndex(s => s.id === stepId);
+    
+    if (stepIndex < currentIndex) return 'completed';
+    if (stepIndex === currentIndex) return 'current';
+    return 'pending';
+  };
 
   return (
     <div className="h-full flex flex-col">
-      {/* 优化后的标签切换 */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 px-4 pt-4">
-        <div className="flex w-full">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-all duration-200 rounded-t-lg border-t-2 border-l-2 border-r-2 ${
-              activeTab === 'overview'
-                ? 'bg-white text-purple-600 border-purple-500 shadow-sm'
-                : 'bg-transparent text-gray-500 border-transparent hover:text-gray-700 hover:bg-white/30'
-            }`}
-            style={{ marginBottom: '-2px' }}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <Layers className="w-4 h-4" />
-              <span>立项流程</span>
+      <div className="p-4 border-b border-gray-100">
+        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+          <Layers className="w-5 h-5 text-purple-600 mr-2" />
+          立项流程
+        </h3>
+        <div className="text-sm text-gray-600">
+          {selectedDemand ? `「${selectedDemand.title}」项目管理` : '选择需求查看对应的项目流程'}
             </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('chat')}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-all duration-200 rounded-t-lg border-t-2 border-l-2 border-r-2 ${
-              activeTab === 'chat'
-                ? 'bg-white text-purple-600 border-purple-500 shadow-sm'
-                : 'bg-transparent text-gray-500 border-transparent hover:text-gray-700 hover:bg-white/30'
-            }`}
-            style={{ marginBottom: '-2px' }}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <MessageSquare className="w-4 h-4" />
-              <span>AI助手</span>
-              {chatHistory.length > 0 && (
-                <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs px-2 py-0.5 rounded-full shadow-sm">
-                  {chatHistory.filter(msg => msg.type === 'user').length}
-                </span>
-              )}
             </div>
-          </button>
-        </div>
-      </div>
-      <div className="border-b-2 border-gray-200"></div>
 
-      {activeTab === 'overview' ? (
         <div className="flex-1 p-4 overflow-y-auto">
-          {/* 需求基本信息 */}
-          <div className="mb-6 p-4 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-2">{selectedDemand.title}</h3>
-            <p className="text-sm text-gray-600 mb-3">{selectedDemand.description}</p>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+        {selectedDemand ? (
+          <>
+            {/* 项目概览卡片 */}
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-4 border border-purple-200">
+              <div className="flex items-start justify-between mb-3">
               <div>
-                <span className="text-gray-500">客户:</span>
-                <span className="text-gray-900 ml-2 font-medium">{selectedDemand.customer}</span>
+                  <h4 className="font-bold text-gray-900 text-lg">{selectedDemand.title}</h4>
+                  <p className="text-sm text-gray-600 mt-1">{selectedDemand.customer} • {selectedDemand.source}</p>
               </div>
-              <div>
-                <span className="text-gray-500">评审人:</span>
-                <span className="text-gray-900 ml-2 font-medium">{selectedDemand.reviewer}</span>
+                <div className="text-right">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    selectedDemand.priority === 'High' ? 'bg-red-100 text-red-700' :
+                    selectedDemand.priority === 'Middle' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-gray-100 text-gray-700'
+                  }`}>
+                    {selectedDemand.priority}
+                  </span>
               </div>
-              <div>
-                <span className="text-gray-500">业务价值:</span>
-                <span className="text-green-600 font-bold ml-2">{selectedDemand.businessValue}/10</span>
               </div>
-              <div>
-                <span className="text-gray-500">开发成本:</span>
-                <span className="text-orange-600 font-bold ml-2">{selectedDemand.developmentCost}/10</span>
+              
+              {relatedProject && (
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="bg-white rounded-lg p-3">
+                    <div className="text-gray-600">当前阶段</div>
+                    <div className="font-bold text-purple-600">{relatedProject.currentStage}</div>
               </div>
+                  <div className="bg-white rounded-lg p-3">
+                    <div className="text-gray-600">完成进度</div>
+                    <div className="font-bold text-blue-600">{relatedProject.progress}%</div>
             </div>
+                  <div className="bg-white rounded-lg p-3">
+                    <div className="text-gray-600">项目经理</div>
+                    <div className="font-bold text-gray-900">{relatedProject.manager}</div>
+                  </div>
+                </div>
+              )}
           </div>
 
           {/* 七步成诗流程 */}
-          <div className="mb-6">
-            <h4 className="font-medium text-gray-900 mb-4 flex items-center">
-              <Star className="w-5 h-5 text-amber-500 mr-2" />
-              七步成诗流程
-            </h4>
+            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-gray-900">🎋 七步成诗流程</h4>
+                <div className="text-xs text-gray-500">传统项目管理哲学</div>
+              </div>
+              
             <div className="space-y-3">
-              {sevenSteps.map((step, index) => {
+                {sevenStepsPoetry.map((step, index) => {
+                  const status = getStepStatus(step.id);
                 const IconComponent = step.icon;
+                  
                 return (
-                  <div key={index} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm border ${
-                      step.status === 'completed' ? 'bg-emerald-500 border-emerald-600 text-white' :
-                      step.status === 'current' ? 'bg-slate-700 border-slate-800 text-white' :
-                      'bg-gray-100 border-gray-200 text-gray-400'
+                    <div key={step.id} className={`flex items-center p-3 rounded-lg border transition-all duration-200 ${
+                      status === 'completed' ? `${step.bgColor} ${step.borderColor}` :
+                      status === 'current' ? `${step.bgColor} ${step.borderColor} ring-2 ring-offset-2 ring-blue-200` :
+                      'bg-gray-50 border-gray-200'
                     }`}>
-                      <IconComponent className="w-5 h-5" />
+                      <div className="flex items-center space-x-3 flex-1">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          status === 'completed' ? step.bgColor : 
+                          status === 'current' ? step.bgColor : 'bg-gray-100'
+                        }`}>
+                          {status === 'completed' ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          ) : status === 'current' ? (
+                            <IconComponent className={`w-5 h-5 ${step.color}`} />
+                          ) : (
+                            <span className="text-sm font-medium text-gray-400">{index + 1}</span>
+                          )}
                     </div>
+                        
                     <div className="flex-1">
-                      <span className={`font-medium ${
-                        step.status === 'completed' ? 'text-emerald-600' :
-                        step.status === 'current' ? 'text-slate-700' :
-                        'text-gray-400'
+                          <div className={`font-medium ${
+                            status === 'completed' || status === 'current' ? 'text-gray-900' : 'text-gray-500'
                       }`}>
                         {step.name}
-                      </span>
-                      {step.status === 'current' && (
-                        <span className="ml-2 text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-full border border-slate-200">进行中</span>
-                      )}
-                      {step.status === 'completed' && (
-                        <CheckCircle className="inline w-4 h-4 text-emerald-500 ml-2" />
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">{step.description}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right">
+                        {status === 'completed' && (
+                          <span className="text-xs text-green-600 font-medium">已完成</span>
+                        )}
+                        {status === 'current' && (
+                          <span className="text-xs text-blue-600 font-medium">进行中</span>
+                        )}
+                        {status === 'pending' && (
+                          <span className="text-xs text-gray-400">待开始</span>
                       )}
                     </div>
                   </div>
@@ -1073,233 +1228,76 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
             </div>
           </div>
 
-          {/* 项目详情 */}
-          {displayProject && (
-            <div className="space-y-4">
-              <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm">
-                <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                  <Package className="w-5 h-5 text-slate-600 mr-2" />
-                  项目详情
+            {/* AI助手对话区域 */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900 flex items-center">
+                  <MessageSquare className="w-4 h-4 text-blue-600 mr-2" />
+                  AI项目助手
                 </h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">项目名称:</span>
-                    <span className="text-gray-900 ml-2 font-medium">{displayProject.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">版本类型:</span>
-                    <span className="text-slate-700 font-bold ml-2">{displayProject.versionType}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">产品经理:</span>
-                    <span className="text-gray-900 ml-2 font-medium">{displayProject.manager}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">当前阶段:</span>
-                    <span className="text-slate-700 font-bold ml-2">{displayProject.currentStage}</span>
-                  </div>
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">在线</span>
                 </div>
                 
-                {/* 进度条 */}
-                <div className="mt-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-500">开发进度</span>
-                    <span className="text-sm font-bold text-gray-900">{displayProject.progress}%</span>
+              <div className="h-40 overflow-y-auto border border-gray-100 rounded-lg p-3 mb-3 bg-gray-50">
+                {messages.length === 0 ? (
+                  <div className="text-center text-gray-500 text-sm py-8">
+                    <Bot className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p>AI助手准备就绪，询问项目相关问题</p>
+                    <div className="text-xs text-gray-400 mt-2">
+                      例如："当前阶段有什么风险？" "下一步计划是什么？"
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
-                    <div 
-                      className="bg-gradient-to-r from-slate-600 to-slate-700 h-3 rounded-full transition-all duration-500 shadow-sm"
-                      style={{ width: `${displayProject.progress}%` }}
-                    />
                   </div>
-                </div>
-              </div>
-
-              {/* 立项评审记录 */}
-              {displayProject.reviewRecords.length > 0 && (
-                <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm">
-                  <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-500 mr-2" />
-                    立项评审记录
-                  </h4>
+                ) : (
                   <div className="space-y-3">
-                    {displayProject.reviewRecords.map((record, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm border ${
-                          record.result === '通过' ? 'bg-emerald-500 border-emerald-600 text-white' :
-                          record.result === '不通过' ? 'bg-rose-500 border-rose-600 text-white' :
-                          'bg-amber-500 border-amber-600 text-white'
+                    {messages.map((message) => (
+                      <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                          message.type === 'user' 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-white border border-gray-200'
                         }`}>
-                          {record.stage.charAt(0)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <span className="font-medium text-gray-900">{record.stage}立项</span>
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium border ${
-                              record.result === '通过' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              record.result === '不通过' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                              'bg-amber-50 text-amber-700 border-amber-200'
-                            }`}>
-                              {record.result}
-                            </span>
-                            <span className="text-xs text-gray-500">{record.time}</span>
+                          <div className="whitespace-pre-wrap">{message.content}</div>
+                          <div className={`text-xs mt-2 ${
+                            message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                          }`}>
+                            {message.timestamp}
                           </div>
-                          <p className="text-sm text-gray-600">{record.feedback}</p>
                         </div>
                       </div>
                     ))}
-                  </div>
                 </div>
               )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex-1 flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-          {/* AI助手头部 */}
-          <div className="p-4 border-b border-white/50 bg-white/70 backdrop-blur-sm">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-sm">AI</span>
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">米多AI产品助手</h3>
-                <p className="text-xs text-gray-600">基于产品研发规范V2.4的智能分析</p>
-              </div>
-              <div className="ml-auto">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              </div>
-            </div>
           </div>
 
-          {/* 对话历史区域 */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            <div className="space-y-4 max-w-4xl mx-auto">
-              {chatHistory.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-sm lg:max-w-lg px-4 py-3 rounded-2xl shadow-sm ${
-                    msg.type === 'user' 
-                      ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white' 
-                      : 'bg-white text-gray-900 border border-gray-200'
-                  }`}>
-                    {msg.type === 'ai' && (
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
-                          <span className="text-white text-xs font-bold">AI</span>
-                        </div>
-                        <span className="text-xs text-gray-500 font-medium">{msg.timestamp}</span>
-                      </div>
-                    )}
-                    <div className="text-sm leading-relaxed whitespace-pre-line">{msg.content}</div>
-                    {msg.type === 'user' && (
-                      <div className="text-xs text-purple-200 mt-2 text-right font-medium">{msg.timestamp}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              
-              {/* AI思考中动画 */}
-              {isAnalyzing && (
-                <div className="flex justify-start">
-                  <div className="bg-white text-gray-900 px-4 py-3 rounded-2xl shadow-sm border border-gray-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">AI</span>
-                      </div>
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                      <span className="text-xs text-gray-500">正在分析中...</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 输入区域 */}
-          <div className="p-4 bg-white/70 backdrop-blur-sm border-t border-white/50">
-            <div className="max-w-4xl mx-auto">
-              {/* 快捷问题分类 */}
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <div className="text-xs font-medium text-gray-600 flex items-center mr-2">
-                    <Zap className="w-3 h-3 mr-1" />
-                    快捷问题:
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-xs text-purple-600 font-medium">产品:</span>
-                    {['优先级如何？', '建议什么版本？', '预计工期多久？', '有什么风险？'].map((question, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setMessage(question)}
-                        className="px-3 py-1 text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-full transition-all duration-200 hover:scale-105"
-                        disabled={isAnalyzing}
-                      >
-                        {question}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-xs text-blue-600 font-medium">技术:</span>
-                    {['技术架构建议？', '性能优化方案？', '安全防护措施？', '测试策略制定？'].map((question, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setMessage(question)}
-                        className="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full transition-all duration-200 hover:scale-105"
-                        disabled={isAnalyzing}
-                      >
-                        {question}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-xs text-green-600 font-medium">流程:</span>
-                    {['如何完善方案？', '流程下一步？', '团队协作建议？', '上线计划制定？'].map((question, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setMessage(question)}
-                        className="px-3 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-full transition-all duration-200 hover:scale-105"
-                        disabled={isAnalyzing}
-                      >
-                        {question}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* 输入框 */}
-              <div className="flex space-x-3">
+              <div className="flex space-x-2">
                 <input
                   type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="问我关于需求、技术、流程的任何问题..."
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white shadow-sm"
-                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-                  disabled={isAnalyzing}
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  placeholder="询问项目相关问题..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={isAnalyzing || !message.trim()}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl hover:from-purple-600 hover:to-blue-600 disabled:from-gray-400 disabled:to-gray-400 transition-all duration-200 shadow-sm hover:shadow-md disabled:cursor-not-allowed"
+                  disabled={!inputMessage.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isAnalyzing ? (
-                    <RefreshCw className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
+                  <Send className="w-4 h-4" />
                 </button>
               </div>
             </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-gray-500">
+              <Layers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h4 className="text-lg font-medium mb-2">选择需求开始项目管理</h4>
+              <p className="text-sm">从左侧选择一个需求，查看对应的七步成诗项目流程</p>
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
@@ -2009,19 +2007,722 @@ const FlipTopBar: React.FC<{
 const ModuleManager: React.FC<ModuleManagerProps> = ({
   currentDepartment,
   onCustomerSelect,
-  selectedCustomer
+  selectedCustomer,
+  customerSuccessMode = 'normal'
 }) => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [previousDepartment, setPreviousDepartment] = useState<string | null>(null);
-  const [selectedDemand, setSelectedDemand] = useState<ProductDemand>(productDemands[0]); // 默认选择第一个需求
-  const [selectedStandard, setSelectedStandard] = useState<TechnicalStandard>(technicalStandards[0]); // 默认选择第一个规范
+  const [selectedDemand, setSelectedDemand] = useState<ProductDemand>(productDemands[0]);
+  const [selectedStandard, setSelectedStandard] = useState<TechnicalStandard>(technicalStandards[0]);
 
-  // 固定的基础配置 - 不依赖于props，避免重新渲染
+  // 考核模式的组件 - 拆分为真正的三个模块
+  const AssessmentLeftPanel = () => (
+    <div className="h-full flex flex-col">
+      {/* 考核管理导航 */}
+      <div className="p-4 border-b border-gray-100">
+        {/* 考核理念口号 */}
+        <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+          <div className="text-center">
+            {/*<div className="text-sm font-bold text-blue-800 mb-1">考核理念</div>*/}
+            <div className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+              「提升均值、减少方差」
+            </div>
+            <div className="text-xs text-gray-600 mt-1">让团队整体更强，个体差距更小</div>
+          </div>
+        </div>
+        
+        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+          <BookOpen className="w-5 h-5 text-blue-600 mr-2" />
+          考核管理
+        </h3>
+        <div className="text-sm text-gray-600 mb-4">考核计划与项目历史记录</div>
+        
+        {/* 本月考核计划 */}
+        <div className="space-y-2 mb-4">
+          <div className="text-xs font-medium text-gray-700 mb-2">本月考核计划</div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs bg-blue-50 p-2 rounded">
+              <span>客户成功综合考核</span>
+              <span className="text-blue-600 font-medium">进行中</span>
+            </div>
+            <div className="flex items-center justify-between text-xs bg-gray-50 p-2 rounded">
+              <span>项目协议管理专项</span>
+              <span className="text-gray-500">待开始</span>
+            </div>
+            <div className="flex items-center justify-between text-xs bg-green-50 p-2 rounded">
+              <span>商户续费沟通评估</span>
+              <span className="text-green-600 font-medium">已完成</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* 考核统计 */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="text-center bg-blue-50 rounded p-2">
+            <div className="text-lg font-bold text-blue-600">15</div>
+            <div className="text-xs text-gray-600">本年项目</div>
+          </div>
+          <div className="text-center bg-green-50 rounded p-2">
+            <div className="text-lg font-bold text-green-600">92.3</div>
+            <div className="text-xs text-gray-600">平均分</div>
+          </div>
+        </div>
+      </div>
+      
+      {/* 项目考核历史 */}
+      <div className="p-4 border-b border-gray-100">
+        <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+          <FileText className="w-4 h-4 text-purple-600 mr-2" />
+          项目考核历史
+        </h4>
+        <div className="text-xs text-gray-600 mb-3">基于真实项目的考核记录</div>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {/* 米多硬件类产品项目 */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-900">米多硬件产品订单管理</div>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">95分</span>
+          </div>
+          <div className="text-xs text-gray-600 mb-2">负责硬件类产品订单流程优化与客户沟通</div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">考核时间: 2024-02-15</span>
+            <span className="text-blue-600">客户满意度: 98%</span>
+          </div>
+        </div>
+
+        {/* 社交云店项目 */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-900">社交云店端口项目</div>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">88分</span>
+          </div>
+          <div className="text-xs text-gray-600 mb-2">社交云店端口订单管理与技术对接协调</div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">考核时间: 2024-02-01</span>
+            <span className="text-green-600">项目按期完成</span>
+          </div>
+        </div>
+
+        {/* 场景码牛券项目 */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-900">场景码牛券系统升级</div>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">82分</span>
+          </div>
+          <div className="text-xs text-gray-600 mb-2">单填写指引版场景码牛券系统优化项目</div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">考核时间: 2024-01-20</span>
+            <span className="text-orange-600">需改进沟通</span>
+          </div>
+        </div>
+
+        {/* 服务协议管理 */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-900">软件服务协议管理</div>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">91分</span>
+          </div>
+          <div className="text-xs text-gray-600 mb-2">2023财年米多软件服务协议维护与更新</div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">考核时间: 2024-01-15</span>
+            <span className="text-blue-600">法务配合优秀</span>
+          </div>
+        </div>
+
+        {/* 营销费用代发项目 */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-900">营销费用代发服务</div>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">86分</span>
+          </div>
+          <div className="text-xs text-gray-600 mb-2">营销费用代发服务协议(MT)项目执行</div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">考核时间: 2024-01-10</span>
+            <span className="text-green-600">财务对接顺畅</span>
+          </div>
+        </div>
+
+        {/* 商户续费协议 */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-900">商户续费协议项目</div>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">94分</span>
+          </div>
+          <div className="text-xs text-gray-600 mb-2">商户续费协议流程优化与客户维系</div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">考核时间: 2024-01-05</span>
+            <span className="text-blue-600">续费率: 87%</span>
+          </div>
+        </div>
+
+        {/* 赋码采集项目 */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-900">赋码采集关联集成</div>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">89分</span>
+          </div>
+          <div className="text-xs text-gray-600 mb-2">赋码采集关联集成项目协议执行与技术协调</div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">考核时间: 2023-12-20</span>
+            <span className="text-green-600">技术对接优秀</span>
+          </div>
+        </div>
+
+        {/* 客户成功运营 */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-900">客户成功部运营指南</div>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">96分</span>
+          </div>
+          <div className="text-xs text-gray-600 mb-2">客户成功部运营指南制定与团队培训</div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">考核时间: 2023-12-15</span>
+            <span className="text-blue-600">团队评价: 优秀</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const AssessmentCenterPanel = () => (
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b border-gray-100">
+        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+          <User className="w-5 h-5 text-purple-600 mr-2" />
+          考核进行状态
+        </h3>
+        <div className="text-sm text-gray-600">当前正在进行的能力评估与考核</div>
+      </div>
+      
+      <div className="flex-1 p-4 overflow-y-auto">
+        {/* 主要考核状态卡片 - 突出显示 */}
+        <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-xl p-6 mb-6 border-2 border-blue-200 shadow-lg">
+          <div className="text-center mb-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <ClipboardCheck className="w-10 h-10 text-white" />
+            </div>
+            <h4 className="text-2xl font-bold text-gray-900 mb-2">季度综合考核</h4>
+            <p className="text-gray-600">2024年第一季度能力评估</p>
+          </div>
+          
+          {/* 主进度展示 */}
+          <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-lg font-semibold text-gray-800">考核进度</span>
+              <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">85%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-4 mb-3">
+              <div className="h-4 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-1000" style={{ width: '85%' }}></div>
+            </div>
+            <div className="text-sm text-gray-600 text-center">预计还需15分钟完成剩余考核项</div>
+          </div>
+          
+          {/* 统计概览 */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-green-100">
+              <div className="text-3xl font-bold text-green-600 mb-1">6</div>
+              <div className="text-sm text-gray-600">已完成</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-blue-100">
+              <div className="text-3xl font-bold text-blue-600 mb-1">1</div>
+              <div className="text-sm text-gray-600">进行中</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-gray-100">
+              <div className="text-3xl font-bold text-gray-600 mb-1">1</div>
+              <div className="text-sm text-gray-600">待开始</div>
+            </div>
+          </div>
+          
+          {/* 主要操作按钮 - 精致设计 */}
+          <button className="w-full bg-blue-600 text-white font-medium py-3 px-5 rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm flex items-center justify-center">
+            <Play className="w-5 h-5 mr-2" />
+            继续考核
+          </button>
+        </div>
+
+        {/* 当前考核项详情 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-5 mb-4 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-semibold text-gray-900 text-lg">当前考核项</h4>
+            <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">第3/4题</span>
+          </div>
+          
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-4 border border-blue-200">
+            <h5 className="font-semibold text-blue-900 mb-2">📋 客户沟通案例分析</h5>
+            <p className="text-blue-700 text-sm leading-relaxed">
+              某客户反馈产品功能不满足预期，作为客户成功经理，请分析问题原因并制定解决方案。
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="text-gray-600 text-sm">考核类型</div>
+              <div className="font-semibold text-gray-900">案例分析</div>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+              <div className="text-gray-600 text-sm">剩余时间</div>
+              <div className="font-semibold text-orange-600">⏰ 15分钟</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 次要操作区域 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow-sm">
+          <h5 className="font-medium text-gray-900 mb-3">操作选项</h5>
+          <div className="grid grid-cols-3 gap-3">
+            <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex flex-col items-center">
+              <Pause className="w-5 h-5 mb-1" />
+              <span className="text-sm">暂停</span>
+            </button>
+            <button className="bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex flex-col items-center">
+              <FileText className="w-5 h-5 mb-1" />
+              <span className="text-sm">查看</span>
+            </button>
+            <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex flex-col items-center">
+              <Star className="w-5 h-5 mb-1" />
+              <span className="text-sm">收藏</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 考核模块进度 - 简化展示 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+          <h5 className="font-medium text-gray-900 mb-4">考核模块进度</h5>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <div>
+                  <div className="font-medium text-green-900 text-sm">项目管理能力</div>
+                  <div className="text-xs text-green-700">基于真实项目的综合评估</div>
+                </div>
+              </div>
+              <span className="text-xs text-green-600 font-semibold px-2 py-1 bg-green-100 rounded">已完成</span>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+              <div className="flex items-center space-x-3">
+                <Timer className="w-5 h-5 text-blue-600" />
+                <div>
+                  <div className="font-medium text-blue-900 text-sm">客户沟通能力</div>
+                  <div className="text-xs text-blue-700">客户满意度调研与面谈评估</div>
+                </div>
+              </div>
+              <span className="text-xs text-blue-600 font-semibold px-2 py-1 bg-blue-100 rounded">进行中</span>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border-l-4 border-purple-400">
+              <div className="flex items-center space-x-3">
+                <Activity className="w-5 h-5 text-purple-600" />
+                <div>
+                  <div className="font-medium text-purple-900 text-sm">协议文档管理</div>
+                  <div className="text-xs text-purple-700">服务协议制定与维护能力</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold text-purple-600">80%</div>
+                <div className="text-xs text-purple-600">进度</div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-gray-300">
+              <div className="flex items-center space-x-3">
+                <Clock className="w-5 h-5 text-gray-500" />
+                <div>
+                  <div className="font-medium text-gray-700 text-sm">跨部门协作</div>
+                  <div className="text-xs text-gray-600">与技术、财务、法务协作评估</div>
+                </div>
+              </div>
+              <span className="text-xs text-gray-500 font-semibold px-2 py-1 bg-gray-100 rounded">待开始</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const AssessmentRightPanel = () => (
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="p-4 border-b border-gray-100">
+        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+          <PieChart className="w-5 h-5 text-purple-600 mr-2" />
+          能力分析
+        </h3>
+        <div className="text-sm text-gray-600">个人能力发展报告</div>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* 雷达图区域 - 缩小尺寸 */}
+        <div className="text-center">
+          <h4 className="font-medium text-gray-900 mb-3">能力发展趋势</h4>
+          <div className="flex justify-center mb-3">
+            {/* 优化的雷达图 - 修复样式问题 */}
+            <div className="relative">
+              <svg width="200" height="200" viewBox="0 0 200 200" className="overflow-visible">
+                {/* 雷达图背景网格 - 同心六边形 */}
+                {[20, 35, 50, 65, 80].map((radius, index) => {
+                  const points = Array.from({ length: 6 }, (_, i) => {
+                    const angle = (i * 60 - 90) * (Math.PI / 180);
+                    const x = 100 + radius * Math.cos(angle);
+                    const y = 100 + radius * Math.sin(angle);
+                    return `${x},${y}`;
+                  }).join(' ');
+                  
+                  return (
+                    <polygon
+                      key={index}
+                      points={points}
+                      fill="none"
+                      stroke={index === 4 ? "#e2e8f0" : "#f1f5f9"}
+                      strokeWidth={index === 4 ? "1" : "0.5"}
+                    />
+                  );
+                })}
+                
+                {/* 六边形网格线 */}
+                {[0, 1, 2, 3, 4, 5].map((i) => {
+                  const angle = (i * 60 - 90) * (Math.PI / 180);
+                  const x = 100 + 80 * Math.cos(angle);
+                  const y = 100 + 80 * Math.sin(angle);
+                  return (
+                    <line
+                      key={i}
+                      x1="100"
+                      y1="100"
+                      x2={x}
+                      y2={y}
+                      stroke="#f1f5f9"
+                      strokeWidth="0.5"
+                    />
+                  );
+                })}
+                
+                {/* 当前能力数据多边形 */}
+                {(() => {
+                  const abilities = [88, 82, 90, 78, 85, 75]; // 客户洞察、问题解决、沟通表达、数据分析、团队协作、创新思维
+                  const currentPoints = abilities.map((value, i) => {
+                    const angle = (i * 60 - 90) * (Math.PI / 180);
+                    const radius = (value / 100) * 70; // 最大半径70
+                    const x = 100 + radius * Math.cos(angle);
+                    const y = 100 + radius * Math.sin(angle);
+                    return `${x},${y}`;
+                  }).join(' ');
+                  
+                  return (
+                    <polygon
+                      points={currentPoints}
+                      fill="rgba(34, 197, 94, 0.2)"
+                      stroke="#22c55e"
+                      strokeWidth="2"
+                    />
+                  );
+                })()}
+                
+                {/* 目标能力数据多边形（虚线） */}
+                {(() => {
+                  const targetAbilities = [95, 90, 95, 85, 90, 85]; // 目标值
+                  const targetPoints = targetAbilities.map((value, i) => {
+                    const angle = (i * 60 - 90) * (Math.PI / 180);
+                    const radius = (value / 100) * 70;
+                    const x = 100 + radius * Math.cos(angle);
+                    const y = 100 + radius * Math.sin(angle);
+                    return `${x},${y}`;
+                  }).join(' ');
+                  
+                  return (
+                    <polygon
+                      points={targetPoints}
+                      fill="none"
+                      stroke="#3b82f6"
+                      strokeWidth="2"
+                      strokeDasharray="4,3"
+                    />
+                  );
+                })()}
+                
+                {/* 能力标签和数值点 */}
+                {(() => {
+                  const labels = ['客户洞察', '问题解决', '沟通表达', '数据分析', '团队协作', '创新思维'];
+                  const values = [88, 82, 90, 78, 85, 75];
+                  const colors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899'];
+                  
+                  return labels.map((label, i) => {
+                    const angle = (i * 60 - 90) * (Math.PI / 180);
+                    const labelRadius = 110; // 增加标签距离
+                    const dotRadius = (values[i] / 100) * 70;
+                    const valueRadius = dotRadius + 15; // 数值标签位置在数据点外侧
+                    
+                    const labelX = 100 + labelRadius * Math.cos(angle);
+                    const labelY = 100 + labelRadius * Math.sin(angle);
+                    
+                    const dotX = 100 + dotRadius * Math.cos(angle);
+                    const dotY = 100 + dotRadius * Math.sin(angle);
+                    
+                    const valueX = 100 + valueRadius * Math.cos(angle);
+                    const valueY = 100 + valueRadius * Math.sin(angle);
+                    
+                    return (
+                      <g key={i}>
+                        {/* 数据点 */}
+                        <circle
+                          cx={dotX}
+                          cy={dotY}
+                          r="4"
+                          fill={colors[i]}
+                          stroke="white"
+                          strokeWidth="2"
+                        />
+                        
+                        {/* 标签背景 */}
+                        <rect
+                          x={labelX - 28}
+                          y={labelY - 10}
+                          width="56"
+                          height="20"
+                          rx="10"
+                          fill="white"
+                          stroke="#e2e8f0"
+                          strokeWidth="1"
+                        />
+                        
+                        {/* 标签文字 */}
+                        <text 
+                          x={labelX} 
+                          y={labelY} 
+                          textAnchor="middle" 
+                          dominantBaseline="middle"
+                          className="text-xs font-medium"
+                          fill="#374151"
+                        >
+                          {label}
+                        </text>
+                        
+                        {/* 数值标签背景 */}
+                        <rect
+                          x={valueX - 15}
+                          y={valueY - 8}
+                          width="30"
+                          height="16"
+                          rx="8"
+                          fill={colors[i]}
+                          fillOpacity="0.9"
+                        />
+                        
+                        {/* 数值标签 */}
+                        <text 
+                          x={valueX} 
+                          y={valueY} 
+                          textAnchor="middle" 
+                          dominantBaseline="middle"
+                          className="text-xs font-bold"
+                          fill="white"
+                        >
+                          {values[i]}%
+                        </text>
+                      </g>
+                    );
+                  });
+                })()}
+                
+                {/* 中心点 */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="2"
+                  fill="#64748b"
+                />
+              </svg>
+            </div>
+          </div>
+          <div className="flex items-center justify-center space-x-6 text-xs">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full opacity-20 border-2 border-green-500"></div>
+              <span className="text-gray-600 font-medium">当前能力</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-0.5 bg-blue-500 border border-dashed"></div>
+              <span className="text-gray-600 font-medium">目标水平</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* 能力发展势态 - 扩展内容 */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-3">能力发展势态</h4>
+          <div className="space-y-3">
+            <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-green-900 text-sm">客户洞察力</span>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">优秀</span>
+              </div>
+              <div className="text-xs text-green-700 mb-2">
+                具备深度洞察客户需求的能力，建议加强行业趋势分析
+              </div>
+              <div className="w-full bg-green-200 rounded-full h-2">
+                <div className="h-2 rounded-full bg-green-500" style={{ width: '88%' }}></div>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-blue-900 text-sm">问题解决力</span>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-yellow-100 text-yellow-700">良好</span>
+              </div>
+              <div className="text-xs text-blue-700 mb-2">
+                沟通技巧娴熟，建议增强跨部门协调能力
+              </div>
+              <div className="w-full bg-blue-200 rounded-full h-2">
+                <div className="h-2 rounded-full bg-blue-500" style={{ width: '82%' }}></div>
+              </div>
+            </div>
+            
+            <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-purple-900 text-sm">沟通表达力</span>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">优秀</span>
+              </div>
+              <div className="text-xs text-purple-700 mb-2">
+                表达清晰有条理，继续保持并提升演讲技巧
+              </div>
+              <div className="w-full bg-purple-200 rounded-full h-2">
+                <div className="h-2 rounded-full bg-purple-500" style={{ width: '90%' }}></div>
+              </div>
+            </div>
+            
+            <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-amber-900 text-sm">数据分析力</span>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-orange-100 text-orange-700">待提升</span>
+              </div>
+              <div className="text-xs text-amber-700 mb-2">
+                需加强数据挖掘和统计分析技能
+              </div>
+              <div className="w-full bg-amber-200 rounded-full h-2">
+                <div className="h-2 rounded-full bg-amber-500" style={{ width: '78%' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* 月度能力变化趋势 */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-3">月度能力变化</h4>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              <div className="text-center">
+                <div className="text-green-600 font-bold">+5.2%</div>
+                <div className="text-gray-600">客户洞察</div>
+              </div>
+              <div className="text-center">
+                <div className="text-blue-600 font-bold">+3.1%</div>
+                <div className="text-gray-600">问题解决</div>
+              </div>
+              <div className="text-center">
+                <div className="text-purple-600 font-bold">+2.8%</div>
+                <div className="text-gray-600">沟通表达</div>
+              </div>
+              <div className="text-center">
+                <div className="text-orange-600 font-bold">+1.5%</div>
+                <div className="text-gray-600">数据分析</div>
+              </div>
+              <div className="text-center">
+                <div className="text-red-600 font-bold">+4.2%</div>
+                <div className="text-gray-600">团队协作</div>
+              </div>
+              <div className="text-center">
+                <div className="text-pink-600 font-bold">+2.3%</div>
+                <div className="text-gray-600">创新思维</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* 同事评价摘要 */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-3">同事评价摘要</h4>
+          <div className="space-y-2">
+            <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-400">
+              <div className="text-sm font-medium text-blue-900">产品部 - 王经理</div>
+              <div className="text-xs text-blue-700 mt-1">"沟通能力很强，能快速理解客户需求，提出的解决方案很有针对性。"</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-400">
+              <div className="text-sm font-medium text-green-900">技术部 - 李工程师</div>
+              <div className="text-xs text-green-700 mt-1">"合作愉快，善于协调各方资源，项目推进效率很高。"</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* 最新评估结果 */}
+        <div>
+          <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
+            <Star className="w-4 h-4 text-yellow-500 mr-2" />
+            最新评估结果
+          </h4>
+          
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">综合评分</span>
+              <span className="text-xl font-bold text-blue-600">88</span>
+            </div>
+            <div className="text-xs text-gray-600 mb-2">季度综合考核 • 2024-01-15</div>
+            <div className="text-xs text-gray-600">
+              排名：部门第3名 / 全公司前15%
+            </div>
+          </div>
+          
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="flex items-center space-x-2 mb-2">
+              <Lightbulb className="w-4 h-4 text-amber-600" />
+              <span className="font-medium text-amber-900 text-sm">改进建议</span>
+            </div>
+            <div className="space-y-1 text-xs text-amber-800">
+              <div>• 加强数据分析力训练，建议参与BI工具培训</div>
+              <div>• 参与更多客户沟通实践，提升现场应变能力</div>
+              <div>• 定期更新产品知识，关注行业发展趋势</div>
+              <div>• 加强跨部门协作，提升项目统筹能力</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* 能力提升计划 */}
+        <div>
+          <h4 className="font-medium text-gray-900 mb-3">下季度提升计划</h4>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+              <div>
+                <div className="text-sm font-medium text-gray-900">数据分析专项培训</div>
+                <div className="text-xs text-gray-600">3月15日 - 3月30日</div>
+              </div>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">进行中</span>
+            </div>
+            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+              <div>
+                <div className="text-sm font-medium text-gray-900">客户沟通实战演练</div>
+                <div className="text-xs text-gray-600">4月1日 - 4月15日</div>
+              </div>
+              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">待开始</span>
+            </div>
+            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+              <div>
+                <div className="text-sm font-medium text-gray-900">跨部门协作项目</div>
+                <div className="text-xs text-gray-600">4月15日 - 5月15日</div>
+              </div>
+              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">计划中</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // 固定的基础配置 - 根据模式动态生成
   const baseDepartmentConfigs: { [key: string]: DepartmentConfig } = useMemo(() => ({
     '客户成功部': {
       id: 'customer-success',
       name: '客户成功部',
-      modules: [
+      modules: customerSuccessMode === 'normal' ? [
         {
           id: 'customer-list',
           name: '客户列表',
@@ -2037,9 +2738,31 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
           props: {}
         },
         {
-          id: 'customer-panel',
-          name: '客户面板',
+          id: 'right-panel',
+          name: '右侧面板',
           component: CustomerPanel,
+          position: 'right',
+          props: {}
+        }
+      ] : [
+        {
+          id: 'assessment-left',
+          name: '考核管理',
+          component: AssessmentLeftPanel,
+          position: 'left',
+          props: {}
+        },
+        {
+          id: 'assessment-center',
+          name: '考核进行状态',
+          component: AssessmentCenterPanel,
+          position: 'center',
+          props: {}
+        },
+        {
+          id: 'assessment-right',
+          name: '能力分析',
+          component: AssessmentRightPanel,
           position: 'right',
           props: {}
         }
@@ -2114,7 +2837,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         background: '#F0FDF4'
       }
     }
-  }), []); // 空依赖数组，不会重新生成
+  }), [customerSuccessMode]);
 
   // 动态更新props的函数
   const getModuleProps = useCallback((moduleId: string) => {
@@ -2125,31 +2848,50 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
           selectedCustomer: selectedCustomer 
         };
       case 'chat-area':
-        return { selectedCustomer: selectedCustomer };
-      case 'customer-panel':
-        return { customer: selectedCustomer };
+        return { 
+          selectedCustomer: selectedCustomer 
+        };
+      case 'right-panel':
+        return { 
+          customer: selectedCustomer 
+        };
       case 'demand-pool':
         return { 
           selectedDemand: selectedDemand,
           onDemandSelect: setSelectedDemand
         };
       case 'project-flow':
-        return { selectedDemand: selectedDemand };
+        return { 
+          selectedDemand: selectedDemand 
+        };
       case 'version-management':
-        return { selectedDemand: selectedDemand };
+        return { 
+          selectedDemand: selectedDemand 
+        };
       case 'standard-library':
         return { 
           selectedStandard: selectedStandard,
           onStandardSelect: setSelectedStandard
         };
       case 'agent-center':
-        return { selectedStandard: selectedStandard };
+        return { 
+          selectedStandard: selectedStandard 
+        };
       case 'task-tracker':
-        return { selectedStandard: selectedStandard };
+        return { 
+          selectedStandard: selectedStandard 
+        };
+      // 考核模式的组件不需要额外props
+      case 'assessment-center':
+        return {};
+      case 'assessment-left':
+        return {};
+      case 'assessment-right':
+        return {};
       default:
         return {};
     }
-  }, [onCustomerSelect, selectedCustomer, selectedDemand, selectedStandard]);
+  }, [selectedCustomer, onCustomerSelect, selectedDemand, selectedStandard]);
 
   // 获取当前部门配置
   const currentConfig = baseDepartmentConfigs[currentDepartment];

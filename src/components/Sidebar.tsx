@@ -151,9 +151,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onCustomerSelect, selectedCustomer })
               onClick={action.action}
               className="flex flex-col items-center p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all group"
             >
-              <div className={`w-8 h-8 ${action.color} rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                <action.icon className="w-4 h-4 text-white" />
-              </div>
+                              <div className={`w-8 h-8 ${action.color} rounded-lg flex items-center justify-center mb-2 transition-colors`}>
+                  <action.icon className="w-4 h-4 text-white" />
+                </div>
               <span className="text-xs font-medium text-gray-700 text-center leading-tight">
                 {action.label}
               </span>
