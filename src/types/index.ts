@@ -1,0 +1,115 @@
+// 统一导出所有类型定义
+
+// 客户相关类型
+export type {
+  Customer,
+  CustomerAnalytics,
+  CustomerFilter,
+  CustomerUpdate,
+  CustomerStats,
+  CustomerActivity
+} from './customer';
+
+// API相关类型
+export type {
+  ApiResponse,
+  PaginatedResponse,
+  ApiError,
+  AIMessage,
+  AIModel,
+  AIConversation,
+  KnowledgeSearchResult,
+  FAQResult,
+  ProductDemand,
+  ProductProject,
+  ProjectMilestone,
+  TechnicalStandard,
+  TechnicalTask,
+  TechnicalReport
+} from './api';
+
+// 通用UI类型
+export interface TableColumn<T = any> {
+  key: keyof T;
+  title: string;
+  width?: number;
+  render?: (value: any, record: T) => React.ReactNode;
+  sortable?: boolean;
+  filterable?: boolean;
+}
+
+export interface FilterOption {
+  label: string;
+  value: string;
+  count?: number;
+}
+
+export interface MenuItem {
+  key: string;
+  label: string;
+  icon?: React.ReactNode;
+  children?: MenuItem[];
+  disabled?: boolean;
+  href?: string;
+}
+
+export interface BreadcrumbItem {
+  title: string;
+  href?: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  message: string;
+  timestamp: Date;
+  read: boolean;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+}
+
+// 统计数据类型
+export interface MetricCard {
+  title: string;
+  value: string | number;
+  change?: {
+    value: number;
+    type: 'increase' | 'decrease';
+    period: string;
+  };
+  icon?: React.ReactNode;
+  color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple';
+}
+
+export interface ChartData {
+  label: string;
+  value: number;
+  color?: string;
+}
+
+export interface TimeSeriesData {
+  timestamp: string;
+  value: number;
+  label?: string;
+}
+
+// 表单相关类型
+export interface FormField {
+  name: string;
+  label: string;
+  type: 'text' | 'email' | 'password' | 'number' | 'select' | 'textarea' | 'date' | 'checkbox' | 'radio';
+  required?: boolean;
+  placeholder?: string;
+  options?: { label: string; value: string }[];
+  validation?: {
+    pattern?: RegExp;
+    min?: number;
+    max?: number;
+    minLength?: number;
+    maxLength?: number;
+    custom?: (value: any) => string | null;
+  };
+} 

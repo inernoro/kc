@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # MongoDB数据库
+  mongodb:
+    image: mongo:7.0
+    container_name: mido-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-midopassword123}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-mido-knowledge-base}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - mido-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 后端API服务 + 前端静态文件
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${DOCKER_API_URL:-http://backend:10255/api}
+    container_name: mido-backend
+    restart: unless-stopped
+    ports:
+      - "${DOCKER_BACKEND_PORT:-10255}:10255"
+    environment:
+      # 服务配置
+      PORT: 10255
+      NODE_ENV: production
+      
+      # API配置
+      API_BASE_URL: http://backend:10255
+      FRONTEND_URL: http://backend:10255
+      CORS_ORIGIN: http://localhost:10255
+      
+      # 数据库配置
+      MONGODB_URI: ${DOCKER_MONGODB_URI:-mongodb://mongodb:27017/mido-knowledge-base}
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-mido-knowledge-base}
+      MONGODB_USERNAME: ${MONGODB_USERNAME:-admin}
+      MONGODB_PASSWORD: ${MONGODB_PASSWORD:-midopassword123}
+      
+      # AI配置
+      AI_MODEL_URL: ${AI_MODEL_URL:-https://api.siliconflow.cn}
+      AI_MODEL_API_KEY: ${AI_MODEL_API_KEY}
+      AI_MODEL_TYPE: ${AI_MODEL_TYPE:-openai}
+      DEFAULT_AI_MODEL: ${DEFAULT_AI_MODEL:-Pro/deepseek-ai/DeepSeek-V3}
+      
+      # 安全配置
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - mido-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:10255/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx反向代理（可选）
+  nginx:
+    image: nginx:alpine
+    container_name: mido-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    networks:
+      - mido-network
+    profiles:
+      - nginx
+
+  # MongoDB管理界面（可选）
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mido-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_USERNAME:-admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_PASSWORD:-midopassword123}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGODB_USERNAME:-admin}:${MONGODB_PASSWORD:-midopassword123}@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: password123
+    depends_on:
+      - mongodb
+    networks:
+      - mido-network
+    profiles:
+      - admin
+
+volumes:
+  mongodb_data:
+    driver: local
+    name: mido-mongodb-data
+
+networks:
+  mido-network:
+    driver: bridge
+    name: mido-network 
