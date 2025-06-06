@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Header from './components/Header';
 import ModuleManager from './components/ModuleManager';
+import './styles/sunshine-theme.css';
 
 const App: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);

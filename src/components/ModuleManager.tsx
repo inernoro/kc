@@ -1772,11 +1772,11 @@ const FlipModule: React.FC<{
   const getContainerClass = () => {
     switch (position) {
       case 'left':
-        return 'w-80 bg-white border-r border-gray-200 flex-shrink-0 h-full overflow-hidden';
+        return 'bg-white border-r border-gray-200 h-full overflow-hidden';
       case 'center':
-        return 'flex-1 flex flex-col min-w-0 h-full overflow-hidden';
+        return 'flex flex-col min-w-0 h-full overflow-hidden bg-gray-50 px-4';
       case 'right':
-        return 'w-96 bg-white border-l border-gray-200 flex-shrink-0 h-full overflow-hidden';
+        return 'bg-white border-l border-gray-200 h-full overflow-hidden';
       default:
         return '';
     }
@@ -2014,28 +2014,121 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
   const [previousDepartment, setPreviousDepartment] = useState<string | null>(null);
   const [selectedDemand, setSelectedDemand] = useState<ProductDemand>(productDemands[0]);
   const [selectedStandard, setSelectedStandard] = useState<TechnicalStandard>(technicalStandards[0]);
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [previousMode, setPreviousMode] = useState<'normal' | 'assessment'>('normal');
 
-  // 考核模式的组件 - 拆分为真正的三个模块
+  // 青春阳光主题配置
+  const sunshineTheme = {
+    background: 'bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50',
+    primary: 'from-orange-400 via-yellow-400 to-pink-400',
+    secondary: 'from-green-400 via-blue-400 to-purple-400',
+    accent: 'from-pink-400 via-purple-400 to-indigo-400',
+    cardBg: 'bg-white/80 backdrop-blur-sm',
+    textPrimary: 'text-orange-600',
+    textSecondary: 'text-purple-600',
+    button: 'bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500',
+    glow: 'shadow-lg shadow-orange-200/50'
+  };
+
+  // 专业激励语录
+  const motivationalQuotes = [
+    '专注模式已激活！',
+    '高效执行状态启动！',
+    '深度工作模式开启！',
+    '专业能力全面发挥！',
+    '卓越表现即将开始！',
+    '精英状态成功切换！'
+  ];
+
+  const [currentQuote, setCurrentQuote] = useState(motivationalQuotes[0]);
+
+  // 监听模式变化，触发变身动画
+  useEffect(() => {
+    if (customerSuccessMode !== previousMode) {
+      setIsTransforming(true);
+      setPreviousMode(customerSuccessMode);
+      
+      // 随机选择激励语录
+      if (customerSuccessMode === 'assessment') {
+        const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+        setCurrentQuote(randomQuote);
+      }
+      
+      // 变身动画时长
+      setTimeout(() => {
+        setIsTransforming(false);
+      }, 1000);
+    }
+  }, [customerSuccessMode, previousMode]);
+
+  // 考核模式的组件 - 拆分为真正的三个模块 (青春阳光版)
   const AssessmentLeftPanel = () => (
-    <div className="h-full flex flex-col">
+    <div className={`h-full flex flex-col transition-all duration-1000 ${
+      isTransforming ? 'transform scale-105' : ''
+    } ${customerSuccessMode === 'assessment' ? sunshineTheme.background : ''}`}>
+      {/* 变身光效 */}
+      {isTransforming && (
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 via-yellow-400/30 to-pink-400/20 animate-pulse pointer-events-none z-10" />
+      )}
+      
       {/* 考核管理导航 */}
-      <div className="p-4 border-b border-gray-100">
-        {/* 考核理念口号 */}
-        <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+      <div className="p-4 border-b border-orange-100 relative">
+        {/* 考核理念口号 - 青春版 */}
+        <div className={`mb-4 p-4 rounded-xl ${
+          customerSuccessMode === 'assessment' 
+            ? `${sunshineTheme.cardBg} border-2 border-gradient-to-r from-orange-300 to-pink-300 ${sunshineTheme.glow}` 
+            : 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200'
+        } transition-all duration-700`}>
           <div className="text-center">
-            {/*<div className="text-sm font-bold text-blue-800 mb-1">考核理念</div>*/}
-            <div className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+            {customerSuccessMode === 'assessment' && (
+              <div className="text-xs font-medium text-orange-500 mb-1 sunshine-sparkle">✨ 考核模式已激活 ✨</div>
+            )}
+            <div className={`text-lg font-bold text-transparent bg-clip-text transition-all duration-700 ${
+              customerSuccessMode === 'assessment' 
+                ? `bg-gradient-to-r ${sunshineTheme.primary}` 
+                : 'bg-gradient-to-r from-blue-600 to-purple-600'
+            }`}>
               「提升均值、减少方差」
             </div>
-            <div className="text-xs text-gray-600 mt-1">让团队整体更强，个体差距更小</div>
+            <div className={`text-xs mt-1 transition-all duration-700 ${
+              customerSuccessMode === 'assessment' ? 'text-orange-600' : 'text-gray-600'
+            }`}>
+              {customerSuccessMode === 'assessment' 
+                ? '让团队整体更强，个体差距更小 • 考核激活模式' 
+                : '让团队整体更强，个体差距更小'
+              }
+            </div>
+            
+            {/* 青春阳光模式专属能量条 */}
+            {customerSuccessMode === 'assessment' && (
+              <div className="mt-3 bg-white/60 rounded-lg p-2 backdrop-blur-sm">
+                <div className="flex items-center justify-between text-xs text-orange-700 mb-1">
+                  <span>专注执行力</span>
+                  <span className="sunshine-sparkle">⚡ 88%</span>
+                </div>
+                <div className="w-full bg-orange-200/50 rounded-full h-2">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-orange-400 to-pink-400 sunshine-glow" style={{ width: '88%' }}></div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
-        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-          <BookOpen className="w-5 h-5 text-blue-600 mr-2" />
-          考核管理
+        <h3 className={`font-semibold mb-3 flex items-center transition-all duration-700 ${
+          customerSuccessMode === 'assessment' ? sunshineTheme.textPrimary : 'text-gray-900'
+        }`}>
+          <BookOpen className={`w-5 h-5 mr-2 transition-all duration-700 ${
+            customerSuccessMode === 'assessment' 
+              ? `text-orange-500 ${isTransforming ? 'animate-spin' : 'animate-pulse'}` 
+              : 'text-blue-600'
+          }`} />
+                     {customerSuccessMode === 'assessment' ? '考核管理 • 活力模式' : '考核管理'}
         </h3>
-        <div className="text-sm text-gray-600 mb-4">考核计划与项目历史记录</div>
+        <div className={`text-sm mb-4 transition-all duration-700 ${
+          customerSuccessMode === 'assessment' ? 'text-orange-600' : 'text-gray-600'
+        }`}>
+          {customerSuccessMode === 'assessment' ? '考核计划与项目历史记录 • 专注执行模式' : '考核计划与项目历史记录'}
+        </div>
         
         {/* 本月考核计划 */}
         <div className="space-y-2 mb-4">
@@ -2196,63 +2289,98 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         <div className="text-sm text-gray-600">当前正在进行的能力评估与考核</div>
       </div>
       
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-3 overflow-y-auto">
         {/* 主要考核状态卡片 - 突出显示 */}
-        <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-xl p-6 mb-6 border-2 border-blue-200 shadow-lg">
-          <div className="text-center mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <ClipboardCheck className="w-10 h-10 text-white" />
+        <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-lg p-4 mb-4 border-2 border-blue-200 shadow-sm">
+          <div className="text-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+              <ClipboardCheck className="w-8 h-8 text-white" />
             </div>
-            <h4 className="text-2xl font-bold text-gray-900 mb-2">季度综合考核</h4>
-            <p className="text-gray-600">2024年第一季度能力评估</p>
+            <h4 className="text-xl font-bold text-gray-900 mb-1">季度综合考核</h4>
+            <p className="text-sm text-gray-600">2024年第一季度能力评估</p>
           </div>
           
           {/* 主进度展示 */}
-          <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-lg font-semibold text-gray-800">考核进度</span>
-              <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">85%</span>
+          <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-base font-semibold text-gray-800">考核进度</span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">85%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-4 mb-3">
-              <div className="h-4 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-1000" style={{ width: '85%' }}></div>
+            <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+              <div className="h-3 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-1000" style={{ width: '85%' }}></div>
             </div>
-            <div className="text-sm text-gray-600 text-center">预计还需15分钟完成剩余考核项</div>
+            <div className="text-xs text-gray-600 text-center">预计还需15分钟完成剩余考核项</div>
           </div>
           
           {/* 统计概览 */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-green-100">
-              <div className="text-3xl font-bold text-green-600 mb-1">6</div>
-              <div className="text-sm text-gray-600">已完成</div>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm border border-green-100">
+              <div className="text-2xl font-bold text-green-600 mb-1">6</div>
+              <div className="text-xs text-gray-600">已完成</div>
             </div>
-            <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-blue-100">
-              <div className="text-3xl font-bold text-blue-600 mb-1">1</div>
-              <div className="text-sm text-gray-600">进行中</div>
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm border border-blue-100">
+              <div className="text-2xl font-bold text-blue-600 mb-1">1</div>
+              <div className="text-xs text-gray-600">进行中</div>
             </div>
-            <div className="bg-white rounded-lg p-4 text-center shadow-sm border border-gray-100">
-              <div className="text-3xl font-bold text-gray-600 mb-1">1</div>
-              <div className="text-sm text-gray-600">待开始</div>
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm border border-gray-100">
+              <div className="text-2xl font-bold text-gray-600 mb-1">1</div>
+              <div className="text-xs text-gray-600">待开始</div>
             </div>
           </div>
           
-          {/* 主要操作按钮 - 精致设计 */}
-          <button className="w-full bg-blue-600 text-white font-medium py-3 px-5 rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm flex items-center justify-center">
-            <Play className="w-5 h-5 mr-2" />
-            继续考核
+          {/* 主要操作按钮 - 青春阳光版 */}
+          <button className={`w-full font-medium py-3 px-5 rounded-lg flex items-center justify-center transition-all duration-700 transform ${
+            customerSuccessMode === 'assessment' 
+              ? `${sunshineTheme.button} ${sunshineTheme.glow} text-white hover:scale-105 sunshine-button energy-pulse` 
+              : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+          } ${isTransforming ? 'animate-bounce' : ''}`}>
+            <Play className={`mr-2 transition-all duration-700 ${
+              customerSuccessMode === 'assessment' 
+                ? 'w-5 h-5 animate-pulse' 
+                : 'w-4 h-4'
+            }`} />
+                         {customerSuccessMode === 'assessment' ? '继续考核 • 专注模式' : '继续考核'}
           </button>
         </div>
 
-        {/* 当前考核项详情 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-5 mb-4 shadow-sm">
+        {/* 当前考核项详情 - 青春阳光版 */}
+        <div className={`rounded-lg p-4 mb-3 transition-all duration-700 transform ${
+          customerSuccessMode === 'assessment' 
+            ? `${sunshineTheme.cardBg} border-2 border-gradient-to-r from-orange-300 to-pink-300 ${sunshineTheme.glow} ${isTransforming ? 'scale-105' : 'hover:scale-102'}` 
+            : 'bg-white border border-gray-200 shadow-sm'
+        }`}>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-gray-900 text-lg">当前考核项</h4>
-            <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">第3/4题</span>
+            <h4 className={`font-semibold text-lg transition-all duration-700 ${
+              customerSuccessMode === 'assessment' ? sunshineTheme.textPrimary : 'text-gray-900'
+            }`}>
+              {customerSuccessMode === 'assessment' ? '当前考核项 • 专注执行' : '当前考核项'}
+            </h4>
+                         <span className={`text-sm px-4 py-2 rounded-full font-medium transition-all duration-700 ${
+               customerSuccessMode === 'assessment' 
+                 ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 sunshine-float achievement-halo' 
+                 : 'bg-blue-100 text-blue-700'
+             }`}>
+                             {customerSuccessMode === 'assessment' ? '第3/4题 • 专注模式' : '第3/4题'}
+            </span>
           </div>
           
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-4 border border-blue-200">
-            <h5 className="font-semibold text-blue-900 mb-2">📋 客户沟通案例分析</h5>
-            <p className="text-blue-700 text-sm leading-relaxed">
-              某客户反馈产品功能不满足预期，作为客户成功经理，请分析问题原因并制定解决方案。
+          <div className={`rounded-xl p-5 mb-4 border-2 transition-all duration-700 ${
+            customerSuccessMode === 'assessment' 
+              ? 'bg-gradient-to-r from-orange-50/80 via-yellow-50/80 to-pink-50/80 border-gradient-to-r from-orange-300 to-pink-300' 
+              : 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200'
+          }`}>
+            <h5 className={`font-semibold mb-3 transition-all duration-700 ${
+              customerSuccessMode === 'assessment' ? 'text-orange-800' : 'text-blue-900'
+            }`}>
+              {customerSuccessMode === 'assessment' ? '📋 客户沟通案例分析 • 深度聚焦' : '📋 客户沟通案例分析'}
+            </h5>
+            <p className={`text-sm leading-relaxed transition-all duration-700 ${
+              customerSuccessMode === 'assessment' ? 'text-orange-700' : 'text-blue-700'
+            }`}>
+              {customerSuccessMode === 'assessment' 
+                ? '某客户反馈产品功能不满足预期，作为客户成功经理，请分析问题原因并制定解决方案。请充分运用你的专业能力，展现优秀的客户沟通技巧。' 
+                : '某客户反馈产品功能不满足预期，作为客户成功经理，请分析问题原因并制定解决方案。'
+              }
             </p>
           </div>
           
@@ -2938,11 +3066,45 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
 
   return (
     <div 
-      className="flex-1 flex flex-col overflow-hidden relative"
-      style={{ backgroundColor: currentConfig.theme.background }}
+      className={`flex-1 flex flex-col overflow-hidden relative transition-all duration-1000 ${
+        customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' 
+          ? sunshineTheme.background 
+          : ''
+      } ${isTransforming ? 'animate-pulse' : ''}`}
+      style={{ 
+        backgroundColor: customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' 
+          ? 'transparent' 
+          : currentConfig.theme.background 
+      }}
     >
+      {/* 青春阳光变身特效 */}
+      {isTransforming && customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-300/30 via-yellow-300/40 to-pink-300/30 animate-pulse pointer-events-none z-20" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-blue-400/20 via-purple-400/20 to-green-400/20 animate-ping pointer-events-none z-20" style={{ animationDuration: '2s' }} />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30">
+            <div className="text-6xl animate-bounce sunshine-sparkle">✨🌟💫</div>
+            <div className="text-center text-lg font-bold motivation-text mt-4 animate-pulse">
+              {currentQuote}
+            </div>
+          </div>
+          {/* 星星特效 */}
+          <div className="absolute top-10 left-10 text-2xl animate-ping pointer-events-none z-25">⭐</div>
+          <div className="absolute top-20 right-16 text-xl animate-bounce pointer-events-none z-25" style={{ animationDelay: '0.2s' }}>💫</div>
+          <div className="absolute bottom-20 left-20 text-3xl animate-pulse pointer-events-none z-25" style={{ animationDelay: '0.4s' }}>🌟</div>
+          <div className="absolute bottom-16 right-12 text-2xl animate-spin pointer-events-none z-25" style={{ animationDelay: '0.6s' }}>✨</div>
+          <div className="absolute top-32 left-1/3 text-xl animate-bounce pointer-events-none z-25" style={{ animationDelay: '0.8s' }}>🎉</div>
+          <div className="absolute bottom-32 right-1/3 text-2xl animate-pulse pointer-events-none z-25" style={{ animationDelay: '1s' }}>🎊</div>
+        </>
+      )}
+      
+      {/* 青春阳光模式的持续背景效果 */}
+      {customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' && !isTransforming && (
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-50/50 via-yellow-50/60 to-pink-50/50 pointer-events-none z-5" />
+      )}
+      
       {/* 模块区域 */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 grid grid-cols-[320px_1fr_320px] gap-0 overflow-hidden relative z-10">
         {/* 左侧模块 */}
         <FlipModule
           position="left"
