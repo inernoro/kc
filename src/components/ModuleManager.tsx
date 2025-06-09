@@ -1182,12 +1182,53 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                 const IconComponent = step.icon;
                   
                 return (
-                    <div key={step.id} className={`flex items-center p-3 rounded-lg border transition-all duration-200 ${
+                    <div key={step.id} className={`flex items-center p-3 rounded-lg border transition-all duration-200 relative overflow-hidden ${
                       status === 'completed' ? `${step.bgColor} ${step.borderColor}` :
                       status === 'current' ? `${step.bgColor} ${step.borderColor} ring-2 ring-offset-2 ring-blue-200` :
                       'bg-gray-50 border-gray-200'
                     }`}>
-                      <div className="flex items-center space-x-3 flex-1">
+                      {/* 海浪动效 - 仅在开发跟踪且正在进行时显示 */}
+                      {status === 'current' && step.id === '开发跟踪' && relatedProject && (
+                        <div className="absolute inset-0 overflow-hidden rounded-lg">
+                          {/* 基础进度条背景 */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-gray-300"></div>
+                          
+                          {/* 进度条海浪效果 */}
+                          <div className="absolute inset-0" style={{ width: `${relatedProject.progress}%` }}>
+                            {/* 底层进度色 */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/80 to-cyan-500/80"></div>
+                            
+                            {/* 第一层海浪 - 主海浪 */}
+                            <div className="absolute inset-0 overflow-hidden">
+                              <div className="absolute top-0 left-0 w-[150%] h-full bg-gradient-to-r from-blue-500/60 via-cyan-400/80 to-blue-500/60 animate-[progressWave1_3s_ease-in-out_infinite]" 
+                                   style={{
+                                     clipPath: 'polygon(0 30%, 20% 40%, 40% 30%, 60% 40%, 80% 30%, 100% 40%, 100% 100%, 0% 100%)',
+                                     transform: 'translateX(-25%)'
+                                   }} />
+          </div>
+
+                            {/* 第二层海浪 - 辅助海浪 */}
+                            <div className="absolute inset-0 overflow-hidden">
+                              <div className="absolute top-0 left-0 w-[130%] h-full bg-gradient-to-r from-cyan-300/40 via-blue-300/60 to-cyan-300/40 animate-[progressWave2_4s_ease-in-out_infinite_0.5s]" 
+                                   style={{
+                                     clipPath: 'polygon(0 50%, 25% 45%, 50% 50%, 75% 45%, 100% 50%, 100% 100%, 0% 100%)',
+                                     transform: 'translateX(-15%)'
+                                   }} />
+                </div>
+                
+                            {/* 第三层海浪 - 表面细浪 */}
+                            <div className="absolute inset-0 overflow-hidden">
+                              <div className="absolute top-0 left-0 w-[120%] h-full bg-gradient-to-r from-white/20 via-cyan-200/40 to-white/20 animate-[progressWave3_2s_ease-in-out_infinite_1s]" 
+                                   style={{
+                                     clipPath: 'polygon(0 20%, 30% 25%, 60% 20%, 90% 25%, 100% 20%, 100% 100%, 0% 100%)',
+                                     transform: 'translateX(-10%)'
+                                   }} />
+                  </div>
+                  </div>
+                </div>
+                      )}
+
+                      <div className="flex items-center space-x-3 flex-1 relative z-10">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                           status === 'completed' ? step.bgColor : 
                           status === 'current' ? step.bgColor : 'bg-gray-100'
@@ -1199,9 +1240,9 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                           ) : (
                             <span className="text-sm font-medium text-gray-400">{index + 1}</span>
                           )}
-                    </div>
+                        </div>
                         
-                    <div className="flex-1">
+                        <div className="flex-1">
                           <div className={`font-medium ${
                             status === 'completed' || status === 'current' ? 'text-gray-900' : 'text-gray-500'
                       }`}>
@@ -1211,7 +1252,7 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                         </div>
                       </div>
                       
-                      <div className="text-right">
+                      <div className="text-right relative z-10">
                         {status === 'completed' && (
                           <span className="text-xs text-green-600 font-medium">已完成</span>
                         )}
@@ -1220,9 +1261,9 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                         )}
                         {status === 'pending' && (
                           <span className="text-xs text-gray-400">待开始</span>
-                      )}
-                    </div>
-                  </div>
+          )}
+        </div>
+              </div>
                 );
               })}
             </div>
@@ -1236,7 +1277,7 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                   AI项目助手
                 </h4>
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">在线</span>
-                </div>
+                        </div>
                 
               <div className="h-40 overflow-y-auto border border-gray-100 rounded-lg p-3 mb-3 bg-gray-50">
                 {messages.length === 0 ? (
@@ -1245,8 +1286,8 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                     <p>AI助手准备就绪，询问项目相关问题</p>
                     <div className="text-xs text-gray-400 mt-2">
                       例如："当前阶段有什么风险？" "下一步计划是什么？"
-                  </div>
-                  </div>
+                      </div>
+                      </div>
                 ) : (
                   <div className="space-y-3">
                     {messages.map((message) => (
@@ -1261,13 +1302,13 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                             message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
                           }`}>
                             {message.timestamp}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    </div>
+                  </div>
                 </div>
+                    ))}
+                  </div>
               )}
-          </div>
+              </div>
 
               <div className="flex space-x-2">
                 <input
@@ -1443,77 +1484,84 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
   const businessRisks = getBusinessRisks(selectedDemand);
 
   return (
-    <div className="h-full flex flex-col p-6 bg-gradient-to-br from-gray-50 to-purple-50">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-          <Crown className="w-5 h-5 text-purple-600 mr-2" />
+    <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-purple-50 overflow-hidden">
+      <div className="p-3 pb-2 flex-shrink-0 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-purple-100">
+        <h3 className="text-xs font-semibold text-gray-800 mb-0.5 flex items-center">
+          <Crown className="w-3.5 h-3.5 text-purple-600 mr-1.5" />
           智能版本管理
         </h3>
-        <p className="text-sm text-gray-600">AI驱动的冲突检测与风险评估</p>
+        <p className="text-xs text-gray-400">AI驱动的冲突检测与风险评估</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-6">
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
+        <div className="space-y-3">
         {/* 冲突分析 */}
         {conflicts.length > 0 && (
-          <div className="bg-white rounded-xl border border-red-200 shadow-sm">
-            <div className="p-4 border-b border-red-100 bg-red-50">
-              <h4 className="font-semibold text-red-900 flex items-center">
-                <AlertTriangle className="w-5 h-5 mr-2" />
+          <div className="bg-white rounded-lg border border-red-200 shadow-sm overflow-hidden">
+            <div className="p-2.5 border-b border-red-100 bg-gradient-to-r from-red-50 to-orange-50">
+              <h4 className="font-medium text-red-900 flex items-center text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
                 冲突风险分析
-                <span className="ml-2 text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full">
+                <span className="ml-2 text-xs bg-red-200 text-red-800 px-1.5 py-0.5 rounded-full font-medium">
                   {conflicts.length}个冲突
                 </span>
               </h4>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-2.5 space-y-2.5">
               {conflicts.map((conflict, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <span className={`w-3 h-3 rounded-full ${
-                        conflict.severity === 'high' ? 'bg-red-500' :
-                        conflict.severity === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                <div key={index} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2.5 space-y-2 border border-gray-200">
+                  {/* 冲突头部信息 */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        conflict.severity === 'high' ? 'bg-red-500 shadow-red-300 shadow-sm' :
+                        conflict.severity === 'medium' ? 'bg-amber-500 shadow-amber-300 shadow-sm' : 'bg-emerald-500 shadow-emerald-300 shadow-sm'
                       }`} />
-                      <span className="font-medium text-gray-900">{conflict.type}</span>
-                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                        雷同度: {conflict.similarity}%
-                      </span>
+                      <span className="font-medium text-gray-800 text-xs">{conflict.type}</span>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      conflict.severity === 'high' ? 'bg-red-100 text-red-700' :
-                      conflict.severity === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium">
+                        {conflict.similarity}%
+                      </span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        conflict.severity === 'high' ? 'bg-red-100 text-red-700 border border-red-200' :
+                        conflict.severity === 'medium' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                     }`}>
                       {conflict.severity === 'high' ? '高风险' : conflict.severity === 'medium' ? '中风险' : '低风险'}
                     </span>
+                    </div>
                   </div>
                   
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <span className="text-gray-600">冲突对象: </span>
-                      <span className="text-blue-600 font-medium">{conflict.conflictWith}</span>
+                  {/* 冲突对象 */}
+                  <div className="bg-white rounded p-2 border-l-2 border-blue-400 shadow-sm">
+                    <div className="text-xs text-slate-500 mb-0.5 font-medium">冲突对象</div>
+                    <div className="text-xs text-blue-700 font-medium break-words">{conflict.conflictWith}</div>
                     </div>
                     
-                    <div>
-                      <span className="text-gray-600">问题描述: </span>
-                      <span className="text-gray-900">{conflict.description}</span>
+                  {/* 问题描述 */}
+                  <div className="bg-white rounded p-2 border-l-2 border-slate-300 shadow-sm">
+                    <div className="text-xs text-slate-500 mb-0.5 font-medium">问题描述</div>
+                    <div className="text-xs text-slate-700 leading-relaxed break-words">{conflict.description}</div>
                     </div>
                     
-                    <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                      <div className="flex items-start space-x-2">
-                        <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                  {/* 误解风险和修正建议 */}
+                  <div className="grid grid-cols-1 gap-1.5">
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded p-2 border border-orange-200 shadow-sm">
+                      <div className="flex items-start space-x-1">
+                        <AlertTriangle className="w-3 h-3 text-orange-600 mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="text-orange-900 font-medium mb-1">误解风险</div>
-                          <div className="text-orange-800 text-xs">{conflict.misunderstanding}</div>
+                          <div className="text-xs font-medium text-orange-900 mb-0.5">误解风险</div>
+                          <div className="text-xs text-orange-800 leading-relaxed break-words">{conflict.misunderstanding}</div>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <div className="flex items-start space-x-2">
-                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded p-2 border border-blue-200 shadow-sm">
+                      <div className="flex items-start space-x-1">
+                        <CheckCircle className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="text-blue-900 font-medium mb-1">修正建议</div>
-                          <div className="text-blue-800 text-xs">{conflict.suggestion}</div>
+                          <div className="text-xs font-medium text-blue-900 mb-0.5">修正建议</div>
+                          <div className="text-xs text-blue-800 leading-relaxed break-words">{conflict.suggestion}</div>
                         </div>
                       </div>
                     </div>
@@ -1526,27 +1574,27 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
 
         {/* 技术影响评估 */}
         {technicalImpacts.length > 0 && (
-          <div className="bg-white rounded-xl border border-blue-200 shadow-sm">
-            <div className="p-4 border-b border-blue-100 bg-blue-50">
-              <h4 className="font-semibold text-blue-900 flex items-center">
-                <Code className="w-5 h-5 mr-2" />
+          <div className="bg-white rounded-lg border border-blue-200 shadow-sm overflow-hidden">
+            <div className="p-2.5 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <h4 className="font-medium text-blue-900 flex items-center text-xs">
+                <Code className="w-3.5 h-3.5 mr-1.5" />
                 技术影响评估
               </h4>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-2.5 space-y-2">
               {technicalImpacts.map((impact, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-900">{impact.area}</span>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      impact.impact === 'high' ? 'bg-red-100 text-red-700' :
-                      impact.impact === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                <div key={index} className="bg-gradient-to-br from-slate-50 to-slate-100 rounded p-2 space-y-1.5 border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-800 text-xs">{impact.area}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium border ${
+                      impact.impact === 'high' ? 'bg-red-100 text-red-700 border-red-200' :
+                      impact.impact === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'
                     }`}>
                       {impact.impact === 'high' ? '高影响' : impact.impact === 'medium' ? '中影响' : '低影响'}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{impact.description}</p>
-                  <div className="text-xs bg-green-50 text-green-800 p-2 rounded border border-green-200">
+                  <p className="text-xs text-slate-600 leading-relaxed break-words">{impact.description}</p>
+                  <div className="text-xs bg-gradient-to-br from-emerald-50 to-green-100 text-emerald-800 p-2 rounded border border-emerald-200 leading-relaxed shadow-sm">
                     💡 建议: {impact.suggestion}
                   </div>
                 </div>
@@ -1557,27 +1605,27 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
 
         {/* 业务风险评估 */}
         {businessRisks.length > 0 && (
-          <div className="bg-white rounded-xl border border-yellow-200 shadow-sm">
-            <div className="p-4 border-b border-yellow-100 bg-yellow-50">
-              <h4 className="font-semibold text-yellow-900 flex items-center">
-                <AlertTriangle className="w-5 h-5 mr-2" />
+          <div className="bg-white rounded-lg border border-amber-200 shadow-sm overflow-hidden">
+            <div className="p-2.5 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50">
+              <h4 className="font-medium text-amber-900 flex items-center text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
                 业务风险评估
               </h4>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-2.5 space-y-2">
               {businessRisks.map((risk, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-900">{risk.type}</span>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      risk.level === 'high' ? 'bg-red-100 text-red-700' :
-                      risk.level === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                <div key={index} className="bg-gradient-to-br from-slate-50 to-slate-100 rounded p-2 space-y-1.5 border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-800 text-xs">{risk.type}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium border ${
+                      risk.level === 'high' ? 'bg-red-100 text-red-700 border-red-200' :
+                      risk.level === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'
                     }`}>
                       {risk.level === 'high' ? '高风险' : risk.level === 'medium' ? '中风险' : '低风险'}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{risk.description}</p>
-                  <div className="text-xs bg-blue-50 text-blue-800 p-2 rounded border border-blue-200">
+                  <p className="text-xs text-slate-600 leading-relaxed break-words">{risk.description}</p>
+                  <div className="text-xs bg-gradient-to-br from-sky-50 to-blue-100 text-sky-800 p-2 rounded border border-sky-200 leading-relaxed shadow-sm">
                     🛡️ 缓解措施: {risk.mitigation}
                   </div>
                 </div>
@@ -1587,48 +1635,44 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         )}
 
         {/* 米多产品体系 */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-100">
-            <h4 className="font-semibold text-gray-900 flex items-center">
-              <Layers className="w-5 h-5 text-purple-600 mr-2" />
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-2.5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-purple-50">
+            <h4 className="font-medium text-slate-900 flex items-center text-xs">
+              <Layers className="w-3.5 h-3.5 text-purple-600 mr-1.5" />
               米多产品架构影响
             </h4>
           </div>
-          <div className="p-4 space-y-4">
-            <div className="grid grid-cols-1 gap-3">
-              <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
-                <div className="font-medium text-blue-900 mb-2 flex items-center">
-                  <Database className="w-4 h-4 mr-2" />
+          <div className="p-2.5 space-y-1.5">
+            <div className="grid grid-cols-1 gap-1.5">
+              <div className="border border-blue-200 rounded p-2 bg-gradient-to-br from-blue-50 to-sky-50 shadow-sm">
+                <div className="font-medium text-blue-900 mb-0.5 flex items-center text-xs">
+                  <Database className="w-3 h-3 mr-1" />
                   平台层影响
                 </div>
-                <div className="text-sm text-blue-800">
+                <div className="text-xs text-blue-700 leading-relaxed">
                   对{MIDO_PRODUCT_STRUCTURE.platform}的核心数据架构产生影响
                 </div>
               </div>
               
-              <div className="border border-green-200 rounded-lg p-3 bg-green-50">
-                <div className="font-medium text-green-900 mb-2 flex items-center">
-                  <Monitor className="w-4 h-4 mr-2" />
+              <div className="border border-emerald-200 rounded p-2 bg-gradient-to-br from-emerald-50 to-green-50 shadow-sm">
+                <div className="font-medium text-emerald-900 mb-0.5 flex items-center text-xs">
+                  <Monitor className="w-3 h-3 mr-1" />
                   系统层影响
                 </div>
-                <div className="text-sm text-green-800">
+                <div className="text-xs text-emerald-700 leading-relaxed">
                   主要影响: {MIDO_PRODUCT_STRUCTURE.systems.slice(0, 2).join('、')}
                 </div>
               </div>
               
-              <div className="border border-purple-200 rounded-lg p-3 bg-purple-50">
-                <div className="font-medium text-purple-900 mb-2 flex items-center">
-                  <Smartphone className="w-4 h-4 mr-2" />
+              <div className="border border-purple-200 rounded p-2 bg-gradient-to-br from-purple-50 to-violet-50 shadow-sm">
+                <div className="font-medium text-purple-900 mb-0.5 flex items-center text-xs">
+                  <Smartphone className="w-3 h-3 mr-1" />
                   应用层影响
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {MIDO_PRODUCT_STRUCTURE.applications.filter(app => 
+                <div className="text-xs text-purple-700 leading-relaxed">
+                  涉及{MIDO_PRODUCT_STRUCTURE.applications.filter(app => 
                     selectedDemand.title.includes(app.substring(0, 2))
-                  ).map((app, index) => (
-                    <span key={index} className="px-2 py-1 bg-purple-200 text-purple-800 rounded text-xs font-medium">
-                      {app}
-                    </span>
-                  ))}
+                  ).join('、')}等系统
                 </div>
               </div>
             </div>
@@ -1637,39 +1681,39 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
 
         {/* 项目版本信息（如果有关联项目） */}
         {relatedProject && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="p-4 border-b border-gray-100">
-              <h4 className="font-semibold text-gray-900 flex items-center">
-                <Package className="w-5 h-5 text-green-600 mr-2" />
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-2.5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-green-50">
+              <h4 className="font-medium text-slate-900 flex items-center text-xs">
+                <Package className="w-3.5 h-3.5 text-green-600 mr-1.5" />
                 关联项目信息
               </h4>
             </div>
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="space-y-2">
+            <div className="p-2.5 space-y-2">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="space-y-1">
                   <div>
-                    <span className="text-gray-500">版本号:</span>
-                    <span className="text-purple-600 font-bold ml-2">{relatedProject.version}</span>
+                    <span className="text-slate-500">版本号:</span>
+                    <span className="text-purple-700 font-bold ml-1">{relatedProject.version}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">版本类型:</span>
-                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                      relatedProject.versionType === '大版本' ? 'bg-red-100 text-red-700' :
-                      relatedProject.versionType === '中版本' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-green-100 text-green-700'
+                    <span className="text-slate-500">版本类型:</span>
+                    <span className={`ml-1 px-1 py-0.5 rounded text-xs font-medium border ${
+                      relatedProject.versionType === '大版本' ? 'bg-red-100 text-red-700 border-red-200' :
+                      relatedProject.versionType === '中版本' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                      'bg-emerald-100 text-emerald-700 border-emerald-200'
                     }`}>
                       {relatedProject.versionType}
                     </span>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <div>
-                    <span className="text-gray-500">当前状态:</span>
-                    <span className="text-blue-600 font-medium ml-2">{relatedProject.status}</span>
+                    <span className="text-slate-500">当前状态:</span>
+                    <span className="text-blue-700 font-medium ml-1">{relatedProject.status}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">预计交付:</span>
-                    <span className="text-gray-900 ml-2 font-medium">{relatedProject.deadline}</span>
+                    <span className="text-slate-500">预计交付:</span>
+                    <span className="text-slate-800 ml-1 font-medium">{relatedProject.deadline}</span>
                   </div>
                 </div>
               </div>
@@ -1689,26 +1733,26 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
               </div>
 
               {/* 团队信息 */}
-              <div className="border-t border-gray-100 pt-4">
-                <div className="text-sm font-medium text-gray-900 mb-2">项目团队</div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <User className="w-4 h-4 text-purple-600" />
-                    <span className="text-gray-500">产品经理:</span>
-                    <span className="text-gray-900 font-medium">{relatedProject.manager}</span>
+              <div className="border-t border-slate-100 pt-2">
+                <div className="text-xs font-medium text-slate-800 mb-1">项目团队</div>
+                <div className="space-y-0.5 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <User className="w-3 h-3 text-purple-600" />
+                    <span className="text-slate-500">产品经理:</span>
+                    <span className="text-slate-800 font-medium">{relatedProject.manager}</span>
                   </div>
                   {relatedProject.developer && (
-                    <div className="flex items-center space-x-2">
-                      <Code className="w-4 h-4 text-blue-600" />
-                      <span className="text-gray-500">技术负责人:</span>
-                      <span className="text-gray-900 font-medium">{relatedProject.developer}</span>
+                    <div className="flex items-center space-x-1">
+                      <Code className="w-3 h-3 text-blue-600" />
+                      <span className="text-slate-500">技术负责人:</span>
+                      <span className="text-slate-800 font-medium">{relatedProject.developer}</span>
                     </div>
                   )}
                   {relatedProject.tester && (
-                    <div className="flex items-center space-x-2">
-                      <Bug className="w-4 h-4 text-green-600" />
-                      <span className="text-gray-500">测试负责人:</span>
-                      <span className="text-gray-900 font-medium">{relatedProject.tester}</span>
+                    <div className="flex items-center space-x-1">
+                      <Bug className="w-3 h-3 text-emerald-600" />
+                      <span className="text-slate-500">测试负责人:</span>
+                      <span className="text-slate-800 font-medium">{relatedProject.tester}</span>
                     </div>
                   )}
                 </div>
@@ -1756,6 +1800,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
@@ -1772,48 +1817,45 @@ const FlipModule: React.FC<{
   const getContainerClass = () => {
     switch (position) {
       case 'left':
-        return 'bg-white border-r border-gray-200 h-full overflow-hidden';
+        return 'bg-white border-r border-gray-200 h-full overflow-hidden min-h-full';
       case 'center':
-        return 'flex flex-col min-w-0 h-full overflow-hidden bg-gray-50 px-4';
+        return 'flex flex-col min-w-0 h-full overflow-hidden bg-gray-50 px-4 min-h-full';
       case 'right':
-        return 'bg-white border-l border-gray-200 h-full overflow-hidden';
+        return 'bg-white border-l border-gray-200 h-full overflow-hidden min-h-full';
       default:
         return '';
     }
   };
 
-  // 真正的3D魔方翻转动效
+  // 简单的淡入淡出 + 缩放特效 - 统一且稳定，快速切换
   const flipVariants = {
     initial: {
-      rotateY: -90,
-      rotateX: 0,
-      scale: 0.8,
       opacity: 0,
-      z: -200,
+      scale: 0.95,
+      y: 10,
     },
     enter: {
-      rotateY: 0,
-      rotateX: 0,
-      scale: 1,
       opacity: 1,
-      z: 0,
+      scale: 1,
+      y: 0,
       transition: {
-        duration: 0.8,
-        ease: [0.25, 0.46, 0.45, 0.94], // 自定义缓动曲线
-        opacity: { duration: 0.4, delay: 0.2 },
-        scale: { duration: 0.6, delay: 0.1 }
+        duration: 0.15,
+        ease: [0.25, 0.46, 0.45, 0.94],
+        opacity: { duration: 0.12 },
+        scale: { duration: 0.15 },
+        y: { duration: 0.15 }
       }
     },
     exit: {
-      rotateY: 90,
-      rotateX: 10,
-      scale: 0.7,
       opacity: 0,
-      z: -300,
+      scale: 0.95,
+      y: -10,
       transition: {
-        duration: 0.6,
-        ease: [0.55, 0.06, 0.68, 0.19],
-        opacity: { duration: 0.3 }
+        duration: 0.1,
+        ease: [0.4, 0.0, 0.6, 1],
+        opacity: { duration: 0.08 },
+        scale: { duration: 0.1 },
+        y: { duration: 0.1 }
       }
     }
   };
@@ -1839,52 +1881,31 @@ const FlipModule: React.FC<{
   };
 
   return (
-    <div 
-      className={getContainerClass()} 
-      style={{ 
-        perspective: '2000px',
-        perspectiveOrigin: 'center center'
-      }}
-    >
-      <AnimatePresence mode="wait">
-        {!isFlipping && currentModule && (
+    <div className={getContainerClass()}>
+      <AnimatePresence>
+        {currentModule && (
           <motion.div
             key={`${currentModule.id}-${position}`}
-            className="w-full h-full relative"
+            className="w-full h-full relative min-h-full"
             variants={flipVariants}
             initial="initial"
             animate="enter"
             exit="exit"
             style={{ 
-              transformStyle: 'preserve-3d',
-              backfaceVisibility: 'hidden',
-              transformOrigin: 'center center'
+              minHeight: '100%',
+              height: '100%'
             }}
           >
-            {/* 简化背景效果，避免translateZ导致的尺寸跳跃 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50 to-gray-100 shadow-xl" />
-            
-            {/* 主要内容 */}
-            <div className="relative z-10 w-full h-full bg-white rounded-lg overflow-hidden shadow-lg">
+            {/* 简单的内容容器 */}
+            <div className="w-full h-full bg-white rounded-lg overflow-hidden shadow-sm">
               {React.createElement(currentModule.component, {
                 ...getModuleProps(currentModule.id)
               })}
             </div>
-
-            {/* 简化光影效果，避免translateZ */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-lg pointer-events-none" />
           </motion.div>
         )}
       </AnimatePresence>
-      
-      {/* 翻转中的简洁效果 */}
-      {isFlipping && (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-blue-50 relative overflow-hidden">
-          {/* 简洁的背景渐变效果 */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-pink-50/30 animate-pulse" />
         </div>
-      )}
-    </div>
   );
 };
 
@@ -1894,38 +1915,35 @@ const FlipTopBar: React.FC<{
   previousConfig: DepartmentConfig | null;
   isFlipping: boolean;
 }> = ({ currentConfig, previousConfig, isFlipping }) => {
-  // 与模块翻转保持一致的3D动效
+  // 与模块翻转保持一致的简单动效，快速切换
   const topBarFlipVariants = {
     initial: {
-      rotateX: -90,
-      rotateY: 0,
-      scale: 0.8,
       opacity: 0,
-      z: -200,
+      scale: 0.95,
+      y: -10,
     },
     enter: {
-      rotateX: 0,
-      rotateY: 0,
-      scale: 1,
       opacity: 1,
-      z: 0,
+      scale: 1,
+      y: 0,
       transition: {
-        duration: 0.8,
-        ease: [0.25, 0.46, 0.45, 0.94], // 与FlipModule一致的缓动曲线
-        opacity: { duration: 0.4, delay: 0.2 },
-        scale: { duration: 0.6, delay: 0.1 }
+        duration: 0.15,
+        ease: [0.25, 0.46, 0.45, 0.94],
+        opacity: { duration: 0.12 },
+        scale: { duration: 0.15 },
+        y: { duration: 0.15 }
       }
     },
     exit: {
-      rotateX: 90,
-      rotateY: 10,
-      scale: 0.7,
       opacity: 0,
-      z: -300,
+      scale: 0.95,
+      y: -10,
       transition: {
-        duration: 0.6,
-        ease: [0.55, 0.06, 0.68, 0.19],
-        opacity: { duration: 0.3 }
+        duration: 0.1,
+        ease: [0.4, 0.0, 0.6, 1],
+        opacity: { duration: 0.08 },
+        scale: { duration: 0.1 },
+        y: { duration: 0.1 }
       }
     }
   };
@@ -1933,33 +1951,18 @@ const FlipTopBar: React.FC<{
   if (!currentConfig?.topBarInfo) return null;
 
   return (
-    <div 
-      className="border-b border-gray-200"
-      style={{ 
-        perspective: '2000px',
-        perspectiveOrigin: 'center top'
-      }}
-    >
-      <AnimatePresence mode="wait">
-        {!isFlipping && currentConfig.topBarInfo && (
+    <div className="border-b border-gray-200">
+      <AnimatePresence>
+        {currentConfig.topBarInfo && (
           <motion.div
             key={`topbar-${currentConfig.id}`}
-            className="bg-white px-6 py-4 relative"
+            className="bg-white px-6 py-4"
             variants={topBarFlipVariants}
             initial="initial"
             animate="enter"
             exit="exit"
-            style={{ 
-              transformStyle: 'preserve-3d',
-              backfaceVisibility: 'hidden',
-              transformOrigin: 'center bottom'
-            }}
           >
-            {/* 简化背景效果，避免translateZ导致的尺寸跳跃 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50 to-gray-100 shadow-lg" />
-            
-            {/* 主要内容 */}
-            <div className="relative z-10">
+            <div>
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-semibold text-gray-900">{currentConfig.topBarInfo.title}</h1>
@@ -1986,20 +1989,9 @@ const FlipTopBar: React.FC<{
                 </div>
               </div>
             </div>
-
-            {/* 简化光影效果，避免translateZ */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 pointer-events-none" />
           </motion.div>
         )}
       </AnimatePresence>
-      
-      {/* 翻转中的简洁效果 */}
-      {isFlipping && (
-        <div className="bg-white px-6 py-4 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-blue-50 relative overflow-hidden min-h-[80px]">
-          {/* 简洁的背景渐变效果 */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-pink-50/30 animate-pulse" />
-        </div>
-      )}
     </div>
   );
 };
@@ -2014,7 +2006,6 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
   const [previousDepartment, setPreviousDepartment] = useState<string | null>(null);
   const [selectedDemand, setSelectedDemand] = useState<ProductDemand>(productDemands[0]);
   const [selectedStandard, setSelectedStandard] = useState<TechnicalStandard>(technicalStandards[0]);
-  const [isTransforming, setIsTransforming] = useState(false);
   const [previousMode, setPreviousMode] = useState<'normal' | 'assessment'>('normal');
 
   // 青春阳光主题配置
@@ -2030,44 +2021,28 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
     glow: 'shadow-lg shadow-orange-200/50'
   };
 
-  // 专业激励语录
-  const motivationalQuotes = [
-    '专注模式已激活！',
-    '高效执行状态启动！',
-    '深度工作模式开启！',
-    '专业能力全面发挥！',
-    '卓越表现即将开始！',
-    '精英状态成功切换！'
-  ];
 
-  const [currentQuote, setCurrentQuote] = useState(motivationalQuotes[0]);
 
-  // 监听模式变化，触发变身动画
+  // 监听模式变化 - 统一使用 isTransitioning 状态
   useEffect(() => {
     if (customerSuccessMode !== previousMode) {
-      setIsTransforming(true);
+      setIsTransitioning(true);
       setPreviousMode(customerSuccessMode);
       
-      // 随机选择激励语录
-      if (customerSuccessMode === 'assessment') {
-        const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-        setCurrentQuote(randomQuote);
-      }
-      
-      // 变身动画时长
+      // 大幅缩短动画时长，减少白屏
       setTimeout(() => {
-        setIsTransforming(false);
-      }, 1000);
+        setIsTransitioning(false);
+      }, 150);
     }
   }, [customerSuccessMode, previousMode]);
 
   // 考核模式的组件 - 拆分为真正的三个模块 (青春阳光版)
   const AssessmentLeftPanel = () => (
     <div className={`h-full flex flex-col transition-all duration-1000 ${
-      isTransforming ? 'transform scale-105' : ''
+      isTransitioning ? 'transform scale-105' : ''
     } ${customerSuccessMode === 'assessment' ? sunshineTheme.background : ''}`}>
       {/* 变身光效 */}
-      {isTransforming && (
+      {isTransitioning && (
         <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 via-yellow-400/30 to-pink-400/20 animate-pulse pointer-events-none z-10" />
       )}
       
@@ -2119,7 +2094,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         }`}>
           <BookOpen className={`w-5 h-5 mr-2 transition-all duration-700 ${
             customerSuccessMode === 'assessment' 
-              ? `text-orange-500 ${isTransforming ? 'animate-spin' : 'animate-pulse'}` 
+              ? `text-orange-500 ${isTransitioning ? 'animate-spin' : 'animate-pulse'}` 
               : 'text-blue-600'
           }`} />
                      {customerSuccessMode === 'assessment' ? '考核管理 • 活力模式' : '考核管理'}
@@ -2333,7 +2308,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             customerSuccessMode === 'assessment' 
               ? `${sunshineTheme.button} ${sunshineTheme.glow} text-white hover:scale-105 sunshine-button energy-pulse` 
               : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
-          } ${isTransforming ? 'animate-bounce' : ''}`}>
+                      } ${isTransitioning ? 'animate-bounce' : ''}`}>
             <Play className={`mr-2 transition-all duration-700 ${
               customerSuccessMode === 'assessment' 
                 ? 'w-5 h-5 animate-pulse' 
@@ -2346,7 +2321,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         {/* 当前考核项详情 - 青春阳光版 */}
         <div className={`rounded-lg p-4 mb-3 transition-all duration-700 transform ${
           customerSuccessMode === 'assessment' 
-            ? `${sunshineTheme.cardBg} border-2 border-gradient-to-r from-orange-300 to-pink-300 ${sunshineTheme.glow} ${isTransforming ? 'scale-105' : 'hover:scale-102'}` 
+                          ? `${sunshineTheme.cardBg} border-2 border-gradient-to-r from-orange-300 to-pink-300 ${sunshineTheme.glow} ${isTransitioning ? 'scale-105' : 'hover:scale-102'}` 
             : 'bg-white border border-gray-200 shadow-sm'
         }`}>
           <div className="flex items-center justify-between mb-4">
@@ -3044,7 +3019,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
     const timer = setTimeout(() => {
       setIsTransitioning(false);
       setPreviousDepartment(currentDepartment);
-    }, 600); // 翻转时间
+    }, 150); // 大幅缩短翻转时间，减少白屏
 
     return () => clearTimeout(timer);
   }, [currentDepartment, previousDepartment, currentConfig]);
@@ -3070,41 +3045,17 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' 
           ? sunshineTheme.background 
           : ''
-      } ${isTransforming ? 'animate-pulse' : ''}`}
+      } ${isTransitioning ? 'animate-pulse' : ''}`}
       style={{ 
         backgroundColor: customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' 
           ? 'transparent' 
           : currentConfig.theme.background 
       }}
     >
-      {/* 青春阳光变身特效 */}
-      {isTransforming && customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' && (
-        <>
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-300/30 via-yellow-300/40 to-pink-300/30 animate-pulse pointer-events-none z-20" />
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-400/20 via-purple-400/20 to-green-400/20 animate-ping pointer-events-none z-20" style={{ animationDuration: '2s' }} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30">
-            <div className="text-6xl animate-bounce sunshine-sparkle">✨🌟💫</div>
-            <div className="text-center text-lg font-bold motivation-text mt-4 animate-pulse">
-              {currentQuote}
-            </div>
-          </div>
-          {/* 星星特效 */}
-          <div className="absolute top-10 left-10 text-2xl animate-ping pointer-events-none z-25">⭐</div>
-          <div className="absolute top-20 right-16 text-xl animate-bounce pointer-events-none z-25" style={{ animationDelay: '0.2s' }}>💫</div>
-          <div className="absolute bottom-20 left-20 text-3xl animate-pulse pointer-events-none z-25" style={{ animationDelay: '0.4s' }}>🌟</div>
-          <div className="absolute bottom-16 right-12 text-2xl animate-spin pointer-events-none z-25" style={{ animationDelay: '0.6s' }}>✨</div>
-          <div className="absolute top-32 left-1/3 text-xl animate-bounce pointer-events-none z-25" style={{ animationDelay: '0.8s' }}>🎉</div>
-          <div className="absolute bottom-32 right-1/3 text-2xl animate-pulse pointer-events-none z-25" style={{ animationDelay: '1s' }}>🎊</div>
-        </>
-      )}
-      
-      {/* 青春阳光模式的持续背景效果 */}
-      {customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' && !isTransforming && (
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-50/50 via-yellow-50/60 to-pink-50/50 pointer-events-none z-5" />
-      )}
-      
-      {/* 模块区域 */}
-      <div className="flex-1 grid grid-cols-[320px_1fr_320px] gap-0 overflow-hidden relative z-10">
+
+
+      {/* 模块区域 - 固定高度防止切换时塌陷 */}
+      <div className="flex-1 grid grid-cols-[320px_1fr_320px] gap-0 overflow-hidden relative z-10 min-h-0" style={{ height: 'calc(100vh - 120px)' }}>
         {/* 左侧模块 */}
         <FlipModule
           position="left"

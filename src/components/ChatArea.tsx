@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Paperclip, Mic, Bot, User, Lightbulb, Copy, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Customer } from '../types/customer';
 import KnowledgeSelector from './KnowledgeSelector';
@@ -22,35 +22,37 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedKnowledge, setSelectedKnowledge] = useState('general');
   const [conversationId, setConversationId] = useState<string>('');
+  const [useStreamMode, setUseStreamMode] = useState<boolean>(true); // 默认使用流式模式
+  const [streamingMessage, setStreamingMessage] = useState<string>(''); // 存储流式接收的消息
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 初始化欢迎消息
   useEffect(() => {
-    if (messages.length === 0) {
-      const knowledgeTypeMap: { [key: string]: string } = {
-        'general': '通用知识库',
-        'product': '产品知识库', 
-        'customer': '客户知识库',
-        'sales': '销售知识库',
-        'solution': '解决方案',
-        'technical': '技术知识库'
-      };
-      
-      const welcomeMessage: Message = {
-        id: 'welcome',
-        type: 'ai',
-        content: `您好！我是米多智库AI助手，当前已连接${knowledgeTypeMap[selectedKnowledge]}。我可以帮您查询客户信息、分析客户需求、提供解决方案建议等。请问有什么可以帮助您的吗？`,
-        timestamp: new Date(),
-        suggestions: ['查询客户档案', '一键群发消息', '分析客户需求', '生成解决方案', '查看历史记录']
-      };
-      setMessages([welcomeMessage]);
-    }
+    const knowledgeTypeMap: { [key: string]: string } = {
+      'general': '通用知识库',
+      'product': '产品知识库', 
+      'customer': '客户知识库',
+      'sales': '销售知识库',
+      'solution': '解决方案',
+      'technical': '技术知识库'
+    };
+    
+    const welcomeMessage: Message = {
+      id: 'welcome-' + selectedKnowledge,
+      type: 'ai',
+      content: `您好！我是米多智库AI助手，当前已连接${knowledgeTypeMap[selectedKnowledge]}。我可以帮您查询客户信息、分析客户需求、提供解决方案建议等。请问有什么可以帮助您的吗？`,
+      timestamp: new Date(),
+      suggestions: ['查询客户档案', '一键群发消息', '分析客户需求', '生成解决方案', '查看历史记录']
+    };
+    
+    // 只保留欢迎消息，清空其他所有消息
+    setMessages([welcomeMessage]);
   }, [selectedKnowledge]); // 当选择的知识库改变时更新欢迎消息
 
-  // 滚动到底部
+  // 滚动到底部 - 监听消息变化和流式消息变化
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, streamingMessage]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -63,41 +65,148 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue.trim();
     setInputValue('');
     setIsTyping(true);
+    setStreamingMessage('');
 
     try {
-      // 根据选择的知识库类型调用对应的API
-      let response;
-      if (selectedKnowledge === 'general' || selectedKnowledge === 'product') {
-        // 使用知识库搜索API
-        response = await aiAPI.searchKnowledge({
-          query: inputValue.trim(),
-          knowledgeType: selectedKnowledge,
-          customerId: selectedCustomer?.id
-        });
-      } else {
-        // 使用普通对话API
-        response = await aiAPI.chat({
-          message: inputValue.trim(),
+      if (useStreamMode) {
+        // 流式模式
+        let currentStreamMessage = '';
+        let streamMessageId = (Date.now() + 1).toString();
+        
+        // 先添加一个空的AI消息框
+        const initialMessage: Message = {
+          id: streamMessageId,
+          type: 'ai',
+          content: '',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, initialMessage]);
+        
+        console.log('🔥 开始流式调用，参数:', {
+          message: currentInput,
           conversationId,
           knowledgeBase: selectedKnowledge,
           customerId: selectedCustomer?.id
         });
-      }
+        
+        await aiAPI.chatStream(
+          {
+            message: currentInput,
+            conversationId,
+            knowledgeBase: selectedKnowledge,
+            customerId: selectedCustomer?.id
+          },
+          // onMessage回调
+          (data) => {
+            console.log('🔄 收到流式数据:', data);
+            
+            if (data.type === 'start') {
+              if (data.conversationId) {
+                setConversationId(data.conversationId);
+              }
+            } else if (data.type === 'delta' && data.content) {
+              currentStreamMessage += data.content;
+              console.log('📝 更新流式内容，当前长度:', currentStreamMessage.length);
+              
+              // 使用React 18的flushSync强制同步更新，确保立即渲染
+              setMessages(prev => {
+                const newMessages = prev.map(msg => 
+                  msg.id === streamMessageId 
+                    ? { ...msg, content: currentStreamMessage }
+                    : msg
+                );
+                return newMessages;
+              });
+            } else if (data.type === 'done') {
+              // 流式完成，更新最终消息和建议
+              setMessages(prev => 
+                prev.map(msg => 
+                  msg.id === streamMessageId 
+                    ? { 
+                        ...msg, 
+                        content: data.fullResponse || currentStreamMessage,
+                        suggestions: data.suggestions || generateSuggestions(currentInput)
+                      }
+                    : msg
+                )
+              );
+              setStreamingMessage('');
+            } else if (data.type === 'error') {
+              console.error('流式响应错误:', data.error);
+              setMessages(prev => 
+                prev.map(msg => 
+                  msg.id === streamMessageId 
+                    ? { ...msg, content: '抱歉，服务出现了问题，请稍后再试。' }
+                    : msg
+                )
+              );
+            } else if (data.type === 'fallback') {
+              setMessages(prev => 
+                prev.map(msg => 
+                  msg.id === streamMessageId 
+                    ? { 
+                        ...msg, 
+                        content: data.content,
+                        suggestions: data.suggestions || generateSuggestions(currentInput)
+                      }
+                    : msg
+                )
+              );
+            }
+          },
+          // onError回调
+          (error) => {
+            console.error('流式请求错误:', error);
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === streamMessageId 
+                  ? { ...msg, content: '抱歉，服务出现了问题，请稍后再试。' }
+                  : msg
+              )
+            );
+          },
+          // onComplete回调
+          () => {
+            setIsTyping(false);
+          }
+        );
+      } else {
+        // 普通模式
+        const response = await aiAPI.chat({
+          message: currentInput,
+          conversationId,
+          knowledgeBase: selectedKnowledge,
+          customerId: selectedCustomer?.id
+        });
+        
+        // 检查响应数据结构
+        let aiContent = '';
+        if (response.data && response.data.response) {
+          aiContent = response.data.response;
+        } else if (response.reply) {
+          aiContent = response.reply;
+        } else if (response.answer) {
+          aiContent = response.answer;
+        } else {
+          aiContent = '抱歉，我暂时无法回答这个问题。';
+        }
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: aiContent,
+          timestamp: new Date(),
+          suggestions: response.data?.suggestions || generateSuggestions(currentInput)
+        };
 
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: response.reply || response.answer || '抱歉，我暂时无法回答这个问题。',
-        timestamp: new Date(),
-        suggestions: generateSuggestions(inputValue.trim())
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-      
-      if (response.conversationId) {
-        setConversationId(response.conversationId);
+        setMessages(prev => [...prev, aiMessage]);
+        
+        if (response.data?.conversationId) {
+          setConversationId(response.data.conversationId);
+        }
       }
     } catch (error) {
       console.error('AI对话出错:', error);
@@ -109,7 +218,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsTyping(false);
+      if (!useStreamMode) {
+        setIsTyping(false);
+      }
     }
   };
 
@@ -182,8 +293,26 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
               onKnowledgeChange={setSelectedKnowledge}
               className="w-48"
             />
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
-              在线
+            
+            {/* 流式模式切换 */}
+            <div className="flex items-center space-x-2">
+              <label className="flex items-center space-x-1 text-sm text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={useStreamMode}
+                  onChange={(e) => setUseStreamMode(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <span>流式输出</span>
+              </label>
+            </div>
+            
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+              useStreamMode 
+                ? 'bg-blue-100 text-blue-800' 
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {useStreamMode ? '流式模式' : '标准模式'}
             </span>
           </div>
         </div>
@@ -194,24 +323,31 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`flex items-start space-x-3 max-w-[70%] ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                message.type === 'user' 
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  message.type === 'user' 
                   ? 'bg-primary-500 text-white' 
                   : 'bg-blue-600 text-white'
-              }`}>
+                }`}>
                 {message.type === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-              </div>
+                </div>
               <div className={`rounded-lg px-4 py-3 ${
-                message.type === 'user' 
-                  ? 'bg-primary-500 text-white' 
+                    message.type === 'user'
+                      ? 'bg-primary-500 text-white'
                   : 'bg-white border border-gray-200 text-gray-900'
-              }`}>
-                <div className="text-sm whitespace-pre-wrap break-words">{message.content}</div>
+                  }`}>
+                <div className="text-sm whitespace-pre-wrap break-words">
+                  {message.content}
+                  {/* 流式模式下正在输入的内容添加光标效果 */}
+                  {useStreamMode && isTyping && message.type === 'ai' && 
+                   message.id === messages[messages.length - 1]?.id && (
+                    <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1">|</span>
+                  )}
+                </div>
                 {message.type === 'ai' && (
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                     <div className="text-xs text-gray-500">
                       {message.timestamp.toLocaleTimeString()}
-                    </div>
+                  </div>
                     <div className="flex items-center space-x-2">
                       <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
                         <Copy className="w-3 h-3" />
@@ -223,8 +359,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
                         <ThumbsDown className="w-3 h-3" />
                       </button>
                     </div>
-                  </div>
-                )}
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -239,10 +375,21 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
               </div>
               <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
                 <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-                  <span className="text-sm text-gray-500 ml-2">AI正在思考...</span>
+                  {useStreamMode ? (
+                    <>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                      <span className="text-sm text-gray-500 ml-2">AI正在流式回复...</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                      <span className="text-sm text-gray-500 ml-2">AI正在思考...</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

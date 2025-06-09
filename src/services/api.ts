@@ -136,7 +136,7 @@ export const analyticsAPI = {
 
 // AI相关API
 export const aiAPI = {
-  // AI对话
+  // AI对话（普通模式）
   chat: (params: {
     message: string;
     conversationId?: string;
@@ -154,6 +154,159 @@ export const aiAPI = {
         method: 'POST',
         body: JSON.stringify(params),
       });
+    }
+  },
+
+  // AI对话（流式模式）- 按照OpenAI标准实现
+  chatStream: async (params: {
+    message: string;
+    conversationId?: string;
+    knowledgeBase?: string;
+    customerId?: string;
+  }, onMessage: (data: any) => void, onError?: (error: any) => void, onComplete?: () => void) => {
+    try {
+      console.log('🚀 开始流式请求:', params);
+      
+      // 发送流式请求
+      const response = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!response.ok) {
+        throw new Error(`流式请求失败: HTTP ${response.status}`);
+      }
+
+      // 检查响应类型
+      const contentType = response.headers.get('content-type');
+      console.log('📡 响应类型:', contentType);
+      
+      if (contentType && contentType.includes('text/event-stream')) {
+        // 处理真正的流式响应
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('无法获取响应流读取器');
+        }
+        
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        console.log('📖 开始读取流数据');
+        
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+              console.log('✅ 流读取完成');
+              onComplete?.();
+              break;
+            }
+            
+            // 处理接收到的数据块
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // 保留不完整的行
+            
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (trimmedLine.startsWith('data: ')) {
+                const dataStr = trimmedLine.slice(6);
+                
+                if (dataStr) {
+                  try {
+                    const data = JSON.parse(dataStr);
+                    console.log('📦 收到流数据:', data);
+                    
+                    onMessage(data);
+                    
+                    // 检查是否完成或出错
+                    if (data.type === 'done' || data.type === 'error') {
+                      console.log('🎯 流处理完成，类型:', data.type);
+                      onComplete?.();
+                      return;
+                    }
+                  } catch (parseError) {
+                    console.warn('⚠️ 解析SSE数据失败:', parseError, '原始数据:', dataStr);
+                    // 继续处理其他数据，不因解析错误而中断
+                  }
+                }
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      } else {
+        // 不是流式响应，降级到普通模式
+        console.log('🔄 非流式响应，降级到普通模式');
+        const normalResponse = await request('/ai/chat', {
+          method: 'POST',
+          body: JSON.stringify(params),
+        });
+        
+        // 模拟流式输出效果
+        onMessage({ type: 'start', conversationId: params.conversationId });
+        
+        if (normalResponse.data?.response) {
+          // 模拟逐字输出效果
+          const text = normalResponse.data.response;
+          let currentText = '';
+          
+          for (let i = 0; i < text.length; i++) {
+            currentText += text[i];
+            onMessage({ 
+              type: 'delta', 
+              content: text[i],
+              timestamp: new Date().toISOString()
+            });
+            
+            // 添加小延迟模拟流式输出
+            if (i % 5 === 0) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+          }
+          
+          onMessage({ 
+            type: 'done',
+            fullResponse: text,
+            suggestions: normalResponse.data.suggestions,
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        onComplete?.();
+      }
+    } catch (error) {
+      console.error('❌ 流式请求失败:', error);
+      
+      try {
+        // 最后的降级方案：普通模式
+        console.log('🔄 最终降级到普通模式');
+        const normalResponse = await request('/ai/chat', {
+          method: 'POST',
+          body: JSON.stringify(params),
+        });
+        
+        onMessage({ type: 'start', conversationId: params.conversationId });
+        
+        if (normalResponse.data?.response) {
+          onMessage({ 
+            type: 'fallback', 
+            content: normalResponse.data.response,
+            suggestions: normalResponse.data.suggestions,
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        onComplete?.();
+      } catch (fallbackError) {
+        console.error('❌ 普通模式也失败了:', fallbackError);
+        onError?.(fallbackError);
+      }
     }
   },
 

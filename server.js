@@ -19,9 +19,29 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS配置 - 从环境变量读取
+// CORS配置 - 从环境变量读取，支持多个前端URL
+const allowedOrigins = [
+  'http://localhost:10256',
+  'http://localhost:10258',  // 添加前端实际运行的端口
+  'http://localhost:3000', 
+  'http://localhost:10255',
+  'http://backend:10255',
+  FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: function (origin, callback) {
+    // 允许没有origin的请求（如移动应用）
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log(`❌ CORS blocked origin: ${origin}`);
+      console.log(`✅ Allowed origins: ${allowedOrigins.join(', ')}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

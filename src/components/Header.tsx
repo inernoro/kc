@@ -185,7 +185,7 @@ const Header: React.FC<HeaderProps> = ({
           }`}
           style={{
             transform: !isVisible ? 'translateY(-8px)' : 'translateY(0)',
-            transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+            transition: 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           <div className="flex items-center space-x-8">
@@ -238,14 +238,15 @@ const Header: React.FC<HeaderProps> = ({
           <div className="relative flex bg-gray-100/70 backdrop-blur-sm rounded-xl p-1 shadow-inner" style={{ width: '420px' }}>
             {/* 滑动背景 - 使用固定宽度确保完全一致 */}
             <div 
-              className="absolute bg-white rounded-lg shadow-sm transition-all duration-300 ease-out"
+              className="absolute bg-white rounded-lg shadow-sm"
               style={{
                 top: '2px',
                 bottom: '2px',
                 left: `${departments.findIndex(d => d.id === currentDepartment) * 136 + 2}px`,
                 width: '132px',
                 transform: 'translateZ(0)', // 硬件加速
-                willChange: 'left' // 优化动画性能
+                willChange: 'left', // 优化动画性能
+                transition: 'left 0.5s cubic-bezier(0.16, 1, 0.3, 1)' // 苹果经典缓动
               }}
             />
             
@@ -290,14 +291,15 @@ const Header: React.FC<HeaderProps> = ({
             <div className="relative flex bg-gray-100/70 backdrop-blur-sm rounded-xl p-1 shadow-inner" style={{ width: '240px' }}>
               {/* 滑动背景 */}
               <div 
-                className="absolute bg-white rounded-lg shadow-sm transition-all duration-300 ease-out"
+                className="absolute bg-white rounded-lg shadow-sm"
                 style={{
                   top: '2px',
                   bottom: '2px',
                   left: `${customerSuccessMode === 'normal' ? 2 : 118}px`,
                   width: '116px',
                   transform: 'translateZ(0)',
-                  willChange: 'left'
+                  willChange: 'left',
+                  transition: 'left 0.45s cubic-bezier(0.16, 1, 0.3, 1)' // 苹果风格缓动
                 }}
               />
               

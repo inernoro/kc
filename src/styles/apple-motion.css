@@ -1,0 +1,158 @@
+/* 苹果风格动画缓动函数 */
+
+/* 苹果经典缓动函数 */
+:root {
+  --apple-ease-in-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --apple-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --apple-ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --apple-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --apple-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* 苹果风格通用动画类 */
+.apple-transition {
+  transition: all 0.5s var(--apple-ease-in-out);
+}
+
+.apple-transition-fast {
+  transition: all 0.3s var(--apple-ease-in-out);
+}
+
+.apple-transition-slow {
+  transition: all 0.8s var(--apple-ease-in-out);
+}
+
+/* 苹果风格按钮动画 */
+.apple-button {
+  transition: all 0.2s var(--apple-ease-out);
+}
+
+.apple-button:hover {
+  transform: scale(1.02);
+}
+
+.apple-button:active {
+  transform: scale(0.98);
+  transition: all 0.1s var(--apple-ease-in);
+}
+
+/* 苹果风格卡片动画 */
+.apple-card {
+  transition: all 0.4s var(--apple-ease-in-out);
+}
+
+.apple-card:hover {
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 苹果风格淡入动画 */
+@keyframes apple-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.apple-fade-in {
+  animation: apple-fade-in 0.6s var(--apple-ease-in-out);
+}
+
+/* 苹果风格滑动动画 */
+@keyframes apple-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.apple-slide-in-right {
+  animation: apple-slide-in-right 0.5s var(--apple-ease-in-out);
+}
+
+/* 苹果风格弹性动画 */
+@keyframes apple-bounce-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.apple-bounce-in {
+  animation: apple-bounce-in 0.6s var(--apple-bounce);
+}
+
+/* 苹果风格呼吸动画 */
+@keyframes apple-breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.apple-breathe {
+  animation: apple-breathe 4s var(--apple-ease-in-out) infinite;
+}
+
+/* 苹果风格脉冲动画 */
+@keyframes apple-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.apple-pulse {
+  animation: apple-pulse 2s var(--apple-ease-in-out) infinite;
+}
+
+/* 苹果风格页面切换 */
+.apple-page-transition {
+  transition: all 0.6s var(--apple-ease-in-out);
+}
+
+/* 响应式减弱动画 - 针对性能较差的设备 */
+@media (prefers-reduced-motion: reduce) {
+  .apple-transition,
+  .apple-transition-fast,
+  .apple-transition-slow,
+  .apple-button,
+  .apple-card {
+    transition: none;
+  }
+  
+  .apple-fade-in,
+  .apple-slide-in-right,
+  .apple-bounce-in,
+  .apple-breathe,
+  .apple-pulse {
+    animation: none;
+  }
+}
+
+/* 高性能设备优化 */
+@media (prefers-reduced-motion: no-preference) {
+  .apple-transition,
+  .apple-button,
+  .apple-card {
+    will-change: transform, opacity;
+  }
+} 

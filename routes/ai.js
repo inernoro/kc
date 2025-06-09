@@ -247,7 +247,7 @@ ${conversationContext ? `对话历史：${conversationContext}` : ''}
 }
 
 // 调用大模型API
-async function callAIModel(prompt, modelName = 'qwen-turbo') {
+async function callAIModel(prompt, modelName = 'Pro/deepseek-ai/DeepSeek-V3', isStream = false) {
   try {
     if (!AI_CONFIG.url || !AI_CONFIG.apiKey) {
       throw new Error('AI模型配置不完整');
@@ -270,32 +270,82 @@ async function callAIModel(prompt, modelName = 'qwen-turbo') {
       ],
       max_tokens: Math.min(1000, modelConfig.maxTokens),
       temperature: 0.7,
-      stream: false
+      stream: isStream
     };
 
+    // 详细日志输出 - 请求信息
+    console.log('\n=== AI请求详细信息 ===');
     console.log(`🤖 调用AI模型: ${modelConfig.name} (${modelName})`);
+    console.log(`📡 API地址: ${apiUrl}`);
+    console.log(`🔧 请求配置:`, {
+      model: modelName,
+      max_tokens: requestData.max_tokens,
+      temperature: requestData.temperature,
+      stream: isStream
+    });
+    console.log(`💬 系统提示词:`, prompt.system.substring(0, 200) + '...');
+    console.log(`👤 用户消息:`, prompt.user);
+    console.log(`⏰ 请求时间:`, new Date().toLocaleString('zh-CN'));
+    console.log('========================\n');
 
     const response = await axios.post(apiUrl, requestData, {
       headers: {
         'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
         'Content-Type': 'application/json'
       },
-      timeout: AI_CONFIG.timeout
+      timeout: AI_CONFIG.timeout,
+      responseType: isStream ? 'stream' : 'json'
     });
 
-    if (response.data && response.data.choices && response.data.choices[0]) {
-      return response.data.choices[0].message.content;
+    if (isStream) {
+      // 返回流对象，不在这里处理
+      console.log('🚀 返回流式响应对象');
+      return response;
     } else {
-      throw new Error('AI响应格式异常');
+      // 详细日志输出 - 响应信息
+      console.log('\n=== AI响应详细信息 ===');
+      console.log(`✅ 响应状态:`, response.status);
+      console.log(`📊 响应数据:`, JSON.stringify(response.data, null, 2));
+      
+      if (response.data && response.data.choices && response.data.choices[0]) {
+        const aiResponse = response.data.choices[0].message.content;
+        console.log(`🎯 AI回复内容:`, aiResponse);
+        console.log(`⏰ 响应时间:`, new Date().toLocaleString('zh-CN'));
+        console.log('========================\n');
+        return aiResponse;
+      } else {
+        console.log('❌ AI响应格式异常:', response.data);
+        console.log('========================\n');
+        throw new Error('AI响应格式异常');
+      }
     }
   } catch (error) {
-    console.error('AI模型调用失败:', error.message);
+    // 详细错误日志
+    console.log('\n=== AI请求错误信息 ===');
+    console.error('❌ AI模型调用失败:', error.message);
     if (error.response) {
-      console.error('API响应错误:', error.response.status, error.response.data);
+      console.error('📡 API响应错误:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
     }
+    if (error.config) {
+      console.error('🔧 请求配置:', {
+        url: error.config.url,
+        method: error.config.method,
+        timeout: error.config.timeout
+      });
+    }
+    console.log(`⏰ 错误时间:`, new Date().toLocaleString('zh-CN'));
+    console.log('========================\n');
     
     // 如果AI调用失败，返回基于规则的回复
-    return generateFallbackResponse(prompt.user);
+    if (isStream) {
+      throw error; // 流式模式下抛出错误让上层处理
+    } else {
+      return generateFallbackResponse(prompt.user);
+    }
   }
 }
 
@@ -350,10 +400,10 @@ function generateSuggestions(message, customerContext) {
   return suggestions.slice(0, 6); // 返回前6个建议
 }
 
-// 发送消息到AI
+// 发送消息到AI（普通模式）
 router.post('/chat', async (req, res) => {
   try {
-    const { message, customerId, conversationId, model = 'qwen-turbo' } = req.body;
+    const { message, customerId, conversationId, model = 'Pro/deepseek-ai/DeepSeek-V3' } = req.body;
     
     if (!message || !message.trim()) {
       return res.status(400).json({
@@ -385,7 +435,7 @@ router.post('/chat', async (req, res) => {
     const prompt = generatePrompt(message, customerContext, conversationContext);
     
     // 调用AI模型
-    const aiResponse = await callAIModel(prompt, model);
+    const aiResponse = await callAIModel(prompt, model, false);
     
     // 更新对话历史
     conversation.push(
@@ -421,6 +471,216 @@ router.post('/chat', async (req, res) => {
       error: 'AI服务暂时不可用，请稍后重试',
       code: 'AI_SERVICE_ERROR'
     });
+  }
+});
+
+// 发送消息到AI（流式模式）
+router.post('/chat/stream', async (req, res) => {
+  try {
+    const { message, customerId, conversationId, model = 'Pro/deepseek-ai/DeepSeek-V3' } = req.body;
+    
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: '消息内容不能为空',
+        code: 'EMPTY_MESSAGE'
+      });
+    }
+    
+    // 设置SSE响应头
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control'
+    });
+    
+    // 获取客户上下文（如果提供了客户ID）
+    let customerContext = null;
+    if (customerId) {
+      const mockCustomers = require('./customers').mockCustomers || [];
+      customerContext = mockCustomers.find(c => c.id === customerId);
+    }
+    
+    // 获取对话历史
+    const sessionId = conversationId || uuidv4();
+    let conversation = conversationHistory.get(sessionId) || [];
+    
+    // 构建对话上下文
+    const conversationContext = conversation
+      .slice(-5)
+      .map(msg => `${msg.role}: ${msg.content}`)
+      .join('\n');
+    
+    // 生成AI提示词
+    const prompt = generatePrompt(message, customerContext, conversationContext);
+    
+    // 发送开始事件
+    res.write(`data: ${JSON.stringify({
+      type: 'start',
+      conversationId: sessionId,
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+    
+    try {
+      // 调用AI模型（流式）
+      const streamResponse = await callAIModel(prompt, model, true);
+      
+      let fullResponse = '';
+      let buffer = ''; // 用于处理不完整的数据块
+      
+      // 处理流式响应
+      streamResponse.data.on('data', (chunk) => {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // 保留最后一行不完整的数据
+        
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith('data: ')) {
+            const dataStr = trimmedLine.slice(6);
+            
+            if (dataStr === '[DONE]') {
+              // OpenAI标准：流结束标志
+              console.log('📡 收到流结束标志 [DONE]');
+              
+              // 发送完成事件
+              res.write(`data: ${JSON.stringify({
+                type: 'done',
+                fullResponse,
+                suggestions: generateSuggestions(message, customerContext),
+                timestamp: new Date().toISOString()
+              })}\n\n`);
+              
+              // 更新对话历史
+              conversation.push(
+                { role: 'user', content: message, timestamp: new Date() },
+                { role: 'assistant', content: fullResponse, timestamp: new Date() }
+              );
+              
+              if (conversation.length > 20) {
+                conversation = conversation.slice(-20);
+              }
+              
+              conversationHistory.set(sessionId, conversation);
+              
+              res.end();
+              return;
+            }
+            
+            if (dataStr) {
+              try {
+                const parsed = JSON.parse(dataStr);
+                console.log('📦 解析流数据:', JSON.stringify(parsed, null, 2));
+                
+                // OpenAI标准响应格式处理
+                if (parsed.choices && parsed.choices[0]) {
+                  const choice = parsed.choices[0];
+                  
+                  // 处理delta内容
+                  if (choice.delta && choice.delta.content) {
+                    const content = choice.delta.content;
+                    fullResponse += content;
+                    
+                    console.log('📝 发送增量内容:', content);
+                    
+                    // 发送增量内容事件
+                    res.write(`data: ${JSON.stringify({
+                      type: 'delta',
+                      content: content,
+                      timestamp: new Date().toISOString()
+                    })}\n\n`);
+                  }
+                  
+                  // 检查是否完成
+                  if (choice.finish_reason) {
+                    console.log('✅ 流完成，原因:', choice.finish_reason);
+                    
+                    // 发送完成事件
+                    res.write(`data: ${JSON.stringify({
+                      type: 'done',
+                      fullResponse,
+                      suggestions: generateSuggestions(message, customerContext),
+                      finishReason: choice.finish_reason,
+                      timestamp: new Date().toISOString()
+                    })}\n\n`);
+                    
+                    // 更新对话历史
+                    conversation.push(
+                      { role: 'user', content: message, timestamp: new Date() },
+                      { role: 'assistant', content: fullResponse, timestamp: new Date() }
+                    );
+                    
+                    if (conversation.length > 20) {
+                      conversation = conversation.slice(-20);
+                    }
+                    
+                    conversationHistory.set(sessionId, conversation);
+                    
+                    res.end();
+                    return;
+                  }
+                }
+              } catch (parseError) {
+                console.warn('⚠️ 解析流数据失败:', parseError.message, '原始数据:', dataStr);
+                // 忽略解析错误，继续处理
+              }
+            }
+          }
+        }
+      });
+      
+      // 处理流结束
+      streamResponse.data.on('end', () => {
+        console.log('🔚 流响应结束');
+        if (!res.writableEnded) {
+          res.write(`data: ${JSON.stringify({
+            type: 'done',
+            fullResponse,
+            suggestions: generateSuggestions(message, customerContext),
+            timestamp: new Date().toISOString()
+          })}\n\n`);
+          res.end();
+        }
+      });
+      
+      // 处理流错误
+      streamResponse.data.on('error', (error) => {
+        console.error('❌ 流响应错误:', error);
+        if (!res.writableEnded) {
+          res.write(`data: ${JSON.stringify({
+            type: 'error',
+            error: 'AI服务暂时不可用',
+            timestamp: new Date().toISOString()
+          })}\n\n`);
+          res.end();
+        }
+      });
+      
+    } catch (aiError) {
+      console.error('❌ AI流式调用失败:', aiError);
+      // 发送回退响应事件
+      const fallbackResponse = generateFallbackResponse(message);
+      res.write(`data: ${JSON.stringify({
+        type: 'fallback',
+        content: fallbackResponse,
+        suggestions: generateSuggestions(message, customerContext),
+        timestamp: new Date().toISOString()
+      })}\n\n`);
+      res.end();
+    }
+    
+  } catch (error) {
+    console.error('❌ 流式聊天处理失败:', error);
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        error: '服务暂时不可用，请稍后重试',
+        timestamp: new Date().toISOString()
+      })}\n\n`);
+      res.end();
+    }
   }
 });
 

@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 导入苹果风格动画 */
+@import './styles/apple-motion.css';
+
 /* 真实记分牌样式的翻转动画 - 分阶段防止穿模 */
 
 /* 向上翻转：旧内容向上翻转消失 */
@@ -67,6 +70,34 @@
 /* 确保3D变换正常工作 */
 * {
   transform-style: preserve-3d;
+}
+
+/* 海浪动画效果 */
+@keyframes wave1 {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0px);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-10px);
+  }
+}
+
+@keyframes wave2 {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0px);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-8px);
+  }
+}
+
+@keyframes wave3 {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0px);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-6px);
+  }
 }
 
 body {
