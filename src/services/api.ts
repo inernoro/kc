@@ -172,6 +172,7 @@ export const aiAPI = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
         },
         body: JSON.stringify(params),
       });
@@ -190,8 +191,8 @@ export const aiAPI = {
         if (!reader) {
           throw new Error('无法获取响应流读取器');
         }
-        
-        const decoder = new TextDecoder();
+
+        const decoder = new TextDecoder('utf-8');
         let buffer = '';
         
         console.log('📖 开始读取流数据');
@@ -208,13 +209,13 @@ export const aiAPI = {
             
             // 处理接收到的数据块
             buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || ''; // 保留不完整的行
-            
-            for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (trimmedLine.startsWith('data: ')) {
-                const dataStr = trimmedLine.slice(6);
+            const events = buffer.split('\n\n');
+            buffer = events.pop() || ''; // 保留不完整的事件
+
+            for (const event of events) {
+              const trimmedLine = event.trim();
+              if (trimmedLine.startsWith('data:')) {
+                const dataStr = trimmedLine.slice(5).trim();
                 
                 if (dataStr) {
                   try {

@@ -47,8 +47,15 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 请求压缩
-app.use(compression());
+// 请求压缩 - 对于SSE请求禁用压缩以避免延迟
+const shouldCompress = (req, res) => {
+  const acceptHeader = req.headers['accept'] || '';
+  if (acceptHeader.includes('text/event-stream')) {
+    return false;
+  }
+  return compression.filter(req, res);
+};
+app.use(compression({ filter: shouldCompress }));
 
 // 请求日志
 if (NODE_ENV === 'development') {
