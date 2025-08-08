@@ -1,71 +1,44 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User,
-  Calendar,
-  TrendingUp,
-  Clock,
-  Target,
-  Users,
-  Code,
-  GitPullRequest,
-  FileText,
-  Package,
-  Zap,
+import { AnimatePresence, motion } from 'framer-motion';
+import {
   Activity,
-  MessageSquare,
-  ChevronDown,
-  Sparkles,
-  CircuitBoard,
-  Database,
-  Cloud,
-  Shield,
-  BarChart3,
-  BookOpen,
-  Award,
-  TestTube,
-  Bug,
-  Plus,
-  ThumbsUp,
-  Send,
-  Bot,
-  Search,
-  Filter,
-  Calendar as CalendarIcon,
-  CheckCircle2,
   AlertTriangle,
-  XCircle,
-  Timer,
-  Star,
-  ArrowRight,
-  ArrowLeft,
-  Monitor,
-  Smartphone,
-  Tablet,
-  Download,
-  Eye,
-  Layers,
+  BookOpen,
+  Bot,
+  Bug,
   CheckCircle,
-  RefreshCw,
-  Crown,
-  Trophy,
-  PieChart,
-  Lightbulb,
-  Play,
-  Pause,
   ClipboardCheck,
-  Rocket
+  Clock,
+  Code,
+  Crown,
+  Database,
+  Eye,
+  FileText,
+  Layers,
+  Lightbulb,
+  MessageSquare,
+  Monitor,
+  Package,
+  Pause,
+  PieChart,
+  Play,
+  Rocket,
+  Send,
+  Smartphone,
+  Star,
+  Target,
+  Timer,
+  TrendingUp,
+  User,
+  Zap
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 // 导入组件
-import Sidebar from './Sidebar';
 import ChatArea from './ChatArea';
 import CustomerPanel from './CustomerPanel';
-import AssessmentSystem from './AssessmentSystem';
-import { Customer } from '../types/customer';
+import Sidebar from './Sidebar';
 
 // 品牌域模块
-import { FeatureRoadmap } from '../modules/product';
 
 // 定义模块配置接口
 interface ModuleConfig {
@@ -238,7 +211,7 @@ const productDemands: ProductDemand[] = [
     importance: '重要'
   },
   {
-    id: 'TAPD-002', 
+    id: 'TAPD-002',
     title: '社交云店店铺装修支持自定义配置',
     source: '商户需求',
     priority: 'Middle',
@@ -355,7 +328,7 @@ const productProjects: ProductProject[] = [
       {
         stage: '二稿',
         reviewer: '产品委员会',
-        result: '通过', 
+        result: '通过',
         feedback: '结构设计合理，策略组件化架构清晰',
         time: '2024-01-25'
       },
@@ -738,7 +711,7 @@ const DemandPool = ({ selectedDemand, onDemandSelect }: { selectedDemand: Produc
         <h3 className="text-lg font-semibold text-gray-900 mb-2">TAPD需求管理池</h3>
         <p className="text-sm text-gray-600">基于"七步成诗"法的需求全生命周期管理</p>
       </div>
-      
+
       {/* 四象限矩阵 */}
       <div className="mb-6">
         <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
@@ -752,21 +725,21 @@ const DemandPool = ({ selectedDemand, onDemandSelect }: { selectedDemand: Produc
             <div className="text-lg font-bold text-red-900">{quadrantStats.urgent_important}</div>
             <div className="text-xs text-red-700 opacity-75">立即处理</div>
           </div>
-          
+
           {/* 重要不紧急 - 改为更柔和的绿色调 */}
           <div className="bg-gradient-to-br from-emerald-50 to-green-100 p-2.5 rounded-md border border-emerald-200/60 shadow-sm">
             <div className="text-xs font-medium text-emerald-800 mb-1 opacity-90">重要不紧急</div>
             <div className="text-lg font-bold text-emerald-900">{quadrantStats.important_not_urgent}</div>
             <div className="text-xs text-emerald-700 opacity-75">计划安排</div>
           </div>
-          
+
           {/* 紧急不重要 - 改为更柔和的黄色调 */}
           <div className="bg-gradient-to-br from-amber-50 to-yellow-100 p-2.5 rounded-md border border-amber-200/60 shadow-sm">
             <div className="text-xs font-medium text-amber-800 mb-1 opacity-90">紧急不重要</div>
             <div className="text-lg font-bold text-amber-900">{quadrantStats.urgent_not_important}</div>
             <div className="text-xs text-amber-700 opacity-75">授权处理</div>
           </div>
-          
+
           {/* 不重要不紧急 - 改为更柔和的灰色调 */}
           <div className="bg-gradient-to-br from-slate-50 to-gray-100 p-2.5 rounded-md border border-slate-200/60 shadow-sm">
             <div className="text-xs font-medium text-slate-700 mb-1 opacity-90">不重要不紧急</div>
@@ -783,8 +756,8 @@ const DemandPool = ({ selectedDemand, onDemandSelect }: { selectedDemand: Produc
             onClick={() => onDemandSelect(demand)}
             className={`
               w-full text-left p-3 rounded-lg border transition-all duration-200
-              ${selectedDemand?.id === demand.id 
-                ? 'border-slate-300 bg-slate-50 shadow-sm' 
+              ${selectedDemand?.id === demand.id
+                ? 'border-slate-300 bg-slate-50 shadow-sm'
                 : 'border-gray-200 hover:border-slate-300 hover:bg-gray-50'
               }
             `}
@@ -796,24 +769,23 @@ const DemandPool = ({ selectedDemand, onDemandSelect }: { selectedDemand: Produc
                 px-2 py-1 text-xs rounded-full whitespace-nowrap flex-shrink-0
                 ${demand.priority === 'High' ? 'bg-red-50 text-red-700 border border-red-200' :
                   demand.priority === 'Middle' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                  demand.priority === 'Low' ? 'bg-slate-50 text-slate-700 border border-slate-200' :
-                  'bg-gray-50 text-gray-700 border border-gray-200'
+                    demand.priority === 'Low' ? 'bg-slate-50 text-slate-700 border border-slate-200' :
+                      'bg-gray-50 text-gray-700 border border-gray-200'
                 }
               `}>
                 {demand.priority}
               </span>
             </div>
-            
+
             {/* 需求状态和评审信息 */}
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="flex items-center">
-                <div className={`w-2 h-2 rounded-full mr-2 ${
-                  demand.status === '待评审' ? 'bg-amber-500' :
+                <div className={`w-2 h-2 rounded-full mr-2 ${demand.status === '待评审' ? 'bg-amber-500' :
                   demand.status === '待规划' ? 'bg-slate-500' :
-                  demand.status === '已立项' ? 'bg-emerald-500' :
-                  demand.status === '开发中' ? 'bg-violet-500' :
-                  demand.status === '已上线' ? 'bg-blue-500' : 'bg-rose-500'
-                }`} />
+                    demand.status === '已立项' ? 'bg-emerald-500' :
+                      demand.status === '开发中' ? 'bg-violet-500' :
+                        demand.status === '已上线' ? 'bg-blue-500' : 'bg-rose-500'
+                  }`} />
                 {demand.status}
               </span>
               <span className="text-gray-500">{demand.submitTime}</span>
@@ -822,25 +794,22 @@ const DemandPool = ({ selectedDemand, onDemandSelect }: { selectedDemand: Produc
             {/* 客户和来源 */}
             <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
               <span>{demand.customer}</span>
-              <span className={`px-2 py-1 rounded border ${
-                demand.source === '商户需求' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+              <span className={`px-2 py-1 rounded border ${demand.source === '商户需求' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                 demand.source === '代理伙伴' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                'bg-slate-50 text-slate-700 border-slate-200'
-              }`}>
+                  'bg-slate-50 text-slate-700 border-slate-200'
+                }`}>
                 {demand.source}
               </span>
             </div>
 
             {/* 紧急重要象限 */}
             <div className="flex items-center space-x-2 text-xs">
-              <span className={`px-2 py-1 rounded border ${
-                demand.urgency === '紧急' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-50 text-gray-700 border-gray-200'
-              }`}>
+              <span className={`px-2 py-1 rounded border ${demand.urgency === '紧急' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-50 text-gray-700 border-gray-200'
+                }`}>
                 {demand.urgency}
               </span>
-              <span className={`px-2 py-1 rounded border ${
-                demand.importance === '重要' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-700 border-gray-200'
-              }`}>
+              <span className={`px-2 py-1 rounded border ${demand.importance === '重要' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-700 border-gray-200'
+                }`}>
                 {demand.importance}
               </span>
               <div className="ml-auto">
@@ -864,7 +833,7 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
 
   const handleSendMessage = () => {
     if (!inputMessage.trim() || !selectedDemand) return;
-    
+
     const userMessage = {
       id: Date.now().toString(),
       type: 'user',
@@ -884,7 +853,7 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
       };
       setMessages(prev => [...prev, aiResponse]);
     }, 1000);
-      
+
     setInputMessage('');
   };
 
@@ -1043,66 +1012,66 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
 
   // 七步成诗流程定义
   const sevenStepsPoetry = [
-    { 
-      id: '需求管理', 
-      name: '需求管理', 
-      icon: User, 
-      color: 'text-green-600', 
-      bgColor: 'bg-green-50', 
+    {
+      id: '需求管理',
+      name: '需求管理',
+      icon: User,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
       description: '收集整理客户需求，明确项目目标'
     },
-    { 
-      id: '产品规划', 
-      name: '产品规划', 
-      icon: Target, 
-      color: 'text-blue-600', 
-      bgColor: 'bg-blue-50', 
+    {
+      id: '产品规划',
+      name: '产品规划',
+      icon: Target,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200',
       description: '制定产品方案，设计用户体验'
     },
-    { 
-      id: '产品立项', 
-      name: '产品立项', 
-      icon: Lightbulb, 
-      color: 'text-purple-600', 
-      bgColor: 'bg-purple-50', 
+    {
+      id: '产品立项',
+      name: '产品立项',
+      icon: Lightbulb,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
       borderColor: 'border-purple-200',
       description: '项目评审通过，正式启动开发'
     },
-    { 
-      id: '开发跟踪', 
-      name: '开发跟踪', 
-      icon: Code, 
-      color: 'text-orange-600', 
-      bgColor: 'bg-orange-50', 
+    {
+      id: '开发跟踪',
+      name: '开发跟踪',
+      icon: Code,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
       borderColor: 'border-orange-200',
       description: '监控开发进度，确保质量交付'
     },
-    { 
-      id: '产品验收', 
-      name: '产品验收', 
-      icon: CheckCircle, 
-      color: 'text-teal-600', 
-      bgColor: 'bg-teal-50', 
+    {
+      id: '产品验收',
+      name: '产品验收',
+      icon: CheckCircle,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
       borderColor: 'border-teal-200',
       description: '功能测试验收，确认交付标准'
     },
-    { 
-      id: '上线发布', 
-      name: '上线发布', 
-      icon: Rocket, 
-      color: 'text-red-600', 
-      bgColor: 'bg-red-50', 
+    {
+      id: '上线发布',
+      name: '上线发布',
+      icon: Rocket,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
       borderColor: 'border-red-200',
       description: '正式上线部署，用户开始使用'
     },
-    { 
-      id: '产品总结', 
-      name: '产品总结', 
-      icon: Star, 
-      color: 'text-pink-600', 
-      bgColor: 'bg-pink-50', 
+    {
+      id: '产品总结',
+      name: '产品总结',
+      icon: Star,
+      color: 'text-pink-600',
+      bgColor: 'bg-pink-50',
       borderColor: 'border-pink-200',
       description: '项目复盘总结，沉淀最佳实践'
     }
@@ -1112,7 +1081,7 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
     if (!relatedProject) return 'pending';
     const currentIndex = sevenStepsPoetry.findIndex(s => s.id === relatedProject.currentStage);
     const stepIndex = sevenStepsPoetry.findIndex(s => s.id === stepId);
-    
+
     if (stepIndex < currentIndex) return 'completed';
     if (stepIndex === currentIndex) return 'current';
     return 'pending';
@@ -1127,112 +1096,109 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
         </h3>
         <div className="text-sm text-gray-600">
           {selectedDemand ? `「${selectedDemand.title}」项目管理` : '选择需求查看对应的项目流程'}
-            </div>
-            </div>
+        </div>
+      </div>
 
-        <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4 overflow-y-auto">
         {selectedDemand ? (
           <>
             {/* 项目概览卡片 */}
             <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-4 border border-purple-200">
               <div className="flex items-start justify-between mb-3">
-              <div>
+                <div>
                   <h4 className="font-bold text-gray-900 text-lg">{selectedDemand.title}</h4>
                   <p className="text-sm text-gray-600 mt-1">{selectedDemand.customer} • {selectedDemand.source}</p>
-              </div>
+                </div>
                 <div className="text-right">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedDemand.priority === 'High' ? 'bg-red-100 text-red-700' :
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${selectedDemand.priority === 'High' ? 'bg-red-100 text-red-700' :
                     selectedDemand.priority === 'Middle' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
+                      'bg-gray-100 text-gray-700'
+                    }`}>
                     {selectedDemand.priority}
                   </span>
+                </div>
               </div>
-              </div>
-              
+
               {relatedProject && (
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="bg-white rounded-lg p-3">
                     <div className="text-gray-600">当前阶段</div>
                     <div className="font-bold text-purple-600">{relatedProject.currentStage}</div>
-              </div>
+                  </div>
                   <div className="bg-white rounded-lg p-3">
                     <div className="text-gray-600">完成进度</div>
                     <div className="font-bold text-blue-600">{relatedProject.progress}%</div>
-            </div>
+                  </div>
                   <div className="bg-white rounded-lg p-3">
                     <div className="text-gray-600">项目经理</div>
                     <div className="font-bold text-gray-900">{relatedProject.manager}</div>
                   </div>
                 </div>
               )}
-          </div>
+            </div>
 
-          {/* 七步成诗流程 */}
+            {/* 七步成诗流程 */}
             <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-semibold text-gray-900">🎋 七步成诗流程</h4>
                 <div className="text-xs text-gray-500">传统项目管理哲学</div>
               </div>
-              
-            <div className="space-y-3">
+
+              <div className="space-y-3">
                 {sevenStepsPoetry.map((step, index) => {
                   const status = getStepStatus(step.id);
-                const IconComponent = step.icon;
-                  
-                return (
-                    <div key={step.id} className={`flex items-center p-3 rounded-lg border transition-all duration-200 relative overflow-hidden ${
-                      status === 'completed' ? `${step.bgColor} ${step.borderColor}` :
+                  const IconComponent = step.icon;
+
+                  return (
+                    <div key={step.id} className={`flex items-center p-3 rounded-lg border transition-all duration-200 relative overflow-hidden ${status === 'completed' ? `${step.bgColor} ${step.borderColor}` :
                       status === 'current' ? `${step.bgColor} ${step.borderColor} ring-2 ring-offset-2 ring-blue-200` :
-                      'bg-gray-50 border-gray-200'
-                    }`}>
+                        'bg-gray-50 border-gray-200'
+                      }`}>
                       {/* 海浪动效 - 仅在开发跟踪且正在进行时显示 */}
                       {status === 'current' && step.id === '开发跟踪' && relatedProject && (
                         <div className="absolute inset-0 overflow-hidden rounded-lg">
                           {/* 基础进度条背景 */}
                           <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-gray-300"></div>
-                          
+
                           {/* 进度条海浪效果 */}
                           <div className="absolute inset-0" style={{ width: `${relatedProject.progress}%` }}>
                             {/* 底层进度色 */}
                             <div className="absolute inset-0 bg-gradient-to-r from-blue-400/80 to-cyan-500/80"></div>
-                            
+
                             {/* 第一层海浪 - 主海浪 */}
                             <div className="absolute inset-0 overflow-hidden">
-                              <div className="absolute top-0 left-0 w-[150%] h-full bg-gradient-to-r from-blue-500/60 via-cyan-400/80 to-blue-500/60 animate-[progressWave1_3s_ease-in-out_infinite]" 
-                                   style={{
-                                     clipPath: 'polygon(0 30%, 20% 40%, 40% 30%, 60% 40%, 80% 30%, 100% 40%, 100% 100%, 0% 100%)',
-                                     transform: 'translateX(-25%)'
-                                   }} />
-          </div>
+                              <div className="absolute top-0 left-0 w-[150%] h-full bg-gradient-to-r from-blue-500/60 via-cyan-400/80 to-blue-500/60 animate-[progressWave1_3s_ease-in-out_infinite]"
+                                style={{
+                                  clipPath: 'polygon(0 30%, 20% 40%, 40% 30%, 60% 40%, 80% 30%, 100% 40%, 100% 100%, 0% 100%)',
+                                  transform: 'translateX(-25%)'
+                                }} />
+                            </div>
 
                             {/* 第二层海浪 - 辅助海浪 */}
                             <div className="absolute inset-0 overflow-hidden">
-                              <div className="absolute top-0 left-0 w-[130%] h-full bg-gradient-to-r from-cyan-300/40 via-blue-300/60 to-cyan-300/40 animate-[progressWave2_4s_ease-in-out_infinite_0.5s]" 
-                                   style={{
-                                     clipPath: 'polygon(0 50%, 25% 45%, 50% 50%, 75% 45%, 100% 50%, 100% 100%, 0% 100%)',
-                                     transform: 'translateX(-15%)'
-                                   }} />
-                </div>
-                
+                              <div className="absolute top-0 left-0 w-[130%] h-full bg-gradient-to-r from-cyan-300/40 via-blue-300/60 to-cyan-300/40 animate-[progressWave2_4s_ease-in-out_infinite_0.5s]"
+                                style={{
+                                  clipPath: 'polygon(0 50%, 25% 45%, 50% 50%, 75% 45%, 100% 50%, 100% 100%, 0% 100%)',
+                                  transform: 'translateX(-15%)'
+                                }} />
+                            </div>
+
                             {/* 第三层海浪 - 表面细浪 */}
                             <div className="absolute inset-0 overflow-hidden">
-                              <div className="absolute top-0 left-0 w-[120%] h-full bg-gradient-to-r from-white/20 via-cyan-200/40 to-white/20 animate-[progressWave3_2s_ease-in-out_infinite_1s]" 
-                                   style={{
-                                     clipPath: 'polygon(0 20%, 30% 25%, 60% 20%, 90% 25%, 100% 20%, 100% 100%, 0% 100%)',
-                                     transform: 'translateX(-10%)'
-                                   }} />
-                  </div>
-                  </div>
-                </div>
+                              <div className="absolute top-0 left-0 w-[120%] h-full bg-gradient-to-r from-white/20 via-cyan-200/40 to-white/20 animate-[progressWave3_2s_ease-in-out_infinite_1s]"
+                                style={{
+                                  clipPath: 'polygon(0 20%, 30% 25%, 60% 20%, 90% 25%, 100% 20%, 100% 100%, 0% 100%)',
+                                  transform: 'translateX(-10%)'
+                                }} />
+                            </div>
+                          </div>
+                        </div>
                       )}
 
                       <div className="flex items-center space-x-3 flex-1 relative z-10">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          status === 'completed' ? step.bgColor : 
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${status === 'completed' ? step.bgColor :
                           status === 'current' ? step.bgColor : 'bg-gray-100'
-                        }`}>
+                          }`}>
                           {status === 'completed' ? (
                             <CheckCircle className="w-5 h-5 text-green-600" />
                           ) : status === 'current' ? (
@@ -1241,17 +1207,16 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                             <span className="text-sm font-medium text-gray-400">{index + 1}</span>
                           )}
                         </div>
-                        
+
                         <div className="flex-1">
-                          <div className={`font-medium ${
-                            status === 'completed' || status === 'current' ? 'text-gray-900' : 'text-gray-500'
-                      }`}>
-                        {step.name}
+                          <div className={`font-medium ${status === 'completed' || status === 'current' ? 'text-gray-900' : 'text-gray-500'
+                            }`}>
+                            {step.name}
                           </div>
                           <div className="text-xs text-gray-600 mt-1">{step.description}</div>
                         </div>
                       </div>
-                      
+
                       <div className="text-right relative z-10">
                         {status === 'completed' && (
                           <span className="text-xs text-green-600 font-medium">已完成</span>
@@ -1261,13 +1226,13 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                         )}
                         {status === 'pending' && (
                           <span className="text-xs text-gray-400">待开始</span>
-          )}
-        </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-                );
-              })}
             </div>
-          </div>
 
             {/* AI助手对话区域 */}
             <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -1277,8 +1242,8 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                   AI项目助手
                 </h4>
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">在线</span>
-                        </div>
-                
+              </div>
+
               <div className="h-40 overflow-y-auto border border-gray-100 rounded-lg p-3 mb-3 bg-gray-50">
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-500 text-sm py-8">
@@ -1286,28 +1251,26 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                     <p>AI助手准备就绪，询问项目相关问题</p>
                     <div className="text-xs text-gray-400 mt-2">
                       例如："当前阶段有什么风险？" "下一步计划是什么？"
-                      </div>
-                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {messages.map((message) => (
                       <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-3 rounded-lg text-sm ${
-                          message.type === 'user' 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-white border border-gray-200'
-                        }`}>
-                          <div className="whitespace-pre-wrap">{message.content}</div>
-                          <div className={`text-xs mt-2 ${
-                            message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                        <div className={`max-w-[80%] p-3 rounded-lg text-sm ${message.type === 'user'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white border border-gray-200'
                           }`}>
+                          <div className="whitespace-pre-wrap">{message.content}</div>
+                          <div className={`text-xs mt-2 ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                            }`}>
                             {message.timestamp}
-                    </div>
-                  </div>
-                </div>
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
-              )}
+                )}
               </div>
 
               <div className="flex space-x-2">
@@ -1335,9 +1298,9 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
               <Layers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h4 className="text-lg font-medium mb-2">选择需求开始项目管理</h4>
               <p className="text-sm">从左侧选择一个需求，查看对应的七步成诗项目流程</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );
@@ -1348,7 +1311,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
   // 冲突分析数据
   const getConflictAnalysis = (demand: ProductDemand) => {
     const conflicts = [];
-    
+
     // 模拟冲突检测逻辑
     if (demand.title.includes('智能营销')) {
       conflicts.push({
@@ -1360,7 +1323,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         misunderstanding: '可能混淆门店发奖与分销佣金的触发条件',
         suggestion: '建议统一奖励机制设计，避免用户困惑'
       });
-      
+
       conflicts.push({
         type: '数据冲突',
         severity: 'medium',
@@ -1371,7 +1334,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         suggestion: '制定统一的积分奖励标准和展示规范'
       });
     }
-    
+
     if (demand.title.includes('社交云店')) {
       conflicts.push({
         type: 'UI冲突',
@@ -1383,7 +1346,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         suggestion: '整合装修入口，制定统一的装修流程'
       });
     }
-    
+
     if (demand.title.includes('会员管理')) {
       conflicts.push({
         type: '架构冲突',
@@ -1395,14 +1358,14 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         suggestion: '重新设计用户角色体系，明确权限边界'
       });
     }
-    
+
     return conflicts;
   };
 
   // 技术影响评估
   const getTechnicalImpact = (demand: ProductDemand) => {
     const impacts = [];
-    
+
     if (demand.developmentCost >= 7) {
       impacts.push({
         area: '数据库设计',
@@ -1410,7 +1373,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         description: '需要新增多张业务表，可能影响现有查询性能',
         suggestion: '考虑分库分表，优化索引设计'
       });
-      
+
       impacts.push({
         area: '接口设计',
         impact: 'medium',
@@ -1418,7 +1381,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         suggestion: '采用API版本控制，确保向下兼容'
       });
     }
-    
+
     if (demand.title.includes('智能营销') || demand.title.includes('会员管理')) {
       impacts.push({
         area: '缓存策略',
@@ -1427,14 +1390,14 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         suggestion: '使用Redis集群，分层缓存设计'
       });
     }
-    
+
     return impacts;
   };
 
   // 业务风险评估
   const getBusinessRisks = (demand: ProductDemand) => {
     const risks = [];
-    
+
     if (demand.urgency === '紧急' && demand.importance === '重要') {
       risks.push({
         type: '时间风险',
@@ -1443,7 +1406,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         mitigation: '增加code review轮次，延长测试时间'
       });
     }
-    
+
     if (demand.businessValue / demand.developmentCost < 1.2) {
       risks.push({
         type: '投入产出风险',
@@ -1452,7 +1415,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         mitigation: '重新评估需求价值，考虑分期实现'
       });
     }
-    
+
     if (demand.customer.includes('代理') || demand.source === '代理伙伴') {
       risks.push({
         type: '需求变更风险',
@@ -1461,7 +1424,7 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
         mitigation: '锁定需求范围，制定变更管理流程'
       });
     }
-    
+
     return risks;
   };
 
@@ -1495,311 +1458,306 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
 
       <div className="flex-1 overflow-y-auto px-3 pb-3">
         <div className="space-y-3">
-        {/* 冲突分析 */}
-        {conflicts.length > 0 && (
-          <div className="bg-white rounded-lg border border-red-200 shadow-sm overflow-hidden">
-            <div className="p-2.5 border-b border-red-100 bg-gradient-to-r from-red-50 to-orange-50">
-              <h4 className="font-medium text-red-900 flex items-center text-xs">
-                <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
-                冲突风险分析
-                <span className="ml-2 text-xs bg-red-200 text-red-800 px-1.5 py-0.5 rounded-full font-medium">
-                  {conflicts.length}个冲突
-                </span>
-              </h4>
-            </div>
-            <div className="p-2.5 space-y-2.5">
-              {conflicts.map((conflict, index) => (
-                <div key={index} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2.5 space-y-2 border border-gray-200">
-                  {/* 冲突头部信息 */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        conflict.severity === 'high' ? 'bg-red-500 shadow-red-300 shadow-sm' :
-                        conflict.severity === 'medium' ? 'bg-amber-500 shadow-amber-300 shadow-sm' : 'bg-emerald-500 shadow-emerald-300 shadow-sm'
-                      }`} />
-                      <span className="font-medium text-gray-800 text-xs">{conflict.type}</span>
+          {/* 冲突分析 */}
+          {conflicts.length > 0 && (
+            <div className="bg-white rounded-lg border border-red-200 shadow-sm overflow-hidden">
+              <div className="p-2.5 border-b border-red-100 bg-gradient-to-r from-red-50 to-orange-50">
+                <h4 className="font-medium text-red-900 flex items-center text-xs">
+                  <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
+                  冲突风险分析
+                  <span className="ml-2 text-xs bg-red-200 text-red-800 px-1.5 py-0.5 rounded-full font-medium">
+                    {conflicts.length}个冲突
+                  </span>
+                </h4>
+              </div>
+              <div className="p-2.5 space-y-2.5">
+                {conflicts.map((conflict, index) => (
+                  <div key={index} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2.5 space-y-2 border border-gray-200">
+                    {/* 冲突头部信息 */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${conflict.severity === 'high' ? 'bg-red-500 shadow-red-300 shadow-sm' :
+                          conflict.severity === 'medium' ? 'bg-amber-500 shadow-amber-300 shadow-sm' : 'bg-emerald-500 shadow-emerald-300 shadow-sm'
+                          }`} />
+                        <span className="font-medium text-gray-800 text-xs">{conflict.type}</span>
+                      </div>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium">
+                          {conflict.similarity}%
+                        </span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${conflict.severity === 'high' ? 'bg-red-100 text-red-700 border border-red-200' :
+                          conflict.severity === 'medium' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          }`}>
+                          {conflict.severity === 'high' ? '高风险' : conflict.severity === 'medium' ? '中风险' : '低风险'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-1.5">
-                      <span className="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium">
-                        {conflict.similarity}%
+
+                    {/* 冲突对象 */}
+                    <div className="bg-white rounded p-2 border-l-2 border-blue-400 shadow-sm">
+                      <div className="text-xs text-slate-500 mb-0.5 font-medium">冲突对象</div>
+                      <div className="text-xs text-blue-700 font-medium break-words">{conflict.conflictWith}</div>
+                    </div>
+
+                    {/* 问题描述 */}
+                    <div className="bg-white rounded p-2 border-l-2 border-slate-300 shadow-sm">
+                      <div className="text-xs text-slate-500 mb-0.5 font-medium">问题描述</div>
+                      <div className="text-xs text-slate-700 leading-relaxed break-words">{conflict.description}</div>
+                    </div>
+
+                    {/* 误解风险和修正建议 */}
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded p-2 border border-orange-200 shadow-sm">
+                        <div className="flex items-start space-x-1">
+                          <AlertTriangle className="w-3 h-3 text-orange-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="text-xs font-medium text-orange-900 mb-0.5">误解风险</div>
+                            <div className="text-xs text-orange-800 leading-relaxed break-words">{conflict.misunderstanding}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded p-2 border border-blue-200 shadow-sm">
+                        <div className="flex items-start space-x-1">
+                          <CheckCircle className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="text-xs font-medium text-blue-900 mb-0.5">修正建议</div>
+                            <div className="text-xs text-blue-800 leading-relaxed break-words">{conflict.suggestion}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 技术影响评估 */}
+          {technicalImpacts.length > 0 && (
+            <div className="bg-white rounded-lg border border-blue-200 shadow-sm overflow-hidden">
+              <div className="p-2.5 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <h4 className="font-medium text-blue-900 flex items-center text-xs">
+                  <Code className="w-3.5 h-3.5 mr-1.5" />
+                  技术影响评估
+                </h4>
+              </div>
+              <div className="p-2.5 space-y-2">
+                {technicalImpacts.map((impact, index) => (
+                  <div key={index} className="bg-gradient-to-br from-slate-50 to-slate-100 rounded p-2 space-y-1.5 border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-slate-800 text-xs">{impact.area}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium border ${impact.impact === 'high' ? 'bg-red-100 text-red-700 border-red-200' :
+                        impact.impact === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                        }`}>
+                        {impact.impact === 'high' ? '高影响' : impact.impact === 'medium' ? '中影响' : '低影响'}
                       </span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                        conflict.severity === 'high' ? 'bg-red-100 text-red-700 border border-red-200' :
-                        conflict.severity === 'medium' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                    }`}>
-                      {conflict.severity === 'high' ? '高风险' : conflict.severity === 'medium' ? '中风险' : '低风险'}
-                    </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed break-words">{impact.description}</p>
+                    <div className="text-xs bg-gradient-to-br from-emerald-50 to-green-100 text-emerald-800 p-2 rounded border border-emerald-200 leading-relaxed shadow-sm">
+                      💡 建议: {impact.suggestion}
                     </div>
                   </div>
-                  
-                  {/* 冲突对象 */}
-                  <div className="bg-white rounded p-2 border-l-2 border-blue-400 shadow-sm">
-                    <div className="text-xs text-slate-500 mb-0.5 font-medium">冲突对象</div>
-                    <div className="text-xs text-blue-700 font-medium break-words">{conflict.conflictWith}</div>
-                    </div>
-                    
-                  {/* 问题描述 */}
-                  <div className="bg-white rounded p-2 border-l-2 border-slate-300 shadow-sm">
-                    <div className="text-xs text-slate-500 mb-0.5 font-medium">问题描述</div>
-                    <div className="text-xs text-slate-700 leading-relaxed break-words">{conflict.description}</div>
-                    </div>
-                    
-                  {/* 误解风险和修正建议 */}
-                  <div className="grid grid-cols-1 gap-1.5">
-                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded p-2 border border-orange-200 shadow-sm">
-                      <div className="flex items-start space-x-1">
-                        <AlertTriangle className="w-3 h-3 text-orange-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <div className="text-xs font-medium text-orange-900 mb-0.5">误解风险</div>
-                          <div className="text-xs text-orange-800 leading-relaxed break-words">{conflict.misunderstanding}</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded p-2 border border-blue-200 shadow-sm">
-                      <div className="flex items-start space-x-1">
-                        <CheckCircle className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <div className="text-xs font-medium text-blue-900 mb-0.5">修正建议</div>
-                          <div className="text-xs text-blue-800 leading-relaxed break-words">{conflict.suggestion}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 技术影响评估 */}
-        {technicalImpacts.length > 0 && (
-          <div className="bg-white rounded-lg border border-blue-200 shadow-sm overflow-hidden">
-            <div className="p-2.5 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <h4 className="font-medium text-blue-900 flex items-center text-xs">
-                <Code className="w-3.5 h-3.5 mr-1.5" />
-                技术影响评估
-              </h4>
-            </div>
-            <div className="p-2.5 space-y-2">
-              {technicalImpacts.map((impact, index) => (
-                <div key={index} className="bg-gradient-to-br from-slate-50 to-slate-100 rounded p-2 space-y-1.5 border border-slate-200">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-slate-800 text-xs">{impact.area}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium border ${
-                      impact.impact === 'high' ? 'bg-red-100 text-red-700 border-red-200' :
-                      impact.impact === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                    }`}>
-                      {impact.impact === 'high' ? '高影响' : impact.impact === 'medium' ? '中影响' : '低影响'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed break-words">{impact.description}</p>
-                  <div className="text-xs bg-gradient-to-br from-emerald-50 to-green-100 text-emerald-800 p-2 rounded border border-emerald-200 leading-relaxed shadow-sm">
-                    💡 建议: {impact.suggestion}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 业务风险评估 */}
-        {businessRisks.length > 0 && (
-          <div className="bg-white rounded-lg border border-amber-200 shadow-sm overflow-hidden">
-            <div className="p-2.5 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50">
-              <h4 className="font-medium text-amber-900 flex items-center text-xs">
-                <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
-                业务风险评估
-              </h4>
-            </div>
-            <div className="p-2.5 space-y-2">
-              {businessRisks.map((risk, index) => (
-                <div key={index} className="bg-gradient-to-br from-slate-50 to-slate-100 rounded p-2 space-y-1.5 border border-slate-200">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-slate-800 text-xs">{risk.type}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium border ${
-                      risk.level === 'high' ? 'bg-red-100 text-red-700 border-red-200' :
-                      risk.level === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                    }`}>
-                      {risk.level === 'high' ? '高风险' : risk.level === 'medium' ? '中风险' : '低风险'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed break-words">{risk.description}</p>
-                  <div className="text-xs bg-gradient-to-br from-sky-50 to-blue-100 text-sky-800 p-2 rounded border border-sky-200 leading-relaxed shadow-sm">
-                    🛡️ 缓解措施: {risk.mitigation}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 米多产品体系 */}
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-2.5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-purple-50">
-            <h4 className="font-medium text-slate-900 flex items-center text-xs">
-              <Layers className="w-3.5 h-3.5 text-purple-600 mr-1.5" />
-              米多产品架构影响
-            </h4>
-          </div>
-          <div className="p-2.5 space-y-1.5">
-            <div className="grid grid-cols-1 gap-1.5">
-              <div className="border border-blue-200 rounded p-2 bg-gradient-to-br from-blue-50 to-sky-50 shadow-sm">
-                <div className="font-medium text-blue-900 mb-0.5 flex items-center text-xs">
-                  <Database className="w-3 h-3 mr-1" />
-                  平台层影响
-                </div>
-                <div className="text-xs text-blue-700 leading-relaxed">
-                  对{MIDO_PRODUCT_STRUCTURE.platform}的核心数据架构产生影响
-                </div>
-              </div>
-              
-              <div className="border border-emerald-200 rounded p-2 bg-gradient-to-br from-emerald-50 to-green-50 shadow-sm">
-                <div className="font-medium text-emerald-900 mb-0.5 flex items-center text-xs">
-                  <Monitor className="w-3 h-3 mr-1" />
-                  系统层影响
-                </div>
-                <div className="text-xs text-emerald-700 leading-relaxed">
-                  主要影响: {MIDO_PRODUCT_STRUCTURE.systems.slice(0, 2).join('、')}
-                </div>
-              </div>
-              
-              <div className="border border-purple-200 rounded p-2 bg-gradient-to-br from-purple-50 to-violet-50 shadow-sm">
-                <div className="font-medium text-purple-900 mb-0.5 flex items-center text-xs">
-                  <Smartphone className="w-3 h-3 mr-1" />
-                  应用层影响
-                </div>
-                <div className="text-xs text-purple-700 leading-relaxed">
-                  涉及{MIDO_PRODUCT_STRUCTURE.applications.filter(app => 
-                    selectedDemand.title.includes(app.substring(0, 2))
-                  ).join('、')}等系统
-                </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* 项目版本信息（如果有关联项目） */}
-        {relatedProject && (
+          {/* 业务风险评估 */}
+          {businessRisks.length > 0 && (
+            <div className="bg-white rounded-lg border border-amber-200 shadow-sm overflow-hidden">
+              <div className="p-2.5 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50">
+                <h4 className="font-medium text-amber-900 flex items-center text-xs">
+                  <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
+                  业务风险评估
+                </h4>
+              </div>
+              <div className="p-2.5 space-y-2">
+                {businessRisks.map((risk, index) => (
+                  <div key={index} className="bg-gradient-to-br from-slate-50 to-slate-100 rounded p-2 space-y-1.5 border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-slate-800 text-xs">{risk.type}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium border ${risk.level === 'high' ? 'bg-red-100 text-red-700 border-red-200' :
+                        risk.level === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                        }`}>
+                        {risk.level === 'high' ? '高风险' : risk.level === 'medium' ? '中风险' : '低风险'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed break-words">{risk.description}</p>
+                    <div className="text-xs bg-gradient-to-br from-sky-50 to-blue-100 text-sky-800 p-2 rounded border border-sky-200 leading-relaxed shadow-sm">
+                      🛡️ 缓解措施: {risk.mitigation}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 米多产品体系 */}
           <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-2.5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-green-50">
+            <div className="p-2.5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-purple-50">
               <h4 className="font-medium text-slate-900 flex items-center text-xs">
-                <Package className="w-3.5 h-3.5 text-green-600 mr-1.5" />
-                关联项目信息
+                <Layers className="w-3.5 h-3.5 text-purple-600 mr-1.5" />
+                米多产品架构影响
               </h4>
             </div>
-            <div className="p-2.5 space-y-2">
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="space-y-1">
-                  <div>
-                    <span className="text-slate-500">版本号:</span>
-                    <span className="text-purple-700 font-bold ml-1">{relatedProject.version}</span>
+            <div className="p-2.5 space-y-1.5">
+              <div className="grid grid-cols-1 gap-1.5">
+                <div className="border border-blue-200 rounded p-2 bg-gradient-to-br from-blue-50 to-sky-50 shadow-sm">
+                  <div className="font-medium text-blue-900 mb-0.5 flex items-center text-xs">
+                    <Database className="w-3 h-3 mr-1" />
+                    平台层影响
                   </div>
-                  <div>
-                    <span className="text-slate-500">版本类型:</span>
-                    <span className={`ml-1 px-1 py-0.5 rounded text-xs font-medium border ${
-                      relatedProject.versionType === '大版本' ? 'bg-red-100 text-red-700 border-red-200' :
-                      relatedProject.versionType === '中版本' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                      'bg-emerald-100 text-emerald-700 border-emerald-200'
-                    }`}>
-                      {relatedProject.versionType}
-                    </span>
+                  <div className="text-xs text-blue-700 leading-relaxed">
+                    对{MIDO_PRODUCT_STRUCTURE.platform}的核心数据架构产生影响
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <div>
-                    <span className="text-slate-500">当前状态:</span>
-                    <span className="text-blue-700 font-medium ml-1">{relatedProject.status}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">预计交付:</span>
-                    <span className="text-slate-800 ml-1 font-medium">{relatedProject.deadline}</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* 进度条 */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-500">整体进度</span>
-                  <span className="text-sm font-bold text-gray-900">{relatedProject.progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
-                  <div 
-                    className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500 shadow-sm"
-                    style={{ width: `${relatedProject.progress}%` }}
-                  />
-                </div>
-              </div>
 
-              {/* 团队信息 */}
-              <div className="border-t border-slate-100 pt-2">
-                <div className="text-xs font-medium text-slate-800 mb-1">项目团队</div>
-                <div className="space-y-0.5 text-xs">
-                  <div className="flex items-center space-x-1">
-                    <User className="w-3 h-3 text-purple-600" />
-                    <span className="text-slate-500">产品经理:</span>
-                    <span className="text-slate-800 font-medium">{relatedProject.manager}</span>
+                <div className="border border-emerald-200 rounded p-2 bg-gradient-to-br from-emerald-50 to-green-50 shadow-sm">
+                  <div className="font-medium text-emerald-900 mb-0.5 flex items-center text-xs">
+                    <Monitor className="w-3 h-3 mr-1" />
+                    系统层影响
                   </div>
-                  {relatedProject.developer && (
-                    <div className="flex items-center space-x-1">
-                      <Code className="w-3 h-3 text-blue-600" />
-                      <span className="text-slate-500">技术负责人:</span>
-                      <span className="text-slate-800 font-medium">{relatedProject.developer}</span>
-                    </div>
-                  )}
-                  {relatedProject.tester && (
-                    <div className="flex items-center space-x-1">
-                      <Bug className="w-3 h-3 text-emerald-600" />
-                      <span className="text-slate-500">测试负责人:</span>
-                      <span className="text-slate-800 font-medium">{relatedProject.tester}</span>
-                    </div>
-                  )}
+                  <div className="text-xs text-emerald-700 leading-relaxed">
+                    主要影响: {MIDO_PRODUCT_STRUCTURE.systems.slice(0, 2).join('、')}
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* 如果没有对应项目，显示AI建议 */}
-        {!relatedProject && (
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-purple-200 shadow-sm">
-            <div className="p-4">
-              <h4 className="font-semibold text-purple-900 mb-3 flex items-center">
-                <Zap className="w-5 h-5 mr-2" />
-                AI智能建议
-              </h4>
-              <div className="space-y-3 text-sm">
-                <div className="bg-white p-3 rounded-lg border border-purple-100">
-                  <div className="font-medium text-purple-900 mb-1">版本规划建议</div>
-                  <div className="text-purple-800">
-                    建议版本类型: <span className="font-bold">{selectedDemand.businessValue >= 8 ? '中版本' : '小版本'}</span>
+                <div className="border border-purple-200 rounded p-2 bg-gradient-to-br from-purple-50 to-violet-50 shadow-sm">
+                  <div className="font-medium text-purple-900 mb-0.5 flex items-center text-xs">
+                    <Smartphone className="w-3 h-3 mr-1" />
+                    应用层影响
                   </div>
-                  <div className="text-purple-800">
-                    预计版本号: <span className="font-bold">{selectedDemand.businessValue >= 8 ? 'V2.X.0' : 'V2.X.X'}</span>
-                  </div>
-                </div>
-                
-                <div className="bg-white p-3 rounded-lg border border-blue-100">
-                  <div className="font-medium text-blue-900 mb-1">立项流程建议</div>
-                  <div className="text-blue-800">
-                    {selectedDemand.businessValue >= 8 ? 
-                      '需通过产品委员会三稿制立项评审' : 
-                      '可走产品经理简化立项流程'
-                    }
-                  </div>
-                </div>
-                
-                <div className="bg-white p-3 rounded-lg border border-green-100">
-                  <div className="font-medium text-green-900 mb-1">资源配置建议</div>
-                  <div className="text-green-800">
-                    预计需要配置: 产品经理1人 + 开发工程师{Math.ceil(selectedDemand.developmentCost/3)}人 + 测试工程师1人
+                  <div className="text-xs text-purple-700 leading-relaxed">
+                    涉及{MIDO_PRODUCT_STRUCTURE.applications.filter(app =>
+                      selectedDemand.title.includes(app.substring(0, 2))
+                    ).join('、')}等系统
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        )}
+
+          {/* 项目版本信息（如果有关联项目） */}
+          {relatedProject && (
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-2.5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-green-50">
+                <h4 className="font-medium text-slate-900 flex items-center text-xs">
+                  <Package className="w-3.5 h-3.5 text-green-600 mr-1.5" />
+                  关联项目信息
+                </h4>
+              </div>
+              <div className="p-2.5 space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="space-y-1">
+                    <div>
+                      <span className="text-slate-500">版本号:</span>
+                      <span className="text-purple-700 font-bold ml-1">{relatedProject.version}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">版本类型:</span>
+                      <span className={`ml-1 px-1 py-0.5 rounded text-xs font-medium border ${relatedProject.versionType === '大版本' ? 'bg-red-100 text-red-700 border-red-200' :
+                        relatedProject.versionType === '中版本' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                          'bg-emerald-100 text-emerald-700 border-emerald-200'
+                        }`}>
+                        {relatedProject.versionType}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div>
+                      <span className="text-slate-500">当前状态:</span>
+                      <span className="text-blue-700 font-medium ml-1">{relatedProject.status}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">预计交付:</span>
+                      <span className="text-slate-800 ml-1 font-medium">{relatedProject.deadline}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 进度条 */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-500">整体进度</span>
+                    <span className="text-sm font-bold text-gray-900">{relatedProject.progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
+                    <div
+                      className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500 shadow-sm"
+                      style={{ width: `${relatedProject.progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* 团队信息 */}
+                <div className="border-t border-slate-100 pt-2">
+                  <div className="text-xs font-medium text-slate-800 mb-1">项目团队</div>
+                  <div className="space-y-0.5 text-xs">
+                    <div className="flex items-center space-x-1">
+                      <User className="w-3 h-3 text-purple-600" />
+                      <span className="text-slate-500">产品经理:</span>
+                      <span className="text-slate-800 font-medium">{relatedProject.manager}</span>
+                    </div>
+                    {relatedProject.developer && (
+                      <div className="flex items-center space-x-1">
+                        <Code className="w-3 h-3 text-blue-600" />
+                        <span className="text-slate-500">技术负责人:</span>
+                        <span className="text-slate-800 font-medium">{relatedProject.developer}</span>
+                      </div>
+                    )}
+                    {relatedProject.tester && (
+                      <div className="flex items-center space-x-1">
+                        <Bug className="w-3 h-3 text-emerald-600" />
+                        <span className="text-slate-500">测试负责人:</span>
+                        <span className="text-slate-800 font-medium">{relatedProject.tester}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 如果没有对应项目，显示AI建议 */}
+          {!relatedProject && (
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-purple-200 shadow-sm">
+              <div className="p-4">
+                <h4 className="font-semibold text-purple-900 mb-3 flex items-center">
+                  <Zap className="w-5 h-5 mr-2" />
+                  AI智能建议
+                </h4>
+                <div className="space-y-3 text-sm">
+                  <div className="bg-white p-3 rounded-lg border border-purple-100">
+                    <div className="font-medium text-purple-900 mb-1">版本规划建议</div>
+                    <div className="text-purple-800">
+                      建议版本类型: <span className="font-bold">{selectedDemand.businessValue >= 8 ? '中版本' : '小版本'}</span>
+                    </div>
+                    <div className="text-purple-800">
+                      预计版本号: <span className="font-bold">{selectedDemand.businessValue >= 8 ? 'V2.X.0' : 'V2.X.X'}</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg border border-blue-100">
+                    <div className="font-medium text-blue-900 mb-1">立项流程建议</div>
+                    <div className="text-blue-800">
+                      {selectedDemand.businessValue >= 8 ?
+                        '需通过产品委员会三稿制立项评审' :
+                        '可走产品经理简化立项流程'
+                      }
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg border border-green-100">
+                    <div className="font-medium text-green-900 mb-1">资源配置建议</div>
+                    <div className="text-green-800">
+                      预计需要配置: 产品经理1人 + 开发工程师{Math.ceil(selectedDemand.developmentCost / 3)}人 + 测试工程师1人
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1840,7 +1798,7 @@ const FlipModule: React.FC<{
       y: 0,
       transition: {
         duration: 0.15,
-        ease: [0.25, 0.46, 0.45, 0.94],
+        ease: [0.25, 0.46, 0.45, 0.94] as any,
         opacity: { duration: 0.12 },
         scale: { duration: 0.15 },
         y: { duration: 0.15 }
@@ -1852,7 +1810,7 @@ const FlipModule: React.FC<{
       y: -10,
       transition: {
         duration: 0.1,
-        ease: [0.4, 0.0, 0.6, 1],
+        ease: [0.4, 0.0, 0.6, 1] as any,
         opacity: { duration: 0.08 },
         scale: { duration: 0.1 },
         y: { duration: 0.1 }
@@ -1862,9 +1820,9 @@ const FlipModule: React.FC<{
 
   // 翻转中的3D效果
   const flippingVariants = {
-    initial: { 
+    initial: {
       rotateY: 0,
-      scale: 1 
+      scale: 1
     },
     flip: {
       rotateY: [0, -45, -90, -135, -180],
@@ -1891,7 +1849,7 @@ const FlipModule: React.FC<{
             initial="initial"
             animate="enter"
             exit="exit"
-            style={{ 
+            style={{
               minHeight: '100%',
               height: '100%'
             }}
@@ -1905,7 +1863,7 @@ const FlipModule: React.FC<{
           </motion.div>
         )}
       </AnimatePresence>
-        </div>
+    </div>
   );
 };
 
@@ -1928,7 +1886,7 @@ const FlipTopBar: React.FC<{
       y: 0,
       transition: {
         duration: 0.15,
-        ease: [0.25, 0.46, 0.45, 0.94],
+        ease: [0.25, 0.46, 0.45, 0.94] as any,
         opacity: { duration: 0.12 },
         scale: { duration: 0.15 },
         y: { duration: 0.15 }
@@ -1940,7 +1898,7 @@ const FlipTopBar: React.FC<{
       y: -10,
       transition: {
         duration: 0.1,
-        ease: [0.4, 0.0, 0.6, 1],
+        ease: [0.4, 0.0, 0.6, 1] as any,
         opacity: { duration: 0.08 },
         scale: { duration: 0.1 },
         y: { duration: 0.1 }
@@ -2028,7 +1986,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
     if (customerSuccessMode !== previousMode) {
       setIsTransitioning(true);
       setPreviousMode(customerSuccessMode);
-      
+
       // 大幅缩短动画时长，减少白屏
       setTimeout(() => {
         setIsTransitioning(false);
@@ -2038,42 +1996,38 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
 
   // 考核模式的组件 - 拆分为真正的三个模块 (青春阳光版)
   const AssessmentLeftPanel = () => (
-    <div className={`h-full flex flex-col transition-all duration-1000 ${
-      isTransitioning ? 'transform scale-105' : ''
-    } ${customerSuccessMode === 'assessment' ? sunshineTheme.background : ''}`}>
+    <div className={`h-full flex flex-col transition-all duration-1000 ${isTransitioning ? 'transform scale-105' : ''
+      } ${customerSuccessMode === 'assessment' ? sunshineTheme.background : ''}`}>
       {/* 变身光效 */}
       {isTransitioning && (
         <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 via-yellow-400/30 to-pink-400/20 animate-pulse pointer-events-none z-10" />
       )}
-      
+
       {/* 考核管理导航 */}
       <div className="p-4 border-b border-orange-100 relative">
         {/* 考核理念口号 - 青春版 */}
-        <div className={`mb-4 p-4 rounded-xl ${
-          customerSuccessMode === 'assessment' 
-            ? `${sunshineTheme.cardBg} border-2 border-gradient-to-r from-orange-300 to-pink-300 ${sunshineTheme.glow}` 
-            : 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200'
-        } transition-all duration-700`}>
+        <div className={`mb-4 p-4 rounded-xl ${customerSuccessMode === 'assessment'
+          ? `${sunshineTheme.cardBg} border-2 border-gradient-to-r from-orange-300 to-pink-300 ${sunshineTheme.glow}`
+          : 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200'
+          } transition-all duration-700`}>
           <div className="text-center">
             {customerSuccessMode === 'assessment' && (
               <div className="text-xs font-medium text-orange-500 mb-1 sunshine-sparkle">✨ 考核模式已激活 ✨</div>
             )}
-            <div className={`text-lg font-bold text-transparent bg-clip-text transition-all duration-700 ${
-              customerSuccessMode === 'assessment' 
-                ? `bg-gradient-to-r ${sunshineTheme.primary}` 
-                : 'bg-gradient-to-r from-blue-600 to-purple-600'
-            }`}>
+            <div className={`text-lg font-bold text-transparent bg-clip-text transition-all duration-700 ${customerSuccessMode === 'assessment'
+              ? `bg-gradient-to-r ${sunshineTheme.primary}`
+              : 'bg-gradient-to-r from-blue-600 to-purple-600'
+              }`}>
               「提升均值、减少方差」
             </div>
-            <div className={`text-xs mt-1 transition-all duration-700 ${
-              customerSuccessMode === 'assessment' ? 'text-orange-600' : 'text-gray-600'
-            }`}>
-              {customerSuccessMode === 'assessment' 
-                ? '让团队整体更强，个体差距更小 • 考核激活模式' 
+            <div className={`text-xs mt-1 transition-all duration-700 ${customerSuccessMode === 'assessment' ? 'text-orange-600' : 'text-gray-600'
+              }`}>
+              {customerSuccessMode === 'assessment'
+                ? '让团队整体更强，个体差距更小 • 考核激活模式'
                 : '让团队整体更强，个体差距更小'
               }
             </div>
-            
+
             {/* 青春阳光模式专属能量条 */}
             {customerSuccessMode === 'assessment' && (
               <div className="mt-3 bg-white/60 rounded-lg p-2 backdrop-blur-sm">
@@ -2088,23 +2042,20 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             )}
           </div>
         </div>
-        
-        <h3 className={`font-semibold mb-3 flex items-center transition-all duration-700 ${
-          customerSuccessMode === 'assessment' ? sunshineTheme.textPrimary : 'text-gray-900'
-        }`}>
-          <BookOpen className={`w-5 h-5 mr-2 transition-all duration-700 ${
-            customerSuccessMode === 'assessment' 
-              ? `text-orange-500 ${isTransitioning ? 'animate-spin' : 'animate-pulse'}` 
-              : 'text-blue-600'
-          }`} />
-                     {customerSuccessMode === 'assessment' ? '考核管理 • 活力模式' : '考核管理'}
+
+        <h3 className={`font-semibold mb-3 flex items-center transition-all duration-700 ${customerSuccessMode === 'assessment' ? sunshineTheme.textPrimary : 'text-gray-900'
+          }`}>
+          <BookOpen className={`w-5 h-5 mr-2 transition-all duration-700 ${customerSuccessMode === 'assessment'
+            ? `text-orange-500 ${isTransitioning ? 'animate-spin' : 'animate-pulse'}`
+            : 'text-blue-600'
+            }`} />
+          {customerSuccessMode === 'assessment' ? '考核管理 • 活力模式' : '考核管理'}
         </h3>
-        <div className={`text-sm mb-4 transition-all duration-700 ${
-          customerSuccessMode === 'assessment' ? 'text-orange-600' : 'text-gray-600'
-        }`}>
+        <div className={`text-sm mb-4 transition-all duration-700 ${customerSuccessMode === 'assessment' ? 'text-orange-600' : 'text-gray-600'
+          }`}>
           {customerSuccessMode === 'assessment' ? '考核计划与项目历史记录 • 专注执行模式' : '考核计划与项目历史记录'}
         </div>
-        
+
         {/* 本月考核计划 */}
         <div className="space-y-2 mb-4">
           <div className="text-xs font-medium text-gray-700 mb-2">本月考核计划</div>
@@ -2123,7 +2074,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* 考核统计 */}
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="text-center bg-blue-50 rounded p-2">
@@ -2136,7 +2087,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* 项目考核历史 */}
       <div className="p-4 border-b border-gray-100">
         <h4 className="font-medium text-gray-900 mb-2 flex items-center">
@@ -2145,7 +2096,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         </h4>
         <div className="text-xs text-gray-600 mb-3">基于真实项目的考核记录</div>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {/* 米多硬件类产品项目 */}
         <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
@@ -2263,7 +2214,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         </h3>
         <div className="text-sm text-gray-600">当前正在进行的能力评估与考核</div>
       </div>
-      
+
       <div className="flex-1 p-3 overflow-y-auto">
         {/* 主要考核状态卡片 - 突出显示 */}
         <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-lg p-4 mb-4 border-2 border-blue-200 shadow-sm">
@@ -2274,7 +2225,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             <h4 className="text-xl font-bold text-gray-900 mb-1">季度综合考核</h4>
             <p className="text-sm text-gray-600">2024年第一季度能力评估</p>
           </div>
-          
+
           {/* 主进度展示 */}
           <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
@@ -2286,7 +2237,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             </div>
             <div className="text-xs text-gray-600 text-center">预计还需15分钟完成剩余考核项</div>
           </div>
-          
+
           {/* 统计概览 */}
           <div className="grid grid-cols-3 gap-3 mb-4">
             <div className="bg-white rounded-lg p-3 text-center shadow-sm border border-green-100">
@@ -2302,63 +2253,55 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
               <div className="text-xs text-gray-600">待开始</div>
             </div>
           </div>
-          
+
           {/* 主要操作按钮 - 青春阳光版 */}
-          <button className={`w-full font-medium py-3 px-5 rounded-lg flex items-center justify-center transition-all duration-700 transform ${
-            customerSuccessMode === 'assessment' 
-              ? `${sunshineTheme.button} ${sunshineTheme.glow} text-white hover:scale-105 sunshine-button energy-pulse` 
-              : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
-                      } ${isTransitioning ? 'animate-bounce' : ''}`}>
-            <Play className={`mr-2 transition-all duration-700 ${
-              customerSuccessMode === 'assessment' 
-                ? 'w-5 h-5 animate-pulse' 
-                : 'w-4 h-4'
-            }`} />
-                         {customerSuccessMode === 'assessment' ? '继续考核 • 专注模式' : '继续考核'}
+          <button className={`w-full font-medium py-3 px-5 rounded-lg flex items-center justify-center transition-all duration-700 transform ${customerSuccessMode === 'assessment'
+            ? `${sunshineTheme.button} ${sunshineTheme.glow} text-white hover:scale-105 sunshine-button energy-pulse`
+            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+            } ${isTransitioning ? 'animate-bounce' : ''}`}>
+            <Play className={`mr-2 transition-all duration-700 ${customerSuccessMode === 'assessment'
+              ? 'w-5 h-5 animate-pulse'
+              : 'w-4 h-4'
+              }`} />
+            {customerSuccessMode === 'assessment' ? '继续考核 • 专注模式' : '继续考核'}
           </button>
         </div>
 
         {/* 当前考核项详情 - 青春阳光版 */}
-        <div className={`rounded-lg p-4 mb-3 transition-all duration-700 transform ${
-          customerSuccessMode === 'assessment' 
-                          ? `${sunshineTheme.cardBg} border-2 border-gradient-to-r from-orange-300 to-pink-300 ${sunshineTheme.glow} ${isTransitioning ? 'scale-105' : 'hover:scale-102'}` 
-            : 'bg-white border border-gray-200 shadow-sm'
-        }`}>
+        <div className={`rounded-lg p-4 mb-3 transition-all duration-700 transform ${customerSuccessMode === 'assessment'
+          ? `${sunshineTheme.cardBg} border-2 border-gradient-to-r from-orange-300 to-pink-300 ${sunshineTheme.glow} ${isTransitioning ? 'scale-105' : 'hover:scale-102'}`
+          : 'bg-white border border-gray-200 shadow-sm'
+          }`}>
           <div className="flex items-center justify-between mb-4">
-            <h4 className={`font-semibold text-lg transition-all duration-700 ${
-              customerSuccessMode === 'assessment' ? sunshineTheme.textPrimary : 'text-gray-900'
-            }`}>
+            <h4 className={`font-semibold text-lg transition-all duration-700 ${customerSuccessMode === 'assessment' ? sunshineTheme.textPrimary : 'text-gray-900'
+              }`}>
               {customerSuccessMode === 'assessment' ? '当前考核项 • 专注执行' : '当前考核项'}
             </h4>
-                         <span className={`text-sm px-4 py-2 rounded-full font-medium transition-all duration-700 ${
-               customerSuccessMode === 'assessment' 
-                 ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 sunshine-float achievement-halo' 
-                 : 'bg-blue-100 text-blue-700'
-             }`}>
-                             {customerSuccessMode === 'assessment' ? '第3/4题 • 专注模式' : '第3/4题'}
+            <span className={`text-sm px-4 py-2 rounded-full font-medium transition-all duration-700 ${customerSuccessMode === 'assessment'
+              ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-700 sunshine-float achievement-halo'
+              : 'bg-blue-100 text-blue-700'
+              }`}>
+              {customerSuccessMode === 'assessment' ? '第3/4题 • 专注模式' : '第3/4题'}
             </span>
           </div>
-          
-          <div className={`rounded-xl p-5 mb-4 border-2 transition-all duration-700 ${
-            customerSuccessMode === 'assessment' 
-              ? 'bg-gradient-to-r from-orange-50/80 via-yellow-50/80 to-pink-50/80 border-gradient-to-r from-orange-300 to-pink-300' 
-              : 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200'
-          }`}>
-            <h5 className={`font-semibold mb-3 transition-all duration-700 ${
-              customerSuccessMode === 'assessment' ? 'text-orange-800' : 'text-blue-900'
+
+          <div className={`rounded-xl p-5 mb-4 border-2 transition-all duration-700 ${customerSuccessMode === 'assessment'
+            ? 'bg-gradient-to-r from-orange-50/80 via-yellow-50/80 to-pink-50/80 border-gradient-to-r from-orange-300 to-pink-300'
+            : 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200'
             }`}>
+            <h5 className={`font-semibold mb-3 transition-all duration-700 ${customerSuccessMode === 'assessment' ? 'text-orange-800' : 'text-blue-900'
+              }`}>
               {customerSuccessMode === 'assessment' ? '📋 客户沟通案例分析 • 深度聚焦' : '📋 客户沟通案例分析'}
             </h5>
-            <p className={`text-sm leading-relaxed transition-all duration-700 ${
-              customerSuccessMode === 'assessment' ? 'text-orange-700' : 'text-blue-700'
-            }`}>
-              {customerSuccessMode === 'assessment' 
-                ? '某客户反馈产品功能不满足预期，作为客户成功经理，请分析问题原因并制定解决方案。请充分运用你的专业能力，展现优秀的客户沟通技巧。' 
+            <p className={`text-sm leading-relaxed transition-all duration-700 ${customerSuccessMode === 'assessment' ? 'text-orange-700' : 'text-blue-700'
+              }`}>
+              {customerSuccessMode === 'assessment'
+                ? '某客户反馈产品功能不满足预期，作为客户成功经理，请分析问题原因并制定解决方案。请充分运用你的专业能力，展现优秀的客户沟通技巧。'
                 : '某客户反馈产品功能不满足预期，作为客户成功经理，请分析问题原因并制定解决方案。'
               }
             </p>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="text-gray-600 text-sm">考核类型</div>
@@ -2404,7 +2347,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
               </div>
               <span className="text-xs text-green-600 font-semibold px-2 py-1 bg-green-100 rounded">已完成</span>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
               <div className="flex items-center space-x-3">
                 <Timer className="w-5 h-5 text-blue-600" />
@@ -2415,7 +2358,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
               </div>
               <span className="text-xs text-blue-600 font-semibold px-2 py-1 bg-blue-100 rounded">进行中</span>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border-l-4 border-purple-400">
               <div className="flex items-center space-x-3">
                 <Activity className="w-5 h-5 text-purple-600" />
@@ -2429,7 +2372,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                 <div className="text-xs text-purple-600">进度</div>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-gray-300">
               <div className="flex items-center space-x-3">
                 <Clock className="w-5 h-5 text-gray-500" />
@@ -2455,7 +2398,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         </h3>
         <div className="text-sm text-gray-600">个人能力发展报告</div>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {/* 雷达图区域 - 缩小尺寸 */}
         <div className="text-center">
@@ -2472,7 +2415,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                     const y = 100 + radius * Math.sin(angle);
                     return `${x},${y}`;
                   }).join(' ');
-                  
+
                   return (
                     <polygon
                       key={index}
@@ -2483,7 +2426,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                     />
                   );
                 })}
-                
+
                 {/* 六边形网格线 */}
                 {[0, 1, 2, 3, 4, 5].map((i) => {
                   const angle = (i * 60 - 90) * (Math.PI / 180);
@@ -2501,7 +2444,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                     />
                   );
                 })}
-                
+
                 {/* 当前能力数据多边形 */}
                 {(() => {
                   const abilities = [88, 82, 90, 78, 85, 75]; // 客户洞察、问题解决、沟通表达、数据分析、团队协作、创新思维
@@ -2512,7 +2455,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                     const y = 100 + radius * Math.sin(angle);
                     return `${x},${y}`;
                   }).join(' ');
-                  
+
                   return (
                     <polygon
                       points={currentPoints}
@@ -2522,7 +2465,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                     />
                   );
                 })()}
-                
+
                 {/* 目标能力数据多边形（虚线） */}
                 {(() => {
                   const targetAbilities = [95, 90, 95, 85, 90, 85]; // 目标值
@@ -2533,7 +2476,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                     const y = 100 + radius * Math.sin(angle);
                     return `${x},${y}`;
                   }).join(' ');
-                  
+
                   return (
                     <polygon
                       points={targetPoints}
@@ -2544,28 +2487,28 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                     />
                   );
                 })()}
-                
+
                 {/* 能力标签和数值点 */}
                 {(() => {
                   const labels = ['客户洞察', '问题解决', '沟通表达', '数据分析', '团队协作', '创新思维'];
                   const values = [88, 82, 90, 78, 85, 75];
                   const colors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899'];
-                  
+
                   return labels.map((label, i) => {
                     const angle = (i * 60 - 90) * (Math.PI / 180);
                     const labelRadius = 110; // 增加标签距离
                     const dotRadius = (values[i] / 100) * 70;
                     const valueRadius = dotRadius + 15; // 数值标签位置在数据点外侧
-                    
+
                     const labelX = 100 + labelRadius * Math.cos(angle);
                     const labelY = 100 + labelRadius * Math.sin(angle);
-                    
+
                     const dotX = 100 + dotRadius * Math.cos(angle);
                     const dotY = 100 + dotRadius * Math.sin(angle);
-                    
+
                     const valueX = 100 + valueRadius * Math.cos(angle);
                     const valueY = 100 + valueRadius * Math.sin(angle);
-                    
+
                     return (
                       <g key={i}>
                         {/* 数据点 */}
@@ -2577,7 +2520,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                           stroke="white"
                           strokeWidth="2"
                         />
-                        
+
                         {/* 标签背景 */}
                         <rect
                           x={labelX - 28}
@@ -2589,19 +2532,19 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                           stroke="#e2e8f0"
                           strokeWidth="1"
                         />
-                        
+
                         {/* 标签文字 */}
-                        <text 
-                          x={labelX} 
-                          y={labelY} 
-                          textAnchor="middle" 
+                        <text
+                          x={labelX}
+                          y={labelY}
+                          textAnchor="middle"
                           dominantBaseline="middle"
                           className="text-xs font-medium"
                           fill="#374151"
                         >
                           {label}
                         </text>
-                        
+
                         {/* 数值标签背景 */}
                         <rect
                           x={valueX - 15}
@@ -2612,12 +2555,12 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                           fill={colors[i]}
                           fillOpacity="0.9"
                         />
-                        
+
                         {/* 数值标签 */}
-                        <text 
-                          x={valueX} 
-                          y={valueY} 
-                          textAnchor="middle" 
+                        <text
+                          x={valueX}
+                          y={valueY}
+                          textAnchor="middle"
                           dominantBaseline="middle"
                           className="text-xs font-bold"
                           fill="white"
@@ -2628,7 +2571,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                     );
                   });
                 })()}
-                
+
                 {/* 中心点 */}
                 <circle
                   cx="100"
@@ -2650,7 +2593,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* 能力发展势态 - 扩展内容 */}
         <div>
           <h4 className="font-medium text-gray-900 mb-3">能力发展势态</h4>
@@ -2667,7 +2610,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                 <div className="h-2 rounded-full bg-green-500" style={{ width: '88%' }}></div>
               </div>
             </div>
-            
+
             <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-blue-900 text-sm">问题解决力</span>
@@ -2680,7 +2623,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                 <div className="h-2 rounded-full bg-blue-500" style={{ width: '82%' }}></div>
               </div>
             </div>
-            
+
             <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-purple-900 text-sm">沟通表达力</span>
@@ -2693,7 +2636,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
                 <div className="h-2 rounded-full bg-purple-500" style={{ width: '90%' }}></div>
               </div>
             </div>
-            
+
             <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-amber-900 text-sm">数据分析力</span>
@@ -2708,7 +2651,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* 月度能力变化趋势 */}
         <div>
           <h4 className="font-medium text-gray-900 mb-3">月度能力变化</h4>
@@ -2741,7 +2684,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* 同事评价摘要 */}
         <div>
           <h4 className="font-medium text-gray-900 mb-3">同事评价摘要</h4>
@@ -2756,14 +2699,14 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* 最新评估结果 */}
         <div>
           <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
             <Star className="w-4 h-4 text-yellow-500 mr-2" />
             最新评估结果
           </h4>
-          
+
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 mb-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">综合评分</span>
@@ -2774,7 +2717,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
               排名：部门第3名 / 全公司前15%
             </div>
           </div>
-          
+
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
             <div className="flex items-center space-x-2 mb-2">
               <Lightbulb className="w-4 h-4 text-amber-600" />
@@ -2788,7 +2731,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* 能力提升计划 */}
         <div>
           <h4 className="font-medium text-gray-900 mb-3">下季度提升计划</h4>
@@ -2946,43 +2889,43 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
   const getModuleProps = useCallback((moduleId: string) => {
     switch (moduleId) {
       case 'customer-list':
-        return { 
-          onCustomerSelect: onCustomerSelect, 
-          selectedCustomer: selectedCustomer 
+        return {
+          onCustomerSelect: onCustomerSelect,
+          selectedCustomer: selectedCustomer
         };
       case 'chat-area':
-        return { 
-          selectedCustomer: selectedCustomer 
+        return {
+          selectedCustomer: selectedCustomer
         };
       case 'right-panel':
-        return { 
-          customer: selectedCustomer 
+        return {
+          customer: selectedCustomer
         };
       case 'demand-pool':
-        return { 
+        return {
           selectedDemand: selectedDemand,
           onDemandSelect: setSelectedDemand
         };
       case 'project-flow':
-        return { 
-          selectedDemand: selectedDemand 
+        return {
+          selectedDemand: selectedDemand
         };
       case 'version-management':
-        return { 
-          selectedDemand: selectedDemand 
+        return {
+          selectedDemand: selectedDemand
         };
       case 'standard-library':
-        return { 
+        return {
           selectedStandard: selectedStandard,
           onStandardSelect: setSelectedStandard
         };
       case 'agent-center':
-        return { 
-          selectedStandard: selectedStandard 
+        return {
+          selectedStandard: selectedStandard
         };
       case 'task-tracker':
-        return { 
-          selectedStandard: selectedStandard 
+        return {
+          selectedStandard: selectedStandard
         };
       // 考核模式的组件不需要额外props
       case 'assessment-center':
@@ -3003,7 +2946,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
   // 当部门切换时的动效处理
   useEffect(() => {
     if (!currentConfig) return;
-    
+
     // 如果是初始加载，不需要翻转动效
     if (!previousDepartment) {
       setPreviousDepartment(currentDepartment);
@@ -3014,7 +2957,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
     if (previousDepartment === currentDepartment) return;
 
     setIsTransitioning(true);
-    
+
     // 模块翻转动效延迟
     const timer = setTimeout(() => {
       setIsTransitioning(false);
@@ -3040,16 +2983,15 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
   } : { left: null, center: null, right: null };
 
   return (
-    <div 
-      className={`flex-1 flex flex-col overflow-hidden relative transition-all duration-1000 ${
-        customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' 
-          ? sunshineTheme.background 
-          : ''
-      } ${isTransitioning ? 'animate-pulse' : ''}`}
-      style={{ 
-        backgroundColor: customerSuccessMode === 'assessment' && currentDepartment === '客户成功部' 
-          ? 'transparent' 
-          : currentConfig.theme.background 
+    <div
+      className={`flex-1 flex flex-col overflow-hidden relative transition-all duration-1000 ${customerSuccessMode === 'assessment' && currentDepartment === '客户成功部'
+        ? sunshineTheme.background
+        : ''
+        } ${isTransitioning ? 'animate-pulse' : ''}`}
+      style={{
+        backgroundColor: customerSuccessMode === 'assessment' && currentDepartment === '客户成功部'
+          ? 'transparent'
+          : currentConfig.theme.background
       }}
     >
 
@@ -3088,9 +3030,9 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
 };
 
 // 技术规范管理库组件（左侧）
-const TechnicalStandardLibrary = ({ selectedStandard, onStandardSelect }: { 
-  selectedStandard: TechnicalStandard | null, 
-  onStandardSelect: (standard: TechnicalStandard) => void 
+const TechnicalStandardLibrary = ({ selectedStandard, onStandardSelect }: {
+  selectedStandard: TechnicalStandard | null,
+  onStandardSelect: (standard: TechnicalStandard) => void
 }) => {
   return (
     <div className="h-full flex flex-col p-6 bg-gradient-to-br from-green-50 to-blue-50">
@@ -3101,17 +3043,16 @@ const TechnicalStandardLibrary = ({ selectedStandard, onStandardSelect }: {
         </h3>
         <p className="text-sm text-gray-600">制定、维护、跟踪技术规范执行情况</p>
       </div>
-      
+
       <div className="space-y-3 flex-1 overflow-y-auto">
         {technicalStandards.map((standard) => (
           <button
             key={standard.id}
             onClick={() => onStandardSelect(standard)}
-            className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${
-              selectedStandard?.id === standard.id 
-                ? 'border-green-300 bg-green-50 shadow-sm' 
-                : 'border-gray-200 hover:border-green-200 hover:bg-gray-50'
-            }`}
+            className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${selectedStandard?.id === standard.id
+              ? 'border-green-300 bg-green-50 shadow-sm'
+              : 'border-gray-200 hover:border-green-200 hover:bg-gray-50'
+              }`}
           >
             <h4 className="font-medium text-gray-900 text-sm mb-1">{standard.title}</h4>
             <div className="flex items-center justify-between text-xs">
@@ -3136,24 +3077,23 @@ const TechnicalTaskTracker = ({ selectedStandard }: { selectedStandard: Technica
         </h3>
         <p className="text-sm text-gray-600">跟踪技术任务执行进度</p>
       </div>
-      
+
       <div className="space-y-3 flex-1 overflow-y-auto">
         {technicalTasks.map((task) => (
           <div key={task.id} className="bg-white rounded-lg border border-gray-200 p-3">
             <h4 className="font-medium text-gray-900 text-sm mb-2">{task.title}</h4>
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-gray-600">{task.type}</span>
-              <span className={`px-2 py-1 rounded ${
-                task.priority === 'P0' ? 'bg-red-100 text-red-700' :
+              <span className={`px-2 py-1 rounded ${task.priority === 'P0' ? 'bg-red-100 text-red-700' :
                 task.priority === 'P1' ? 'bg-orange-100 text-orange-700' :
-                'bg-gray-100 text-gray-700'
-              }`}>
+                  'bg-gray-100 text-gray-700'
+                }`}>
                 {task.priority}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-500 h-2 rounded-full" 
+              <div
+                className="bg-blue-500 h-2 rounded-full"
                 style={{ width: `${task.progress}%` }}
               />
             </div>
@@ -3412,7 +3352,7 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
         timestamp: new Date().toISOString(),
         agentId: selectedAgent.id
       };
-      
+
       setMessages(prev => [...prev, assistantMessage]);
       setIsTyping(false);
     }, 1000 + Math.random() * 2000);
@@ -3624,11 +3564,10 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
               <button
                 key={agent.id}
                 onClick={() => setSelectedAgent(agent)}
-                className={`p-2 rounded-lg border text-left transition-all duration-200 ${
-                  selectedAgent.id === agent.id
-                    ? 'border-green-300 bg-green-50 shadow-sm'
-                    : 'border-gray-200 hover:border-green-200 hover:bg-gray-50'
-                }`}
+                className={`p-2 rounded-lg border text-left transition-all duration-200 ${selectedAgent.id === agent.id
+                  ? 'border-green-300 bg-green-50 shadow-sm'
+                  : 'border-gray-200 hover:border-green-200 hover:bg-gray-50'
+                  }`}
               >
                 <div className="flex items-center space-x-2 mb-1">
                   <span className="text-lg">{agent.avatar}</span>
@@ -3666,28 +3605,26 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
               key={message.id}
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[80%] ${
-                message.role === 'user'
-                  ? 'bg-green-600 text-white rounded-l-lg rounded-tr-lg'
-                  : 'bg-white border border-gray-200 rounded-r-lg rounded-tl-lg'
-              } p-3 shadow-sm`}>
+              <div className={`max-w-[80%] ${message.role === 'user'
+                ? 'bg-green-600 text-white rounded-l-lg rounded-tr-lg'
+                : 'bg-white border border-gray-200 rounded-r-lg rounded-tl-lg'
+                } p-3 shadow-sm`}>
                 <pre className="whitespace-pre-wrap text-sm font-sans">{message.content}</pre>
-                <div className={`text-xs mt-2 ${
-                  message.role === 'user' ? 'text-green-100' : 'text-gray-500'
-                }`}>
+                <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-green-100' : 'text-gray-500'
+                  }`}>
                   {new Date(message.timestamp).toLocaleTimeString()}
                 </div>
               </div>
             </div>
           ))}
-          
+
           {isTyping && (
             <div className="flex justify-start">
               <div className="bg-white border border-gray-200 rounded-r-lg rounded-tl-lg p-3 shadow-sm">
                 <div className="flex items-center space-x-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             </div>

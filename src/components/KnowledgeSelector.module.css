@@ -1,7 +1,7 @@
 /* 知识库选择器样式 */
 .knowledgeSelector {
   position: relative;
-  z-index: 1000;
+  z-index: 99998;
 }
 
 .selectorButton {
@@ -51,27 +51,15 @@
 }
 
 .dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0; /* 改为从右侧展开，避免被右侧边界遮住 */
-  width: 320px;
   max-height: 384px;
   overflow-y: auto;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  z-index: 1001;
 }
 
-/* 在屏幕较小时，调整下拉菜单位置 */
-@media (max-width: 640px) {
-  .dropdown {
-    left: 0;
-    right: auto;
-    width: 280px;
-  }
-}
+/* 媒体查询已移除，位置计算在JavaScript中处理 */
 
 .dropdownContent {
   padding: 8px;
@@ -192,5 +180,5 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1000;
+  z-index: 99998;
 } 
