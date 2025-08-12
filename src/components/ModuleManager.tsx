@@ -13,22 +13,27 @@ import {
   Database,
   Eye,
   FileText,
+  Image,
   Layers,
   Lightbulb,
   MessageSquare,
   Monitor,
   Package,
+  Palette,
+  Paperclip,
   Pause,
   PieChart,
   Play,
   Rocket,
   Send,
   Smartphone,
+  Sparkles,
   Star,
   Target,
   Timer,
   TrendingUp,
   User,
+  X,
   Zap
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -830,14 +835,38 @@ const DemandPool = ({ selectedDemand, onDemandSelect }: { selectedDemand: Produc
 const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand | null }) => {
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [activeTab, setActiveTab] = useState('process');
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+
+  // 文件处理函数
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles = Array.from(files).filter(file => 
+      file.type.startsWith('image/') || 
+      file.type === 'application/pdf' ||
+      file.type.includes('document') ||
+      file.type.includes('text/')
+    );
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSendMessage = () => {
-    if (!inputMessage.trim() || !selectedDemand) return;
+    if ((!inputMessage.trim() && uploadedFiles.length === 0) || !selectedDemand) return;
 
     const userMessage = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputMessage,
+      content: inputMessage || '上传了文件',
+      files: uploadedFiles.map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type
+      })),
       timestamp: new Date().toLocaleTimeString()
     };
 
@@ -855,6 +884,7 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
     }, 1000);
 
     setInputMessage('');
+    setUploadedFiles([]);
   };
 
   const generateAIResponse = (userMessage: string, demand: ProductDemand, project?: ProductProject | null): string => {
@@ -1087,210 +1117,497 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
     return 'pending';
   };
 
+  // 页签配置
+  const tabs = [
+    {
+      id: 'process',
+      name: '立项流程',
+      icon: Layers,
+      description: '七步成诗项目管理流程'
+    },
+    {
+      id: 'ai-assistant',
+      name: 'AI助手',
+      icon: Bot,
+      description: '智能项目助手对话'
+    }
+  ];
+
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-gray-100">
-        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-          <Layers className="w-5 h-5 text-purple-600 mr-2" />
-          立项流程
-        </h3>
-        <div className="text-sm text-gray-600">
-          {selectedDemand ? `「${selectedDemand.title}」项目管理` : '选择需求查看对应的项目流程'}
+      <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+        {/* 紧凑页签导航 */}
+        <div className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm">
+          {tabs.map((tab) => {
+            const IconComponent = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-purple-100 text-purple-700 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+                title={tab.description}
+              >
+                <IconComponent className="w-3 h-3" />
+                <span>{tab.name}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto">
         {selectedDemand ? (
           <>
-            {/* 项目概览卡片 */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-4 border border-purple-200">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h4 className="font-bold text-gray-900 text-lg">{selectedDemand.title}</h4>
-                  <p className="text-sm text-gray-600 mt-1">{selectedDemand.customer} • {selectedDemand.source}</p>
-                </div>
-                <div className="text-right">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${selectedDemand.priority === 'High' ? 'bg-red-100 text-red-700' :
-                    selectedDemand.priority === 'Middle' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                    {selectedDemand.priority}
-                  </span>
-                </div>
-              </div>
-
-              {relatedProject && (
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="bg-white rounded-lg p-3">
-                    <div className="text-gray-600">当前阶段</div>
-                    <div className="font-bold text-purple-600">{relatedProject.currentStage}</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-3">
-                    <div className="text-gray-600">完成进度</div>
-                    <div className="font-bold text-blue-600">{relatedProject.progress}%</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-3">
-                    <div className="text-gray-600">项目经理</div>
-                    <div className="font-bold text-gray-900">{relatedProject.manager}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 七步成诗流程 */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-gray-900">🎋 七步成诗流程</h4>
-                <div className="text-xs text-gray-500">传统项目管理哲学</div>
-              </div>
-
-              <div className="space-y-3">
-                {sevenStepsPoetry.map((step, index) => {
-                  const status = getStepStatus(step.id);
-                  const IconComponent = step.icon;
-
-                  return (
-                    <div key={step.id} className={`flex items-center p-3 rounded-lg border transition-all duration-200 relative overflow-hidden ${status === 'completed' ? `${step.bgColor} ${step.borderColor}` :
-                      status === 'current' ? `${step.bgColor} ${step.borderColor} ring-2 ring-offset-2 ring-blue-200` :
-                        'bg-gray-50 border-gray-200'
-                      }`}>
-                      {/* 海浪动效 - 仅在开发跟踪且正在进行时显示 */}
-                      {status === 'current' && step.id === '开发跟踪' && relatedProject && (
-                        <div className="absolute inset-0 overflow-hidden rounded-lg">
-                          {/* 基础进度条背景 */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-gray-300"></div>
-
-                          {/* 进度条海浪效果 */}
-                          <div className="absolute inset-0" style={{ width: `${relatedProject.progress}%` }}>
-                            {/* 底层进度色 */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/80 to-cyan-500/80"></div>
-
-                            {/* 第一层海浪 - 主海浪 */}
-                            <div className="absolute inset-0 overflow-hidden">
-                              <div className="absolute top-0 left-0 w-[150%] h-full bg-gradient-to-r from-blue-500/60 via-cyan-400/80 to-blue-500/60 animate-[progressWave1_3s_ease-in-out_infinite]"
-                                style={{
-                                  clipPath: 'polygon(0 30%, 20% 40%, 40% 30%, 60% 40%, 80% 30%, 100% 40%, 100% 100%, 0% 100%)',
-                                  transform: 'translateX(-25%)'
-                                }} />
-                            </div>
-
-                            {/* 第二层海浪 - 辅助海浪 */}
-                            <div className="absolute inset-0 overflow-hidden">
-                              <div className="absolute top-0 left-0 w-[130%] h-full bg-gradient-to-r from-cyan-300/40 via-blue-300/60 to-cyan-300/40 animate-[progressWave2_4s_ease-in-out_infinite_0.5s]"
-                                style={{
-                                  clipPath: 'polygon(0 50%, 25% 45%, 50% 50%, 75% 45%, 100% 50%, 100% 100%, 0% 100%)',
-                                  transform: 'translateX(-15%)'
-                                }} />
-                            </div>
-
-                            {/* 第三层海浪 - 表面细浪 */}
-                            <div className="absolute inset-0 overflow-hidden">
-                              <div className="absolute top-0 left-0 w-[120%] h-full bg-gradient-to-r from-white/20 via-cyan-200/40 to-white/20 animate-[progressWave3_2s_ease-in-out_infinite_1s]"
-                                style={{
-                                  clipPath: 'polygon(0 20%, 30% 25%, 60% 20%, 90% 25%, 100% 20%, 100% 100%, 0% 100%)',
-                                  transform: 'translateX(-10%)'
-                                }} />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center space-x-3 flex-1 relative z-10">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${status === 'completed' ? step.bgColor :
-                          status === 'current' ? step.bgColor : 'bg-gray-100'
-                          }`}>
-                          {status === 'completed' ? (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                          ) : status === 'current' ? (
-                            <IconComponent className={`w-5 h-5 ${step.color}`} />
-                          ) : (
-                            <span className="text-sm font-medium text-gray-400">{index + 1}</span>
-                          )}
-                        </div>
-
-                        <div className="flex-1">
-                          <div className={`font-medium ${status === 'completed' || status === 'current' ? 'text-gray-900' : 'text-gray-500'
-                            }`}>
-                            {step.name}
-                          </div>
-                          <div className="text-xs text-gray-600 mt-1">{step.description}</div>
-                        </div>
+            {/* 页签内容区域 */}
+            {activeTab === 'process' && (
+              <>
+                {/* 简化的项目概览 - 仅在立项流程页签中显示 */}
+                {relatedProject && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-4">
+                        <span className="font-medium text-gray-900">{relatedProject.currentStage}</span>
+                        <span className="text-blue-600 font-medium">{relatedProject.progress}%</span>
+                        <span className="text-gray-600">{relatedProject.manager}</span>
                       </div>
-
-                      <div className="text-right relative z-10">
-                        {status === 'completed' && (
-                          <span className="text-xs text-green-600 font-medium">已完成</span>
-                        )}
-                        {status === 'current' && (
-                          <span className="text-xs text-blue-600 font-medium">进行中</span>
-                        )}
-                        {status === 'pending' && (
-                          <span className="text-xs text-gray-400">待开始</span>
-                        )}
-                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${selectedDemand.priority === 'High' ? 'bg-red-100 text-red-700' :
+                        selectedDemand.priority === 'Middle' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                        {selectedDemand.priority}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* AI助手对话区域 */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-gray-900 flex items-center">
-                  <MessageSquare className="w-4 h-4 text-blue-600 mr-2" />
-                  AI项目助手
-                </h4>
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">在线</span>
-              </div>
-
-              <div className="h-40 overflow-y-auto border border-gray-100 rounded-lg p-3 mb-3 bg-gray-50">
-                {messages.length === 0 ? (
-                  <div className="text-center text-gray-500 text-sm py-8">
-                    <Bot className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p>AI助手准备就绪，询问项目相关问题</p>
-                    <div className="text-xs text-gray-400 mt-2">
-                      例如："当前阶段有什么风险？" "下一步计划是什么？"
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {messages.map((message) => (
-                      <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-3 rounded-lg text-sm ${message.type === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white border border-gray-200'
-                          }`}>
-                          <div className="whitespace-pre-wrap">{message.content}</div>
-                          <div className={`text-xs mt-2 ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
-                            }`}>
-                            {message.timestamp}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 )}
-              </div>
+                
+                {/* 七步成诗流程 */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+                  <div className="flex items-center justify-between mb-6">
+                    <h4 className="font-semibold text-gray-900">🎋 七步成诗流程</h4>
+                    <div className="text-xs text-gray-500">传统项目管理哲学</div>
+                  </div>
 
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="询问项目相关问题..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!inputMessage.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+                  {/* 步骤进度展示 */}
+                  <div className="mb-6">
+                    {/* 步骤指示点与连接线 */}
+                    <div className="relative mb-2">
+                      <div className="flex justify-between items-start">
+                        {sevenStepsPoetry.map((step, index) => {
+                          const status = getStepStatus(step.id);
+                          const IconComponent = step.icon;
+                          
+                          return (
+                            <div key={step.id} className="flex flex-col items-center relative z-10">
+                              {/* 指示点 */}
+                              <div className={`w-4 h-4 rounded-full flex items-center justify-center border-2 transition-all duration-500 shadow-lg ${
+                                status === 'completed' 
+                                  ? 'bg-emerald-500 border-emerald-400 text-white scale-110' 
+                                  : status === 'current'
+                                  ? 'bg-blue-500 border-blue-400 text-white scale-125 animate-pulse'
+                                  : 'bg-white border-gray-300 text-gray-400'
+                              }`}>
+                                {status === 'completed' ? (
+                                  <CheckCircle className="w-2.5 h-2.5" />
+                                ) : status === 'current' ? (
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                ) : (
+                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                )}
+                              </div>
+                              
+                              {/* 步骤标签 */}
+                              <div className={`text-xs mt-2 text-center max-w-16 leading-tight transition-all duration-300 ${
+                                status === 'completed' ? 'text-emerald-700 font-semibold' : 
+                                status === 'current' ? 'text-blue-700 font-semibold scale-105' : 
+                                'text-gray-500 font-medium'
+                              }`}>
+                                {step.name}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* 连接线 */}
+                      <div className="absolute top-2 left-2 right-2 h-0.5 bg-gray-200" style={{ transform: 'translateY(-50%)' }}>
+                        <div 
+                          className="h-full bg-gradient-to-r from-emerald-400 via-blue-500 to-violet-600 transition-all duration-700 ease-out"
+                          style={{ 
+                            width: `${Math.max(0, (sevenStepsPoetry.findIndex(s => s.id === (relatedProject?.currentStage || '需求管理')) / (sevenStepsPoetry.length - 1)) * 100)}%`
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    {/* 进度统计 */}
+                    <div className="flex justify-between items-center mt-8 text-xs">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-1">
+                          <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                          <span className="text-emerald-700 font-medium">已完成 {sevenStepsPoetry.filter(s => getStepStatus(s.id) === 'completed').length}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                          <span className="text-blue-700 font-medium">进行中 {sevenStepsPoetry.filter(s => getStepStatus(s.id) === 'current').length}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <span className="text-gray-600">待开始 {sevenStepsPoetry.filter(s => getStepStatus(s.id) === 'pending').length}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                          {Math.round(((sevenStepsPoetry.findIndex(s => s.id === (relatedProject?.currentStage || '需求管理')) + 1) / sevenStepsPoetry.length) * 100)}%
+                        </div>
+                        <div className="text-gray-500 font-medium">整体进度</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 当前阶段详情卡片 - 重新设计 */}
+                  {relatedProject && (
+                    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100 shadow-sm">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          {(() => {
+                            const currentStep = sevenStepsPoetry.find(s => s.id === relatedProject.currentStage);
+                            const IconComponent = currentStep?.icon || User;
+                            return (
+                              <>
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                                  <IconComponent className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-gray-900 text-base">{currentStep?.name}</div>
+                                  <div className="text-sm text-blue-600 font-medium">当前阶段</div>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-blue-600">
+                            {relatedProject.progress}%
+                          </div>
+                          <div className="text-xs text-gray-500">完成度</div>
+                        </div>
+                      </div>
+                      
+                      {/* 阶段进度条 - 紧凑设计 */}
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs text-gray-500 mb-2">
+                          <span>阶段进度</span>
+                          <span className="text-blue-600 font-medium">{relatedProject.progress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out relative"
+                            style={{ width: `${relatedProject.progress}%` }}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-60"></div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* 阶段描述 */}
+                      <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
+                        <div className="text-sm text-gray-700 leading-relaxed">
+                          <span className="text-blue-600 font-medium">📋 阶段说明：</span>
+                          {sevenStepsPoetry.find(s => s.id === relatedProject.currentStage)?.description}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 步骤列表 - 现代化卡片设计 */}
+                  <div className="mt-6 space-y-3">
+                    {sevenStepsPoetry.map((step, index) => {
+                      const status = getStepStatus(step.id);
+                      const IconComponent = step.icon;
+
+                        return (
+                          <div key={step.id} className={`group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-md ${
+                            status === 'current' ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm scale-[1.02]' : 
+                            status === 'completed' ? 'bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 shadow-sm' :
+                            'bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}>
+                            {/* 左侧装饰条 */}
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ${
+                              status === 'current' ? 'bg-gradient-to-b from-blue-400 to-indigo-600' : 
+                              status === 'completed' ? 'bg-gradient-to-b from-emerald-400 to-green-600' :
+                              'bg-transparent group-hover:bg-gray-300'
+                            }`}></div>
+                            
+                            <div className="flex items-center px-4 py-3">
+                              <div className="flex items-center space-x-4 flex-1">
+                                {/* 状态图标 */}
+                                <div className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                                  status === 'completed' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' :
+                                  status === 'current' ? 'bg-blue-500 text-white shadow-lg shadow-blue-200 animate-pulse' : 
+                                  'bg-gray-200 text-gray-600 group-hover:bg-gray-300'
+                                }`}>
+                                  {status === 'completed' ? (
+                                    <CheckCircle className="w-4 h-4" />
+                                  ) : status === 'current' ? (
+                                    <IconComponent className="w-4 h-4" />
+                                  ) : (
+                                    <span className="text-xs font-bold">{index + 1}</span>
+                                  )}
+                                  
+                                  {/* 当前步骤的光环效果 */}
+                                  {status === 'current' && (
+                                    <div className="absolute inset-0 rounded-lg bg-blue-400 animate-ping opacity-20"></div>
+                                  )}
+                                </div>
+                                
+                                {/* 步骤信息 */}
+                                <div className="flex-1">
+                                  <div className={`font-medium transition-all duration-300 ${
+                                    status === 'completed' ? 'text-emerald-900' : 
+                                    status === 'current' ? 'text-blue-900 text-base' : 
+                                    'text-gray-700 group-hover:text-gray-900'
+                                  }`}>
+                                    {step.name}
+                                  </div>
+                                  <div className={`text-xs mt-0.5 transition-all duration-300 ${
+                                    status === 'completed' ? 'text-emerald-600' :
+                                    status === 'current' ? 'text-blue-600' :
+                                    'text-gray-500'
+                                  }`}>
+                                    {step.description}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* 状态标签 */}
+                              <div className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
+                                status === 'completed' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                                status === 'current' ? 'bg-blue-100 text-blue-700 border border-blue-200 animate-pulse' :
+                                'bg-gray-100 text-gray-600 border border-gray-200'
+                              }`}>
+                                {status === 'completed' ? '✅ 已完成' : 
+                                 status === 'current' ? '🚀 进行中' : '⏳ 待开始'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === 'ai-assistant' && (
+              <>
+                {/* AI助手对话区域 - 重新设计 */}
+                <div className="relative flex flex-col h-full bg-white rounded-lg border border-gray-200">
+                  {/* 紧凑助手头部 */}
+                  <div className="flex items-center justify-between p-2 border-b border-gray-100 bg-blue-50/30">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                        <Bot className="w-3 h-3 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 text-sm">AI助手</h4>
+                        <p className="text-xs text-gray-500">七步成诗法</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-green-700">在线</span>
+                    </div>
+                  </div>
+
+                  {/* 对话区域 */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 pb-32">
+                    {messages.length === 0 ? (
+                      <div className="text-center text-gray-500 text-sm py-6">
+                        <Bot className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+                        <p className="text-gray-600 text-xs">开始提问吧！我会基于七步成诗法为您提供项目建议</p>
+                      </div>
+                ) : (
+                      messages.map((message) => (
+                        <div key={message.id} className={`flex items-start space-x-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          {message.type === 'ai' && (
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                              <Bot className="w-4 h-4 text-blue-600" />
+                            </div>
+                          )}
+                          <div className={`max-w-[75%] rounded-lg p-3 ${message.type === 'user'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                            }`}>
+                            {/* 文件显示 */}
+                            {message.files && message.files.length > 0 && (
+                              <div className="mb-2 space-y-1">
+                                {message.files.map((file: any, index: number) => (
+                                  <div key={index} className={`flex items-center space-x-2 p-2 rounded ${message.type === 'user' ? 'bg-blue-500' : 'bg-white border'}`}>
+                                    {file.type.startsWith('image/') ? (
+                                      <Image className="w-4 h-4" />
+                                    ) : (
+                                      <FileText className="w-4 h-4" />
+                                    )}
+                                    <span className="text-xs truncate">{file.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+                            <div className={`text-xs mt-2 ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
+                              {message.timestamp}
+                            </div>
+                          </div>
+                          {message.type === 'user' && (
+                            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                              <User className="w-4 h-4 text-white" />
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* 悬浮的输入区域 */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-b-lg z-20">
+                    {/* 快速问题（仅在首次显示，紧贴输入框上方） */}
+                    {messages.length === 0 && (
+                      <div className="px-4 pt-3 pb-2 border-b border-gray-100/30 bg-gray-50/20 backdrop-blur-sm">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => setInputMessage('当前项目有什么风险？')}
+                            className="inline-flex items-center px-3 py-1.5 bg-white/30 border border-blue-200/50 text-blue-700 text-sm rounded-full hover:bg-blue-50/40 hover:border-blue-300/60 transition-all duration-200 shadow-sm backdrop-blur-sm"
+                          >
+                            💡 当前项目有什么风险？
+                          </button>
+                          <button
+                            onClick={() => setInputMessage('下一步计划是什么？')}
+                            className="inline-flex items-center px-3 py-1.5 bg-white/30 border border-green-200/50 text-green-700 text-sm rounded-full hover:bg-green-50/40 hover:border-green-300/60 transition-all duration-200 shadow-sm backdrop-blur-sm"
+                          >
+                            📋 下一步计划是什么？
+                          </button>
+                          <button
+                            onClick={() => setInputMessage('项目进度正常吗？')}
+                            className="inline-flex items-center px-3 py-1.5 bg-white/30 border border-orange-200/50 text-orange-700 text-sm rounded-full hover:bg-orange-50/40 hover:border-orange-300/60 transition-all duration-200 shadow-sm backdrop-blur-sm"
+                          >
+                            ⏰ 项目进度正常吗？
+                          </button>
+                          <button
+                            onClick={() => setInputMessage('需要额外资源支持吗？')}
+                            className="inline-flex items-center px-3 py-1.5 bg-white/30 border border-purple-200/50 text-purple-700 text-sm rounded-full hover:bg-purple-50/40 hover:border-purple-300/60 transition-all duration-200 shadow-sm backdrop-blur-sm"
+                          >
+                            🚀 需要额外资源支持吗？
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 上传的文件预览 */}
+                    {uploadedFiles.length > 0 && (
+                      <div className="p-3 border-b border-gray-100/30 bg-gray-50/20 backdrop-blur-sm">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-gray-600 font-medium">已添加文件 ({uploadedFiles.length})</span>
+                          <button
+                            onClick={() => setUploadedFiles([])}
+                            className="text-xs text-red-600 hover:text-red-700"
+                          >
+                            清空全部
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {uploadedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center space-x-2 bg-white/20 border border-gray-200/50 rounded-lg p-2 text-xs backdrop-blur-sm">
+                              {file.type.startsWith('image/') ? (
+                                <Image className="w-3 h-3 text-blue-600" />
+                              ) : (
+                                <FileText className="w-3 h-3 text-gray-600" />
+                              )}
+                              <span className="truncate max-w-24">{file.name}</span>
+                              <button
+                                onClick={() => removeFile(index)}
+                                className="text-red-500 hover:text-red-700 ml-1"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 输入区域 */}
+                    <div className="border-t border-gray-200/50 bg-white/20 p-3 flex-shrink-0 backdrop-blur-sm">
+                      <div className="flex items-center space-x-2 bg-gray-50/20 rounded-lg p-2 backdrop-blur-sm">
+                        {/* 多媒体上传按钮 */}
+                        <div className="flex items-center space-x-1 shrink-0">
+                          <input
+                            type="file"
+                            id="ai-file-upload"
+                            multiple
+                            accept="image/*,.pdf,.doc,.docx,.txt"
+                            onChange={(e) => handleFileUpload(e.target.files)}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor="ai-file-upload"
+                            className="flex items-center justify-center w-8 h-8 bg-white/30 hover:bg-gray-100/40 rounded-lg cursor-pointer transition-colors border border-gray-200/50 backdrop-blur-sm"
+                            title="上传文件"
+                          >
+                            <Paperclip className="w-3 h-3 text-gray-600" />
+                          </label>
+                          
+                          <input
+                            type="file"
+                            id="ai-image-upload"
+                            multiple
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(e.target.files)}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor="ai-image-upload"
+                            className="flex items-center justify-center w-8 h-8 bg-white/30 hover:bg-gray-100/40 rounded-lg cursor-pointer transition-colors border border-gray-200/50 backdrop-blur-sm"
+                            title="上传图片"
+                          >
+                            <Image className="w-3 h-3 text-gray-600" />
+                          </label>
+
+                        </div>
+                        
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-sm shadow-sm">
+                          🤖
+                        </div>
+
+                        <input
+                          type="text"
+                          value={inputMessage}
+                          onChange={(e) => setInputMessage(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                          placeholder="询问项目相关问题..."
+                          className="flex-1 h-9 px-3 bg-transparent border-0 focus:outline-none text-sm placeholder-gray-500"
+                        />
+
+                        <button
+                          onClick={handleSendMessage}
+                          disabled={!inputMessage.trim() && uploadedFiles.length === 0}
+                          className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
@@ -1458,6 +1775,89 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
 
       <div className="flex-1 overflow-y-auto px-3 pb-3">
         <div className="space-y-3">
+          {/* 关联项目信息 - 置顶显示 */}
+          {relatedProject && (
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-2.5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-green-50">
+                <h4 className="font-medium text-slate-900 flex items-center text-xs">
+                  <Package className="w-3.5 h-3.5 text-green-600 mr-1.5" />
+                  关联项目信息
+                </h4>
+              </div>
+              <div className="p-2.5 space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="space-y-1">
+                    <div>
+                      <span className="text-slate-500">版本号:</span>
+                      <span className="text-purple-700 font-bold ml-1">{relatedProject.version}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">版本类型:</span>
+                      <span className={`ml-1 px-1 py-0.5 rounded text-xs font-medium border ${relatedProject.versionType === '大版本' ? 'bg-red-100 text-red-700 border-red-200' :
+                        relatedProject.versionType === '中版本' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                          'bg-emerald-100 text-emerald-700 border-emerald-200'
+                        }`}>
+                        {relatedProject.versionType}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div>
+                      <span className="text-slate-500">当前状态:</span>
+                      <span className="text-blue-700 font-medium ml-1">{relatedProject.status}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">预计交付:</span>
+                      <span className="text-slate-800 ml-1 font-medium">{relatedProject.deadline}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 进度条 - 统一设计 */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs text-gray-500">整体进度</span>
+                    <span className="text-xs font-medium text-gray-900">{relatedProject.progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-500 relative"
+                      style={{ width: `${relatedProject.progress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-60"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 团队信息 */}
+                <div className="border-t border-slate-100 pt-2">
+                  <div className="text-xs font-medium text-slate-800 mb-1">项目团队</div>
+                  <div className="space-y-0.5 text-xs">
+                    <div className="flex items-center space-x-1">
+                      <User className="w-3 h-3 text-purple-600" />
+                      <span className="text-slate-500">产品经理:</span>
+                      <span className="text-slate-800 font-medium">{relatedProject.manager}</span>
+                    </div>
+                    {relatedProject.developer && (
+                      <div className="flex items-center space-x-1">
+                        <Code className="w-3 h-3 text-blue-600" />
+                        <span className="text-slate-500">技术负责人:</span>
+                        <span className="text-slate-800 font-medium">{relatedProject.developer}</span>
+                      </div>
+                    )}
+                    {relatedProject.tester && (
+                      <div className="flex items-center space-x-1">
+                        <Bug className="w-3 h-3 text-emerald-600" />
+                        <span className="text-slate-500">测试负责人:</span>
+                        <span className="text-slate-800 font-medium">{relatedProject.tester}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 冲突分析 */}
           {conflicts.length > 0 && (
             <div className="bg-white rounded-lg border border-red-200 shadow-sm overflow-hidden">
@@ -1638,86 +2038,6 @@ const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand |
             </div>
           </div>
 
-          {/* 项目版本信息（如果有关联项目） */}
-          {relatedProject && (
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-2.5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-green-50">
-                <h4 className="font-medium text-slate-900 flex items-center text-xs">
-                  <Package className="w-3.5 h-3.5 text-green-600 mr-1.5" />
-                  关联项目信息
-                </h4>
-              </div>
-              <div className="p-2.5 space-y-2">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="space-y-1">
-                    <div>
-                      <span className="text-slate-500">版本号:</span>
-                      <span className="text-purple-700 font-bold ml-1">{relatedProject.version}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">版本类型:</span>
-                      <span className={`ml-1 px-1 py-0.5 rounded text-xs font-medium border ${relatedProject.versionType === '大版本' ? 'bg-red-100 text-red-700 border-red-200' :
-                        relatedProject.versionType === '中版本' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                          'bg-emerald-100 text-emerald-700 border-emerald-200'
-                        }`}>
-                        {relatedProject.versionType}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div>
-                      <span className="text-slate-500">当前状态:</span>
-                      <span className="text-blue-700 font-medium ml-1">{relatedProject.status}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">预计交付:</span>
-                      <span className="text-slate-800 ml-1 font-medium">{relatedProject.deadline}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 进度条 */}
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-500">整体进度</span>
-                    <span className="text-sm font-bold text-gray-900">{relatedProject.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
-                    <div
-                      className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500 shadow-sm"
-                      style={{ width: `${relatedProject.progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* 团队信息 */}
-                <div className="border-t border-slate-100 pt-2">
-                  <div className="text-xs font-medium text-slate-800 mb-1">项目团队</div>
-                  <div className="space-y-0.5 text-xs">
-                    <div className="flex items-center space-x-1">
-                      <User className="w-3 h-3 text-purple-600" />
-                      <span className="text-slate-500">产品经理:</span>
-                      <span className="text-slate-800 font-medium">{relatedProject.manager}</span>
-                    </div>
-                    {relatedProject.developer && (
-                      <div className="flex items-center space-x-1">
-                        <Code className="w-3 h-3 text-blue-600" />
-                        <span className="text-slate-500">技术负责人:</span>
-                        <span className="text-slate-800 font-medium">{relatedProject.developer}</span>
-                      </div>
-                    )}
-                    {relatedProject.tester && (
-                      <div className="flex items-center space-x-1">
-                        <Bug className="w-3 h-3 text-emerald-600" />
-                        <span className="text-slate-500">测试负责人:</span>
-                        <span className="text-slate-800 font-medium">{relatedProject.tester}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* 如果没有对应项目，显示AI建议 */}
           {!relatedProject && (
@@ -1950,6 +2270,325 @@ const FlipTopBar: React.FC<{
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+};
+
+// 简单的模态窗智能体选择器
+const CircularAgentSelector: React.FC<{
+  agents: AIAgent[];
+  selectedAgent: AIAgent;
+  onSelectAgent: (agent: AIAgent) => void;
+  isExpanded: boolean;
+  onToggle: () => void;
+}> = ({ agents, selectedAgent, onSelectAgent, isExpanded, onToggle }) => {
+  return (
+    <div className="relative">
+      {/* 主按钮 */}
+      <motion.button
+        onClick={onToggle}
+        className="relative w-10 h-10 rounded-full overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+          boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1)'
+        }}
+        whileHover={{ 
+          scale: 1.05,
+          boxShadow: '0 8px 25px rgba(139, 92, 246, 0.4), 0 4px 15px rgba(0, 0, 0, 0.15)'
+        }}
+        whileTap={{ scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+      >
+        <div className="flex items-center justify-center w-full h-full text-white">
+          <div className="text-lg font-medium">{selectedAgent.avatar}</div>
+        </div>
+      </motion.button>
+
+      {/* 模态窗 */}
+      <AnimatePresence>
+        {isExpanded && (
+          <>
+            {/* 背景遮罩 */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+              onClick={onToggle}
+            />
+            
+            {/* 模态窗内容 */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none"
+            >
+              <div className="pointer-events-auto">
+              <div 
+                className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                  width: '420px'
+                }}
+              >
+                {/* 精美的标题区域 */}
+                <div 
+                  className="px-8 py-6 border-b border-gray-100/50"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(236, 72, 153, 0.05) 100%)'
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div 
+                        className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                        style={{
+                          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+                          boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)'
+                        }}
+                      >
+                        <span className="text-white text-lg">✨</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">AI智能体</h3>
+                        <p className="text-sm text-gray-500 mt-0.5">选择您的专属助手</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={onToggle}
+                      className="p-2 hover:bg-gray-100/80 rounded-xl transition-all duration-200 group"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        border: '1px solid rgba(229, 231, 235, 0.5)'
+                      }}
+                    >
+                      <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* 智能体网格 */}
+                <div className="p-8">
+                  <div className="grid grid-cols-3 gap-5">
+                    {agents.map((agent) => {
+                      const isSelected = agent.id === selectedAgent.id;
+                      return (
+                        <motion.button
+                          key={agent.id}
+                          onClick={() => {
+                            onSelectAgent(agent);
+                            onToggle();
+                          }}
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`
+                            flex flex-col items-center p-5 rounded-2xl transition-all duration-300 group relative overflow-hidden
+                            ${isSelected 
+                              ? 'ring-2 ring-blue-400/60 ring-offset-2' 
+                              : 'hover:shadow-lg'
+                            }
+                          `}
+                          style={{
+                            background: isSelected 
+                              ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 50%, rgba(236, 72, 153, 0.08) 100%)'
+                              : 'rgba(255, 255, 255, 0.8)',
+                            border: isSelected 
+                              ? '1px solid rgba(99, 102, 241, 0.2)' 
+                              : '1px solid rgba(229, 231, 235, 0.5)',
+                            boxShadow: isSelected 
+                              ? '0 8px 25px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)' 
+                              : '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+                          }}
+                        >
+                          {/* 选中状态的背景光效 */}
+                          {isSelected && (
+                            <div 
+                              className="absolute inset-0 opacity-20"
+                              style={{
+                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+                                filter: 'blur(20px)'
+                              }}
+                            />
+                          )}
+                          
+                          <div 
+                            className={`
+                              relative w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold mb-3
+                              transition-all duration-300 group-hover:scale-110
+                            `}
+                            style={{
+                              background: isSelected 
+                                ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)'
+                                : 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.9) 100%)',
+                              color: isSelected ? 'white' : '#374151',
+                              boxShadow: isSelected 
+                                ? '0 8px 25px rgba(139, 92, 246, 0.3)' 
+                                : '0 4px 12px rgba(0, 0, 0, 0.08)',
+                              border: isSelected ? 'none' : '1px solid rgba(229, 231, 235, 0.8)'
+                            }}
+                          >
+                            {agent.avatar}
+                          </div>
+                          <span 
+                            className={`
+                              text-sm font-semibold text-center leading-tight relative
+                              ${isSelected ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'}
+                            `}
+                          >
+                            {agent.name}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// 万花筒动效组件 - 文档转换为精美页面的循环动画
+const KaleidoscopeAnimation: React.FC = () => {
+  const [animationStep, setAnimationStep] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnimationStep((prev) => (prev + 1) % 4);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="bg-gradient-to-r from-purple-50/50 to-pink-50/50 rounded-xl p-6 border border-purple-200/60 backdrop-blur-lg shadow-lg">
+      <div className="text-center">
+        <h4 className="font-bold text-purple-800 mb-4 flex items-center justify-center drop-shadow-sm">
+          <Sparkles className="w-4 h-4 mr-2" />
+          万花筒设计转换
+        </h4>
+        
+        {/* 动画容器 */}
+        <div className="relative h-32 flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            {animationStep === 0 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.5 }}
+                className="absolute flex flex-col items-center"
+              >
+                <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center mb-2">
+                  <FileText className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-xs text-gray-600">上传文档</p>
+              </motion.div>
+            )}
+
+            {animationStep === 1 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.5 }}
+                className="absolute flex flex-col items-center"
+              >
+                <div className="w-16 h-16 bg-purple-100 rounded-lg shadow-lg flex items-center justify-center mb-2">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Sparkles className="w-8 h-8 text-purple-500" />
+                  </motion.div>
+                </div>
+                <p className="text-xs text-purple-600">AI 分析中</p>
+              </motion.div>
+            )}
+
+            {animationStep === 2 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.5 }}
+                className="absolute flex flex-col items-center"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg shadow-lg flex items-center justify-center mb-2">
+                  <Layers className="w-8 h-8 text-white" />
+                </div>
+                <p className="text-xs text-purple-600">生成设计</p>
+              </motion.div>
+            )}
+
+            {animationStep === 3 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.5 }}
+                className="absolute flex flex-col items-center"
+              >
+                <div className="relative">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-400 rounded-lg shadow-lg flex items-center justify-center mb-2">
+                    <Monitor className="w-8 h-8 text-white" />
+                  </div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: [0, 1.2, 1] }}
+                    transition={{ duration: 0.6, times: [0, 0.7, 1] }}
+                    className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+                  >
+                    <CheckCircle className="w-4 h-4 text-white" />
+                  </motion.div>
+                </div>
+                <p className="text-xs text-green-600">精美页面完成</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* 进度指示器 */}
+          <div className="absolute bottom-0 flex space-x-2">
+            {[0, 1, 2, 3].map((step) => (
+              <div
+                key={step}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  animationStep === step ? 'bg-purple-500' : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 text-center">
+          <p className="text-xs text-gray-800 mb-2 font-semibold drop-shadow-sm">专业的产品方案可视化设计助手</p>
+          <div className="flex items-center justify-center space-x-4 text-xs text-gray-700 font-medium">
+            <span className="flex items-center">
+              <FileText className="w-3 h-3 mr-1" />
+              多格式支持
+            </span>
+            <span className="flex items-center">
+              <Sparkles className="w-3 h-3 mr-1" />
+              AI 智能设计
+            </span>
+            <span className="flex items-center">
+              <Monitor className="w-3 h-3 mr-1" />
+              精美输出
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -2831,9 +3470,9 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
           props: {}
         },
         {
-          id: 'project-flow',
-          name: '立项流程',
-          component: ProductProjectFlow,
+          id: 'brand-agent-center',
+          name: '品牌域智能体中心',
+          component: BrandAgentCenter,
           position: 'center',
           props: {}
         },
@@ -3300,6 +3939,191 @@ const technicalAgents: AIAgent[] = [
   }
 ];
 
+// 品牌域智能体定义
+const brandAgents: AIAgent[] = [
+  {
+    id: 'kaleidoscope-agent',
+    name: '万花筒智能体',
+    avatar: '✨',
+    specialty: '产品方案可视化',
+    description: '专业的产品方案可视化设计助手，能够生成精美的设计图和原型',
+    model: 'GPT-4-Vision',
+    capabilities: [
+      '产品原型设计',
+      '视觉方案生成',
+      '用户界面设计',
+      '交互流程设计',
+      '设计规范制定'
+    ],
+    temperature: 0.8,
+    systemPrompt: `你是万花筒智能体，专注于产品方案的可视化设计和呈现。
+
+你的核心能力：
+1. 根据产品需求生成视觉化方案
+2. 设计用户界面和交互流程
+3. 提供设计建议和最佳实践
+4. 生成产品原型和效果图
+5. 制定视觉设计规范
+
+请以创意、美观、实用的方式帮助用户实现产品可视化需求。`,
+    icon: Sparkles,
+    color: 'text-purple-600'
+  },
+  {
+    id: 'project-assistant',
+    name: '项目智能助手',
+    avatar: '🤖',
+    specialty: '项目管理与分析',
+    description: '基于七步成诗法的项目管理AI助手，提供全流程项目支持',
+    model: 'GPT-4-Turbo',
+    capabilities: [
+      '项目进度分析',
+      '风险评估预警',
+      '资源配置优化',
+      '需求分析整理',
+      '决策支持建议'
+    ],
+    temperature: 0.6,
+    systemPrompt: `你是品牌域的项目智能助手，基于"七步成诗"项目管理法为用户提供专业支持。
+
+七步成诗法包括：
+1. 立项调研 - 项目启动和需求分析
+2. 原型设计 - 产品原型和方案设计
+3. 开发跟踪 - 开发进度监控
+4. 测试上线 - 质量保证和发布
+5. 用户反馈 - 用户体验收集
+6. 数据分析 - 效果评估分析
+7. 项目复盘 - 经验总结沉淀
+
+请结合当前项目情况，为用户提供专业的项目管理建议。`,
+    icon: Bot,
+    color: 'text-blue-600'
+  },
+  {
+    id: 'data-analyst',
+    name: '数据分析专家',
+    avatar: '📊',
+    specialty: '数据洞察与分析',
+    description: '专业的数据分析和可视化专家，提供深度数据洞察',
+    model: 'GPT-4-Analytics',
+    capabilities: [
+      '数据趋势分析',
+      '用户行为洞察',
+      '业务指标监控',
+      '预测建模分析',
+      '可视化图表设计'
+    ],
+    temperature: 0.4,
+    systemPrompt: `你是数据分析专家，专注于为品牌域项目提供数据驱动的洞察和建议。
+
+你的专业领域：
+1. 用户数据分析和行为洞察
+2. 业务指标监控和趋势分析
+3. A/B测试设计和结果解读
+4. 预测模型建立和验证
+5. 数据可视化和报告生成
+
+请以数据为基础，为用户提供准确、有价值的分析结果和建议。`,
+    icon: PieChart,
+    color: 'text-green-600'
+  },
+  {
+    id: 'content-creator',
+    name: '内容创作大师',
+    avatar: '✍️',
+    specialty: '创意内容生成',
+    description: '擅长创作各类营销内容和品牌文案的创意专家',
+    model: 'GPT-4-Creative',
+    capabilities: [
+      '品牌文案创作',
+      '营销内容策划',
+      '社交媒体文案',
+      '产品描述优化',
+      '创意故事编写'
+    ],
+    temperature: 0.9,
+    systemPrompt: `你是内容创作大师，专注于为品牌提供创意、吸引人的内容创作服务。`,
+    icon: Lightbulb,
+    color: 'text-orange-600'
+  },
+  {
+    id: 'marketing-strategist',
+    name: '营销策略师',
+    avatar: '🎯',
+    specialty: '营销策略规划',
+    description: '专业的营销策略制定和市场推广专家',
+    model: 'GPT-4-Strategy',
+    capabilities: [
+      '营销策略制定',
+      '市场调研分析',
+      '竞品分析',
+      '推广渠道规划',
+      'ROI效果评估'
+    ],
+    temperature: 0.7,
+    systemPrompt: `你是营销策略师，帮助品牌制定有效的营销策略和推广方案。`,
+    icon: Target,
+    color: 'text-red-600'
+  },
+  {
+    id: 'ui-designer',
+    name: '界面设计师',
+    avatar: '🎨',
+    specialty: 'UI/UX设计',
+    description: '专业的用户界面和用户体验设计专家',
+    model: 'GPT-4-Design',
+    capabilities: [
+      '界面设计方案',
+      '用户体验优化',
+      '交互原型设计',
+      '设计系统建立',
+      '可用性测试'
+    ],
+    temperature: 0.8,
+    systemPrompt: `你是界面设计师，专注于创造美观且易用的用户界面设计。`,
+    icon: Palette,
+    color: 'text-pink-600'
+  },
+  {
+    id: 'brand-consultant',
+    name: '品牌顾问',
+    avatar: '👑',
+    specialty: '品牌战略咨询',
+    description: '资深品牌战略顾问，提供全方位品牌建设指导',
+    model: 'GPT-4-Consultant',
+    capabilities: [
+      '品牌定位策略',
+      '品牌形象设计',
+      '品牌传播策略',
+      '品牌价值提升',
+      '危机公关处理'
+    ],
+    temperature: 0.6,
+    systemPrompt: `你是品牌顾问，帮助企业建立强有力的品牌形象和市场地位。`,
+    icon: Crown,
+    color: 'text-purple-800'
+  },
+  {
+    id: 'tech-innovator',
+    name: '技术创新者',
+    avatar: '⚡',
+    specialty: '技术创新方案',
+    description: '前沿技术应用和创新解决方案专家',
+    model: 'GPT-4-Tech',
+    capabilities: [
+      '技术方案设计',
+      '创新产品构思',
+      '技术趋势分析',
+      '系统架构规划',
+      '技术选型建议'
+    ],
+    temperature: 0.8,
+    systemPrompt: `你是技术创新者，专注于探索和应用前沿技术解决实际问题。`,
+    icon: Zap,
+    color: 'text-yellow-600'
+  }
+];
+
 // 智能体对话中心组件（中间）
 const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: TechnicalStandard | null }) => {
   const [selectedAgent, setSelectedAgent] = useState<AIAgent>(technicalAgents[0]);
@@ -3550,108 +4374,732 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* 智能体选择栏 */}
-      <div className="border-b border-gray-200 p-4 bg-white">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-          <User className="w-5 h-5 text-green-600 mr-2" />
-          技术智能体中心
-        </h3>
-        <div className="grid grid-cols-3 gap-2">
-          {technicalAgents.map((agent) => {
-            const IconComponent = agent.icon;
-            return (
-              <button
-                key={agent.id}
-                onClick={() => setSelectedAgent(agent)}
-                className={`p-2 rounded-lg border text-left transition-all duration-200 ${selectedAgent.id === agent.id
-                  ? 'border-green-300 bg-green-50 shadow-sm'
-                  : 'border-gray-200 hover:border-green-200 hover:bg-gray-50'
-                  }`}
-              >
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className="text-lg">{agent.avatar}</span>
-                  <IconComponent className={`w-4 h-4 ${agent.color}`} />
-                </div>
-                <h4 className="font-medium text-gray-900 text-xs mb-1">{agent.name}</h4>
-                <p className="text-xs text-gray-600">{agent.specialty}</p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 对话区域 */}
-      <div className="flex-1 flex flex-col bg-gray-50">
-        {/* 当前智能体信息 */}
-        <div className="bg-white border-b border-gray-200 p-3">
-          <div className="flex items-center space-x-3">
-            <span className="text-2xl">{selectedAgent.avatar}</span>
-            <div>
-              <h4 className="font-semibold text-gray-900 text-sm">{selectedAgent.name}</h4>
-              <p className="text-xs text-gray-600">{selectedAgent.description}</p>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{selectedAgent.model}</span>
-                <span className="text-xs text-gray-500">Temperature: {selectedAgent.temperature}</span>
+    <div className="h-full flex flex-col bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+      {/* 主对话区域 */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* 当前智能体简化信息 */}
+        <div className="bg-gradient-to-r from-white/90 to-green-50/80 backdrop-blur-sm border-b border-green-100 p-2 flex-shrink-0">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center text-lg shadow-sm">
+              {selectedAgent.avatar}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-gray-900 text-sm truncate">{selectedAgent.name}</h4>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs bg-blue-500/10 text-blue-700 px-2 py-0.5 rounded font-medium">
+                  {selectedAgent.model}
+                </span>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-gray-500">在线</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 消息列表 */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`max-w-[80%] ${message.role === 'user'
-                ? 'bg-green-600 text-white rounded-l-lg rounded-tr-lg'
-                : 'bg-white border border-gray-200 rounded-r-lg rounded-tl-lg'
-                } p-3 shadow-sm`}>
-                <pre className="whitespace-pre-wrap text-sm font-sans">{message.content}</pre>
-                <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-green-100' : 'text-gray-500'
-                  }`}>
-                  {new Date(message.timestamp).toLocaleTimeString()}
+        {/* 消息列表区域 - 优化滚动 */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <AnimatePresence>
+            {messages.map((message, index) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-[75%] ${message.role === 'user'
+                  ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg rounded-br-md shadow-md'
+                  : 'bg-white/95 border border-gray-200 rounded-lg rounded-bl-md shadow-md'
+                  } p-3`}>
+                  <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{message.content}</pre>
+                  <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-green-100' : 'text-gray-500'}`}>
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="bg-white border border-gray-200 rounded-r-lg rounded-tl-lg p-3 shadow-sm">
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="bg-white/95 border border-gray-200 rounded-lg rounded-bl-md p-3 shadow-md">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">思考中</span>
+                  <div className="flex space-x-1">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </div>
 
+        {/* 智能体选择器 */}
+        <div className="border-t border-gray-200 bg-white/95 p-3 flex-shrink-0">
+          <div className="flex items-center space-x-2 mb-3">
+            <span className="text-xs font-medium text-gray-600">选择智能体:</span>
+          </div>
+          <div className="flex space-x-2 overflow-x-auto pb-1">
+            {technicalAgents.map((agent) => {
+              const IconComponent = agent.icon;
+              const isActive = selectedAgent.id === agent.id;
+              return (
+                <button
+                  key={agent.id}
+                  onClick={() => setSelectedAgent(agent)}
+                  className={`flex-shrink-0 flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-md'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  <span className="text-sm">{agent.avatar}</span>
+                  <IconComponent className="w-3 h-3" />
+                  <span className="whitespace-nowrap">{agent.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* 输入区域 */}
-        <div className="border-t border-gray-200 bg-white p-4">
-          <div className="flex space-x-2">
+        <div className="border-t border-gray-200 bg-white p-3 flex-shrink-0">
+          <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center text-sm shadow-sm">
+              {selectedAgent.avatar}
+            </div>
             <input
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
               placeholder={`向${selectedAgent.name}提问...`}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              className="flex-1 h-9 px-3 bg-transparent border-0 focus:outline-none text-sm placeholder-gray-500"
             />
             <button
               onClick={handleSendMessage}
               disabled={!inputMessage.trim() || isTyping}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <Send className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+// 品牌域智能体中心组件
+const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | null }) => {
+  const [selectedAgent, setSelectedAgent] = useState<AIAgent>(brandAgents[0]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isAgentSelectorExpanded, setIsAgentSelectorExpanded] = useState(false);
+
+  // 文件处理函数
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles = Array.from(files);
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 处理发送消息
+  const handleSendMessage = () => {
+    if ((!inputMessage.trim() && uploadedFiles.length === 0) || isTyping) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: inputMessage,
+      timestamp: Date.now().toString(),
+      agentId: selectedAgent.id
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setUploadedFiles([]);
+    setIsTyping(true);
+
+    // 模拟AI回复
+    setTimeout(() => {
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: getAgentResponse(selectedAgent, inputMessage),
+        timestamp: (Date.now() + 1000).toString(),
+        agentId: selectedAgent.id
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsTyping(false);
+    }, 2000);
+  };
+
+  // 获取智能体回复
+  const getAgentResponse = (agent: AIAgent, userInput: string): string => {
+    switch (agent.id) {
+      case 'kaleidoscope-agent':
+        return `🎨 **万花筒设计方案**
+
+基于您的需求"${userInput}"，我为您生成以下设计建议：
+
+**视觉设计方向**
+• 现代简约风格，突出功能性和美观性
+• 采用渐变色彩搭配，营造科技感
+• 响应式布局，支持多端适配
+
+**交互流程设计**
+1. 用户进入页面 → 引导动画
+2. 功能展示 → 交互演示
+3. 操作反馈 → 结果呈现
+
+**技术实现建议**
+• 使用Framer Motion进行动画处理
+• 采用CSS Grid布局系统
+• 集成可视化图表库
+
+需要我为您生成具体的原型图或详细设计规范吗？`;
+
+      case 'project-assistant':
+        return `📋 **七步成诗项目分析**
+
+针对当前项目情况，我提供以下建议：
+
+**当前阶段评估**
+• 项目进度：${selectedDemand ? '75%' : '待选择需求'}
+• 关键风险：时间节点紧张，需要加强协调
+• 资源状态：开发人员充足，测试资源紧张
+
+**下一步行动计划**
+1. **立项调研**：完善需求文档
+2. **原型设计**：确认设计方案
+3. **开发跟踪**：每日站会同步
+4. **测试上线**：提前准备测试用例
+
+**风险预警**
+⚠️ 建议关注依赖模块的进度
+⚠️ 需要提前协调上线资源
+
+有什么具体问题需要深入分析吗？`;
+
+      case 'data-analyst':
+        return `📊 **数据分析洞察**
+
+基于您的查询"${userInput}"，以下是数据分析结果：
+
+**关键指标趋势**
+• 用户活跃度：↗️ 上升12.5%
+• 转化率：↗️ 提升8.3%
+• 用户留存：→ 保持稳定
+
+**用户行为分析**
+1. 高峰使用时段：9:00-11:00, 14:00-16:00
+2. 主要功能偏好：搜索(45%) > 浏览(32%) > 交互(23%)
+3. 平均会话时长：3分42秒
+
+**优化建议**
+• 在高峰时段推送重要功能
+• 优化搜索体验，提升用户满意度
+• 增加互动元素，延长用户停留时间
+
+需要我进行更深入的数据挖掘分析吗？`;
+
+      default:
+        return `你好！我是${agent.name}，很高兴为你服务。请告诉我你需要什么帮助，我会基于我的专业知识为你提供支持。`;
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col relative overflow-hidden">
+      {/* 动态云彩背景 */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <svg 
+          viewBox="0 0 100 100" 
+          preserveAspectRatio="xMidYMid slice"
+          className="w-full h-full"
+          style={{ opacity: 0.4 }}
+        >
+          <defs>
+            <radialGradient id="BrandGradient1" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="34s" values="0%;3%;0%" repeatCount="indefinite" />
+              <stop offset="0%" stopColor="#a855f7" />
+              <stop offset="100%" stopColor="#a855f700" />
+            </radialGradient>
+            <radialGradient id="BrandGradient2" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="23.5s" values="0%;3%;0%" repeatCount="indefinite" />
+              <stop offset="0%" stopColor="#ec4899" />
+              <stop offset="100%" stopColor="#ec489900" />
+            </radialGradient>
+            <radialGradient id="BrandGradient3" cx="50%" cy="50%" fx="50%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="21.5s" values="0%;3%;0%" repeatCount="indefinite" />
+              <stop offset="0%" stopColor="#f97316" />
+              <stop offset="100%" stopColor="#f9731600" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#BrandGradient1)">
+            <animate attributeName="x" dur="20s" values="25%;0%;25%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="21s" values="0%;25%;0%" repeatCount="indefinite" />
+            <animateTransform 
+              attributeName="transform" 
+              type="rotate" 
+              from="0 50 50" 
+              to="360 50 50" 
+              dur="17s" 
+              repeatCount="indefinite" 
+            />
+          </rect>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#BrandGradient2)">
+            <animate attributeName="x" dur="23s" values="-25%;0%;-25%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="24s" values="0%;50%;0%" repeatCount="indefinite" />
+            <animateTransform 
+              attributeName="transform" 
+              type="rotate" 
+              from="0 50 50" 
+              to="360 50 50" 
+              dur="18s" 
+              repeatCount="indefinite" 
+            />
+          </rect>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#BrandGradient3)">
+            <animate attributeName="x" dur="25s" values="0%;25%;0%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="26s" values="0%;25%;0%" repeatCount="indefinite" />
+            <animateTransform 
+              attributeName="transform" 
+              type="rotate" 
+              from="360 50 50" 
+              to="0 50 50" 
+              dur="19s" 
+              repeatCount="indefinite" 
+            />
+          </rect>
+        </svg>
+      </div>
+
+      {/* 主对话区域 */}
+      <div className="flex-1 flex flex-col min-h-0 relative z-10">
+        {/* 常驻智能体显示区域 */}
+        <div className="bg-gradient-to-r from-white/30 to-purple-50/30 backdrop-blur-sm border-b border-purple-100/30 p-6 flex-shrink-0">
+          <div className="flex items-center space-x-4">
+            {/* 智能体头像 - 增强可感知性 */}
+            <motion.div 
+              className="relative cursor-pointer group"
+              onClick={() => setIsAgentSelectorExpanded(!isAgentSelectorExpanded)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {/* 外圈脉冲动画 */}
+              <motion.div
+                className="absolute inset-0 rounded-2xl"
+                style={{
+                  background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                  opacity: 0.3
+                }}
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.6, 0.3]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+              
+              {/* 旋转光环 */}
+              <motion.div
+                className="absolute inset-0 rounded-2xl"
+                style={{
+                  background: 'conic-gradient(from 0deg, #a855f7, #ec4899, #f97316, #10b981, #3b82f6, #a855f7)',
+                  padding: '2px',
+                  opacity: 0.8
+                }}
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              />
+              
+              {/* 主头像按钮 */}
+              <motion.div 
+                className="relative w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                  boxShadow: '0 8px 25px rgba(168, 85, 247, 0.4)'
+                }}
+                whileHover={{
+                  boxShadow: '0 12px 35px rgba(168, 85, 247, 0.6)',
+                  rotate: [0, -10, 10, 0]
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                {selectedAgent.avatar}
+                
+                {/* 点击提示图标 */}
+                <motion.div
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-md"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: [0, 1, 0] }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: 1
+                  }}
+                >
+                  <div className="w-2 h-2 bg-gradient-to-br from-orange-400 to-red-500 rounded-full"></div>
+                </motion.div>
+              </motion.div>
+              
+              {/* 悬浮提示 */}
+              <motion.div
+                className="absolute -top-12 left-1/2 transform -translate-x-1/2 whitespace-nowrap opacity-0 group-hover:opacity-100"
+                initial={{ opacity: 0, y: 10 }}
+                whileHover={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="bg-gray-800 text-white text-xs px-3 py-1 rounded-lg shadow-lg">
+                  点击切换智能体 🎯
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+              </motion.div>
+            </motion.div>
+            
+            {/* 智能体信息 */}
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-1">
+                <h3 className="text-xl font-bold text-gray-900">{selectedAgent.name}</h3>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-500">在线</span>
+              </div>
+              <p className="text-sm text-gray-600">{selectedAgent.description}</p>
+            </div>
+            
+            {/* 模型标识 */}
+            <div className="text-right">
+              <span className="inline-block bg-purple-500/10 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
+                {selectedAgent.model}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 消息列表区域 */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg">
+                {selectedAgent.avatar}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold text-gray-900 drop-shadow-sm">👋 你好！我是{selectedAgent.name}</h3>
+                <p className="text-sm text-gray-800 max-w-md font-medium drop-shadow-sm">{selectedAgent.description}</p>
+              </div>
+              
+              <div className="w-full max-w-md">
+                {selectedAgent.id === 'kaleidoscope-agent' && <KaleidoscopeAnimation />}
+              </div>
+              
+              <div className="flex flex-wrap gap-2 justify-center">
+                <button 
+                  onClick={() => setInputMessage('帮我设计一个现代化的用户界面')}
+                  className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
+                >
+                  设计界面
+                </button>
+                <button 
+                  onClick={() => setInputMessage('分析一下我的项目进度')}
+                  className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
+                >
+                  项目分析
+                </button>
+                <button 
+                  onClick={() => setInputMessage('帮我制定技术方案')}
+                  className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
+                >
+                  技术方案
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <AnimatePresence>
+                {messages.map((message, index) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[75%] ${message.role === 'user'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg rounded-br-md shadow-md'
+                    : 'bg-white/20 border border-gray-200/50 rounded-lg rounded-bl-md shadow-md backdrop-blur-sm'
+                    } p-3`}>
+                    <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{message.content}</pre>
+                    <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-purple-100' : 'text-gray-500'}`}>
+                      {new Date(Number(message.timestamp)).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-white/20 border border-gray-200/50 rounded-lg rounded-bl-md p-3 shadow-md backdrop-blur-sm">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">思考中</span>
+                      <div className="flex space-x-1">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce"></div>
+                        <div className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* 文件上传预览 */}
+        {uploadedFiles.length > 0 && (
+          <div className="border-t border-gray-200/50 bg-gray-50/20 p-3 backdrop-blur-sm">
+            <div className="flex items-center space-x-2 mb-2">
+              <Paperclip className="w-4 h-4 text-gray-600" />
+              <span className="text-xs font-medium text-gray-700">已上传文件</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {uploadedFiles.map((file, index) => (
+                <div key={index} className="flex items-center space-x-2 bg-white/20 rounded-lg p-2 border border-gray-200/50 text-xs backdrop-blur-sm">
+                  <div className="w-6 h-6 bg-gradient-to-br from-pink-400 to-red-400 rounded flex items-center justify-center">
+                    {file.type.startsWith('image/') ? (
+                      <Image className="w-3 h-3 text-white" />
+                    ) : (
+                      <FileText className="w-3 h-3 text-white" />
+                    )}
+                  </div>
+                  <span className="text-gray-700 max-w-20 truncate">{file.name}</span>
+                  <button
+                    onClick={() => removeFile(index)}
+                    className="text-red-500 hover:text-red-700 w-4 h-4 flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+
+        {/* 输入区域 - 更精致无边框设计 */}
+        <div className="bg-white/20 backdrop-blur-md p-4 flex-shrink-0 relative z-20 border-t border-gray-100/30">
+          <div className="flex items-center space-x-3 bg-gradient-to-r from-gray-50/80 to-white/90 backdrop-blur-sm rounded-xl p-3 shadow-sm" style={{
+            border: '1px solid rgba(148, 163, 184, 0.08)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9)'
+          }}>
+            
+            {/* 文件上传按钮 */}
+            <input
+              type="file"
+              id="brand-file-upload"
+              multiple
+              accept="image/*,.pdf,.doc,.docx,.txt"
+              onChange={(e) => handleFileUpload(e.target.files)}
+              className="hidden"
+            />
+            <label
+              htmlFor="brand-file-upload"
+              className="flex items-center justify-center w-10 h-10 rounded-xl cursor-pointer transition-all duration-200 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04)',
+                border: '1px solid rgba(148, 163, 184, 0.12)'
+              }}
+              title="上传文件"
+            >
+              <Paperclip className="w-4 h-4 text-gray-500" />
+            </label>
+            
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+              placeholder={`向${selectedAgent.name}提问...`}
+              className="flex-1 h-10 px-4 bg-transparent border-0 focus:outline-none text-sm placeholder-gray-400 font-medium"
+              style={{
+                color: '#1f2937'
+              }}
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={(!inputMessage.trim() && uploadedFiles.length === 0) || isTyping}
+              className="flex items-center justify-center w-10 h-10 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
+              style={{
+                background: (!inputMessage.trim() && uploadedFiles.length === 0) || isTyping
+                  ? 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%)'
+                  : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+                boxShadow: (!inputMessage.trim() && uploadedFiles.length === 0) || isTyping
+                  ? '0 2px 8px rgba(0, 0, 0, 0.1)'
+                  : '0 4px 15px rgba(139, 92, 246, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 智能体选择模态窗 */}
+      <AnimatePresence>
+        {isAgentSelectorExpanded && (
+          <>
+            {/* 背景遮罩 */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+              onClick={() => setIsAgentSelectorExpanded(false)}
+            />
+            
+            {/* 模态窗内容 */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none"
+            >
+              <motion.div 
+                className="pointer-events-auto bg-white/40 rounded-3xl shadow-2xl border border-white/30 overflow-hidden backdrop-blur-xl"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.35) 0%, rgba(248,250,252,0.25) 100%)',
+                  backdropFilter: 'blur(25px) saturate(180%)',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                  width: '500px'
+                }}
+                initial={{ scale: 0.8, rotate: -10 }}
+                animate={{ scale: 1, rotate: 0 }}
+                exit={{ scale: 0.8, rotate: 10 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                  {/* 标题区域 */}
+                  <div 
+                    className="px-8 py-6 border-b border-gray-100/50"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(236, 72, 153, 0.05) 100%)'
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div 
+                          className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                          style={{
+                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+                            boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)'
+                          }}
+                        >
+                          <span className="text-white text-lg">✨</span>
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">AI智能体</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">选择您的专属助手</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setIsAgentSelectorExpanded(false)}
+                        className="p-2 hover:bg-gray-100/80 rounded-xl transition-all duration-200 group"
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.8)',
+                          border: '1px solid rgba(229, 231, 235, 0.5)'
+                        }}
+                      >
+                        <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* 简洁九宫格智能体选择器 */}
+                  <div className="p-8">
+                    {/* 当前选中的智能体 */}
+                    <div className="text-center mb-8">
+                      <motion.div
+                        className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center text-3xl font-bold shadow-lg mb-4"
+                        style={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)'
+                        }}
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        {selectedAgent.avatar}
+                      </motion.div>
+                      <h3 className="text-lg font-bold text-gray-800">{selectedAgent.name}</h3>
+                      <p className="text-sm text-gray-500">{selectedAgent.description}</p>
+                    </div>
+
+                    {/* 智能体网格 */}
+                    <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
+                      {brandAgents.map((agent, index) => {
+                        const isSelected = agent.id === selectedAgent.id;
+                        return (
+                          <motion.button
+                            key={agent.id}
+                            onClick={() => {
+                              setSelectedAgent(agent);
+                              setIsAgentSelectorExpanded(false);
+                            }}
+                            className={`
+                              p-4 rounded-2xl flex flex-col items-center space-y-2 transition-all duration-200
+                              ${isSelected 
+                                ? 'bg-gradient-to-br from-purple-100/60 to-blue-100/60 ring-2 ring-purple-400/80 ring-offset-2 backdrop-blur-lg border border-purple-200/40' 
+                                : 'bg-white/50 hover:bg-white/60 border border-gray-200/60 hover:border-gray-300/70 backdrop-blur-lg shadow-lg'
+                              }
+                            `}
+                            whileHover={{ scale: 1.05, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                          >
+                            <div 
+                              className={`
+                                w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold
+                                ${isSelected 
+                                  ? 'bg-gradient-to-br from-purple-500 to-blue-600 text-white shadow-lg' 
+                                  : 'bg-gray-100 text-gray-600'
+                                }
+                              `}
+                            >
+                              {agent.avatar}
+                            </div>
+                            <span className={`text-xs font-bold text-center drop-shadow-sm ${isSelected ? 'text-purple-800' : 'text-gray-900'}`}>
+                              {agent.name}
+                            </span>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
