@@ -43,44 +43,8 @@ import ChatArea from './ChatArea';
 import CustomerPanel from './CustomerPanel';
 import Sidebar from './Sidebar';
 
-// 品牌域模块
-
-// 定义模块配置接口
-interface ModuleConfig {
-  id: string;
-  name: string;
-  component: React.ComponentType<any>;
-  position: 'left' | 'center' | 'right';
-  props?: any;
-}
-
-interface DepartmentConfig {
-  id: string;
-  name: string;
-  modules: ModuleConfig[];
-  theme: {
-    primary: string;
-    secondary: string;
-    background: string;
-  };
-  topBarInfo?: {
-    title: string;
-    description: string;
-    stats: Array<{
-      label: string;
-      value: string;
-      icon: React.ComponentType<any>;
-      trend?: 'up' | 'down' | 'stable';
-    }>;
-  };
-}
-
-interface ModuleManagerProps {
-  currentDepartment: string;
-  onCustomerSelect?: (customer: any) => void;
-  selectedCustomer?: any;
-  customerSuccessMode?: 'normal' | 'assessment';
-}
+// 导入类型
+import { ModuleConfig, DepartmentConfig, ModuleManagerProps } from '../types';
 
 // 在文件开头添加产品需求的类型定义
 interface ProductDemand {
@@ -715,6 +679,7 @@ const DemandPool = ({ selectedDemand, onDemandSelect }: { selectedDemand: Produc
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">TAPD需求管理池</h3>
         <p className="text-sm text-gray-600">基于"七步成诗"法的需求全生命周期管理</p>
+        
       </div>
 
       {/* 四象限矩阵 */}
@@ -839,8 +804,8 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
 
-  // 文件处理函数
-  const handleFileUpload = (files: FileList | null) => {
+  // 文件处理函数（增强版，支持意图识别）
+  const handleFileUpload = async (files: FileList | null) => {
     if (!files) return;
     const newFiles = Array.from(files).filter(file => 
       file.type.startsWith('image/') || 
@@ -848,7 +813,16 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
       file.type.includes('document') ||
       file.type.includes('text/')
     );
+    
     setUploadedFiles(prev => [...prev, ...newFiles]);
+
+    // 对文本文件进行意图识别（需要通过父组件处理）
+    const textFiles = newFiles.filter(file => 
+      file.type.includes('text/') || file.name.endsWith('.md') || file.name.endsWith('.txt')
+    );
+
+    // 暂时注释掉，因为需要访问父组件的状态
+    // textFiles.forEach(file => processFileForIntentRecognition(file));
   };
 
   const removeFile = (index: number) => {
@@ -2602,6 +2576,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
   const [selectedDemand, setSelectedDemand] = useState<ProductDemand>(productDemands[0]);
   const [selectedStandard, setSelectedStandard] = useState<TechnicalStandard>(technicalStandards[0]);
   const [previousMode, setPreviousMode] = useState<'normal' | 'assessment'>('normal');
+  
 
   // 青春阳光主题配置
   const sunshineTheme = {
@@ -5096,6 +5071,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
           </>
         )}
       </AnimatePresence>
+
 
     </div>
   );

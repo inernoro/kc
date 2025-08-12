@@ -112,4 +112,64 @@ export interface FormField {
     maxLength?: number;
     custom?: (value: any) => string | null;
   };
+}
+
+// ModuleManager 相关类型
+export interface ModuleConfig {
+  id: string;
+  name: string;
+  component: React.ComponentType<any>;
+  position: 'left' | 'center' | 'right';
+  props?: any;
+}
+
+export interface DepartmentConfig {
+  id: string;
+  name: string;
+  modules: ModuleConfig[];
+  theme: {
+    primary: string;
+    secondary: string;
+    background: string;
+  };
+  topBarInfo?: {
+    title: string;
+    description: string;
+    stats: Array<{
+      label: string;
+      value: string;
+      icon: React.ComponentType<any>;
+      trend?: 'up' | 'down' | 'stable';
+    }>;
+  };
+}
+
+export interface ModuleManagerProps {
+  currentDepartment: string;
+  onCustomerSelect?: (customer: any) => void;
+  selectedCustomer?: any;
+  customerSuccessMode?: 'normal' | 'assessment';
+}
+
+export interface AIAgent {
+  id: string;
+  name: string;
+  avatar: string;
+  speciality: string;
+  description: string;
+  capabilities: string[];
+  experience: string;
+  responseStyle: string;
+  status: 'available' | 'busy' | 'offline';
+  rating: number;
+  completedTasks: number;
+  category?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  type: 'user' | 'agent' | 'system';
+  content: string;
+  timestamp: Date;
+  agentId?: string;
 } 
