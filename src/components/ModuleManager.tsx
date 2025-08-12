@@ -1547,7 +1547,6 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                             type="file"
                             id="ai-file-upload"
                             multiple
-                            accept="image/*,.pdf,.doc,.docx,.txt"
                             onChange={(e) => handleFileUpload(e.target.files)}
                             className="hidden"
                           />
@@ -1563,7 +1562,6 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                             type="file"
                             id="ai-image-upload"
                             multiple
-                            accept="image/*"
                             onChange={(e) => handleFileUpload(e.target.files)}
                             className="hidden"
                           />
@@ -2095,11 +2093,11 @@ const FlipModule: React.FC<{
   const getContainerClass = () => {
     switch (position) {
       case 'left':
-        return 'bg-white border-r border-gray-200 h-full overflow-hidden min-h-full';
+        return 'bg-gradient-to-br from-white to-gray-50/30 border-r border-gray-200/60 shadow-sm h-full overflow-hidden min-h-full backdrop-blur-sm';
       case 'center':
         return 'flex flex-col min-w-0 h-full overflow-hidden bg-gray-50 px-4 min-h-full';
       case 'right':
-        return 'bg-white border-l border-gray-200 h-full overflow-hidden min-h-full';
+        return 'bg-gradient-to-br from-white to-gray-50/30 border-l border-gray-200/60 shadow-sm h-full overflow-hidden min-h-full backdrop-blur-sm';
       default:
         return '';
     }
@@ -3947,7 +3945,7 @@ const brandAgents: AIAgent[] = [
     avatar: '✨',
     specialty: '产品方案可视化',
     description: '专业的产品方案可视化设计助手，能够生成精美的设计图和原型',
-    model: 'GPT-4-Vision',
+    model: 'GPT-5',
     capabilities: [
       '产品原型设计',
       '视觉方案生成',
@@ -4914,7 +4912,6 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
               type="file"
               id="brand-file-upload"
               multiple
-              accept="image/*,.pdf,.doc,.docx,.txt"
               onChange={(e) => handleFileUpload(e.target.files)}
               className="hidden"
             />
