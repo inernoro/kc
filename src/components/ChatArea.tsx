@@ -3,6 +3,8 @@ import { Send, Paperclip, Mic, Bot, User, Lightbulb, Copy, ThumbsUp, ThumbsDown 
 import { Customer } from '../types/customer';
 import KnowledgeSelector from './KnowledgeSelector';
 import { aiAPI } from '../services/api'; // 使用统一的API服务
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   id: string;
@@ -24,6 +26,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
   const [conversationId, setConversationId] = useState<string>('');
   const [useStreamMode, setUseStreamMode] = useState<boolean>(true); // 默认使用流式模式
   const [streamingMessage, setStreamingMessage] = useState<string>(''); // 存储流式接收的消息
+  const [currentTypingMessageId, setCurrentTypingMessageId] = useState<string | null>(null);
+  const [typingSpeed, setTypingSpeed] = useState(80); // 打字速度，毫秒
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 初始化欢迎消息
@@ -40,7 +44,34 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
     const welcomeMessage: Message = {
       id: 'welcome-' + selectedKnowledge,
       type: 'ai',
-      content: `您好！我是米多智库AI助手，当前已连接${knowledgeTypeMap[selectedKnowledge]}。我可以帮您查询客户信息、分析客户需求、提供解决方案建议等。请问有什么可以帮助您的吗？`,
+      content: `# 👋 欢迎使用米多智库AI助手
+
+**当前连接**: ${knowledgeTypeMap[selectedKnowledge]}
+
+## 🚀 主要功能
+
+我可以为您提供以下服务：
+
+- **客户信息查询** - 快速获取客户详细档案
+- **需求分析** - 深度分析客户业务需求  
+- **解决方案建议** - 提供专业的解决方案
+- **数据报表** - 生成各类分析报表
+
+## 📊 示例用法
+
+\`\`\`bash
+# 查询客户信息
+搜索客户：华为技术有限公司
+
+# 分析需求
+分析该客户的采购需求和预算范围
+\`\`\`
+
+> 💡 **提示**: 您可以直接输入问题，我会根据知识库为您提供准确的回答！
+
+---
+
+请问有什么可以帮助您的吗？`,
       timestamp: new Date(),
       suggestions: ['查询客户档案', '一键群发消息', '分析客户需求', '生成解决方案', '查看历史记录']
     };
@@ -53,6 +84,37 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingMessage]);
+
+  // 打字机效果函数
+  const typeWriterEffect = (messageId: string, fullText: string, callback?: () => void) => {
+    setCurrentTypingMessageId(messageId);
+    let currentIndex = 0;
+    
+    const typeNextChar = () => {
+      if (currentIndex <= fullText.length) {
+        const currentText = fullText.substring(0, currentIndex);
+        
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === messageId 
+              ? { ...msg, content: currentText }
+              : msg
+          )
+        );
+        
+        currentIndex++;
+        
+        if (currentIndex <= fullText.length) {
+          setTimeout(typeNextChar, typingSpeed);
+        } else {
+          setCurrentTypingMessageId(null);
+          if (callback) callback();
+        }
+      }
+    };
+    
+    typeNextChar();
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -139,7 +201,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
               setMessages(prev => 
                 prev.map(msg => 
                   msg.id === streamMessageId 
-                    ? { ...msg, content: '抱歉，服务出现了问题，请稍后再试。' }
+                    ? { ...msg, content: '## ⚠️ 服务异常\n\n抱歉，服务出现了问题，请稍后再试。\n\n**可能的解决方案：**\n- 检查网络连接\n- 稍后重试\n- 联系技术支持' }
                     : msg
                 )
               );
@@ -163,7 +225,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
             setMessages(prev => 
               prev.map(msg => 
                 msg.id === streamMessageId 
-                  ? { ...msg, content: '抱歉，服务出现了问题，请稍后再试。' }
+                  ? { ...msg, content: '## ⚠️ 服务异常\n\n抱歉，服务出现了问题，请稍后再试。\n\n**可能的解决方案：**\n- 检查网络连接\n- 稍后重试\n- 联系技术支持' }
                   : msg
               )
             );
@@ -174,7 +236,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
           }
         );
       } else {
-        // 普通模式
+        // 普通模式 - 使用打字机效果
         const response = await aiAPI.chat({
           message: currentInput,
           conversationId,
@@ -194,15 +256,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
           aiContent = '抱歉，我暂时无法回答这个问题。';
         }
         
+        // 先创建一个空的AI消息
+        const aiMessageId = (Date.now() + 1).toString();
         const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: aiMessageId,
           type: 'ai',
-          content: aiContent,
+          content: '',
           timestamp: new Date(),
           suggestions: response.data?.suggestions || generateSuggestions(currentInput)
         };
 
         setMessages(prev => [...prev, aiMessage]);
+        
+        // 开始打字机效果
+        typeWriterEffect(aiMessageId, aiContent, () => {
+          setIsTyping(false);
+        });
         
         if (response.data?.conversationId) {
           setConversationId(response.data.conversationId);
@@ -213,14 +282,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: '抱歉，服务出现了问题，请稍后再试。',
+        content: '## ⚠️ 服务异常\n\n抱歉，服务出现了问题，请稍后再试。\n\n**可能的解决方案：**\n- 检查网络连接\n- 稍后重试\n- 联系技术支持',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
+      setIsTyping(false);
+      setCurrentTypingMessageId(null);
     } finally {
-      if (!useStreamMode) {
-        setIsTyping(false);
-      }
+      // 不在这里设置setIsTyping(false)，因为打字机效果会在完成时自动设置
+      // 只有流式模式在出错时才需要在这里设置
     }
   };
 
@@ -335,14 +405,47 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
                       ? 'bg-primary-500 text-white'
                   : 'bg-white border border-gray-200 text-gray-900'
                   }`}>
-                <div className="text-sm whitespace-pre-wrap break-words">
-                  {message.content}
-                  {/* 流式模式下正在输入的内容添加光标效果 */}
-                  {useStreamMode && isTyping && message.type === 'ai' && 
-                   message.id === messages[messages.length - 1]?.id && (
-                    <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1">|</span>
-                  )}
-                </div>
+                {message.type === 'user' ? (
+                  <div className="text-sm whitespace-pre-wrap break-words">
+                    {message.content}
+                  </div>
+                ) : (
+                  <div className="text-sm markdown-content">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({children}) => <h1 className="text-lg font-bold text-gray-900 mb-2 border-b pb-1">{children}</h1>,
+                        h2: ({children}) => <h2 className="text-base font-semibold text-gray-800 mb-2 mt-3">{children}</h2>,
+                        h3: ({children}) => <h3 className="text-sm font-medium text-gray-700 mb-1 mt-2">{children}</h3>,
+                        p: ({children}) => <p className="text-sm text-gray-700 leading-relaxed mb-2">{children}</p>,
+                        ul: ({children}) => <ul className="list-disc list-inside text-sm text-gray-700 mb-2 space-y-1">{children}</ul>,
+                        ol: ({children}) => <ol className="list-decimal list-inside text-sm text-gray-700 mb-2 space-y-1">{children}</ol>,
+                        li: ({children}) => <li className="ml-1">{children}</li>,
+                        code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800">{children}</code>,
+                        pre: ({children}) => <pre className="bg-gray-100 p-2 rounded text-xs font-mono overflow-x-auto mb-2">{children}</pre>,
+                        blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-3 py-1 bg-blue-50 text-gray-700 mb-2">{children}</blockquote>,
+                        strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                        em: ({children}) => <em className="italic text-gray-700">{children}</em>,
+                        table: ({children}) => <table className="min-w-full border border-gray-300 mb-2">{children}</table>,
+                        thead: ({children}) => <thead className="bg-gray-50">{children}</thead>,
+                        tbody: ({children}) => <tbody>{children}</tbody>,
+                        tr: ({children}) => <tr className="border-b border-gray-200">{children}</tr>,
+                        th: ({children}) => <th className="px-2 py-1 text-left text-xs font-medium text-gray-700 border-r border-gray-300">{children}</th>,
+                        td: ({children}) => <td className="px-2 py-1 text-xs text-gray-700 border-r border-gray-300">{children}</td>,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                    {/* 光标效果 */}
+                    {useStreamMode && isTyping && message.type === 'ai' && 
+                     message.id === messages[messages.length - 1]?.id && (
+                      <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1">|</span>
+                    )}
+                    {!useStreamMode && message.type === 'ai' && currentTypingMessageId === message.id && (
+                      <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1">|</span>
+                    )}
+                  </div>
+                )}
                 {message.type === 'ai' && (
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                     <div className="text-xs text-gray-500">

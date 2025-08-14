@@ -37,10 +37,13 @@ import {
   Zap
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // 导入组件
 import ChatArea from './ChatArea';
 import CustomerPanel from './CustomerPanel';
+import PRDPreview from './PRDPreview';
 import Sidebar from './Sidebar';
 
 // 导入类型
@@ -1430,7 +1433,31 @@ const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand 
                                 ))}
                               </div>
                             )}
-                            <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+                            {message.type === 'user' ? (
+                              <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+                            ) : (
+                              <div className="markdown-content">
+                                <ReactMarkdown 
+                                  remarkPlugins={[remarkGfm]}
+                                  components={{
+                                    h1: ({children}) => <h1 className="text-base font-bold text-gray-900 mb-2 border-b pb-1">{children}</h1>,
+                                    h2: ({children}) => <h2 className="text-sm font-semibold text-gray-800 mb-1 mt-2">{children}</h2>,
+                                    h3: ({children}) => <h3 className="text-sm font-medium text-gray-700 mb-1 mt-2">{children}</h3>,
+                                    p: ({children}) => <p className="text-sm text-gray-700 leading-relaxed mb-1">{children}</p>,
+                                    ul: ({children}) => <ul className="list-disc list-inside text-sm text-gray-700 mb-1 space-y-0.5">{children}</ul>,
+                                    ol: ({children}) => <ol className="list-decimal list-inside text-sm text-gray-700 mb-1 space-y-0.5">{children}</ol>,
+                                    li: ({children}) => <li className="ml-1">{children}</li>,
+                                    code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800">{children}</code>,
+                                    pre: ({children}) => <pre className="bg-gray-100 p-2 rounded text-xs font-mono overflow-x-auto mb-1">{children}</pre>,
+                                    blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-2 py-1 bg-blue-50 text-gray-700 mb-1">{children}</blockquote>,
+                                    strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                                    em: ({children}) => <em className="italic text-gray-700">{children}</em>,
+                                  }}
+                                >
+                                  {message.content}
+                                </ReactMarkdown>
+                              </div>
+                            )}
                             <div className={`text-xs mt-2 ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
                               {message.timestamp}
                             </div>
@@ -4384,7 +4411,31 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
                   ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg rounded-br-md shadow-md'
                   : 'bg-white/95 border border-gray-200 rounded-lg rounded-bl-md shadow-md'
                   } p-3`}>
-                  <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{message.content}</pre>
+                  {message.role === 'user' ? (
+                    <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{message.content}</pre>
+                  ) : (
+                    <div className="markdown-content">
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: ({children}) => <h1 className="text-lg font-bold text-gray-900 mb-3 border-b pb-1">{children}</h1>,
+                          h2: ({children}) => <h2 className="text-base font-semibold text-gray-800 mb-2 mt-4">{children}</h2>,
+                          h3: ({children}) => <h3 className="text-sm font-medium text-gray-700 mb-2 mt-3">{children}</h3>,
+                          p: ({children}) => <p className="text-sm text-gray-700 leading-relaxed mb-2">{children}</p>,
+                          ul: ({children}) => <ul className="list-disc list-inside text-sm text-gray-700 mb-2 space-y-1">{children}</ul>,
+                          ol: ({children}) => <ol className="list-decimal list-inside text-sm text-gray-700 mb-2 space-y-1">{children}</ol>,
+                          li: ({children}) => <li className="ml-1">{children}</li>,
+                          code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800">{children}</code>,
+                          pre: ({children}) => <pre className="bg-gray-100 p-2 rounded text-xs font-mono overflow-x-auto mb-2">{children}</pre>,
+                          blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-3 py-1 bg-blue-50 text-gray-700 mb-2">{children}</blockquote>,
+                          strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                          em: ({children}) => <em className="italic text-gray-700">{children}</em>,
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                   <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-green-100' : 'text-gray-500'}`}>
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </div>
@@ -4473,6 +4524,8 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
   const [isTyping, setIsTyping] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isAgentSelectorExpanded, setIsAgentSelectorExpanded] = useState(false);
+  const [prdPreviewOpen, setPrdPreviewOpen] = useState(false);
+  const [prdPreviewContent, setPrdPreviewContent] = useState('');
 
   // 文件处理函数
   const handleFileUpload = (files: FileList | null) => {
@@ -4514,6 +4567,22 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
       setMessages(prev => [...prev, aiMessage]);
       setIsTyping(false);
     }, 2000);
+  };
+
+  // 检测消息是否包含PRD相关内容
+  const isPRDContent = (content: string) => {
+    const prdKeywords = [
+      '万花筒设计方案', 'PRD', '需求文档', '产品方案', '设计方案',
+      '视觉设计方向', '交互流程设计', '技术实现建议',
+      '用户界面', '现代化', '产品设计', '万花筒'
+    ];
+    return prdKeywords.some(keyword => content.includes(keyword));
+  };
+
+  // 处理PRD预览
+  const handlePRDPreview = (content: string) => {
+    setPrdPreviewContent(content);
+    setPrdPreviewOpen(true);
   };
 
   // 获取智能体回复
@@ -4594,8 +4663,8 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
     <div className="h-full flex flex-col relative overflow-hidden">
       {/* 动态云彩背景 */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <svg 
-          viewBox="0 0 100 100" 
+        <svg
+          viewBox="0 0 100 100"
           preserveAspectRatio="xMidYMid slice"
           className="w-full h-full"
           style={{ opacity: 0.4 }}
@@ -4620,37 +4689,37 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
           <rect x="0" y="0" width="100%" height="100%" fill="url(#BrandGradient1)">
             <animate attributeName="x" dur="20s" values="25%;0%;25%" repeatCount="indefinite" />
             <animate attributeName="y" dur="21s" values="0%;25%;0%" repeatCount="indefinite" />
-            <animateTransform 
-              attributeName="transform" 
-              type="rotate" 
-              from="0 50 50" 
-              to="360 50 50" 
-              dur="17s" 
-              repeatCount="indefinite" 
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur="17s"
+              repeatCount="indefinite"
             />
           </rect>
           <rect x="0" y="0" width="100%" height="100%" fill="url(#BrandGradient2)">
             <animate attributeName="x" dur="23s" values="-25%;0%;-25%" repeatCount="indefinite" />
             <animate attributeName="y" dur="24s" values="0%;50%;0%" repeatCount="indefinite" />
-            <animateTransform 
-              attributeName="transform" 
-              type="rotate" 
-              from="0 50 50" 
-              to="360 50 50" 
-              dur="18s" 
-              repeatCount="indefinite" 
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur="18s"
+              repeatCount="indefinite"
             />
           </rect>
           <rect x="0" y="0" width="100%" height="100%" fill="url(#BrandGradient3)">
             <animate attributeName="x" dur="25s" values="0%;25%;0%" repeatCount="indefinite" />
             <animate attributeName="y" dur="26s" values="0%;25%;0%" repeatCount="indefinite" />
-            <animateTransform 
-              attributeName="transform" 
-              type="rotate" 
-              from="360 50 50" 
-              to="0 50 50" 
-              dur="19s" 
-              repeatCount="indefinite" 
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="360 50 50"
+              to="0 50 50"
+              dur="19s"
+              repeatCount="indefinite"
             />
           </rect>
         </svg>
@@ -4662,7 +4731,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
         <div className="bg-gradient-to-r from-white/30 to-purple-50/30 backdrop-blur-sm border-b border-purple-100/30 p-6 flex-shrink-0">
           <div className="flex items-center space-x-4">
             {/* 智能体头像 - 增强可感知性 */}
-            <motion.div 
+            <motion.div
               className="relative cursor-pointer group"
               onClick={() => setIsAgentSelectorExpanded(!isAgentSelectorExpanded)}
               whileHover={{ scale: 1.05 }}
@@ -4685,7 +4754,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                   ease: "easeInOut"
                 }}
               />
-              
+
               {/* 旋转光环 */}
               <motion.div
                 className="absolute inset-0 rounded-2xl"
@@ -4701,9 +4770,9 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                   ease: "linear"
                 }}
               />
-              
+
               {/* 主头像按钮 */}
-              <motion.div 
+              <motion.div
                 className="relative w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg"
                 style={{
                   background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
@@ -4716,7 +4785,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                 transition={{ duration: 0.3 }}
               >
                 {selectedAgent.avatar}
-                
+
                 {/* 点击提示图标 */}
                 <motion.div
                   className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-md"
@@ -4731,7 +4800,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                   <div className="w-2 h-2 bg-gradient-to-br from-orange-400 to-red-500 rounded-full"></div>
                 </motion.div>
               </motion.div>
-              
+
               {/* 悬浮提示 */}
               <motion.div
                 className="absolute -top-12 left-1/2 transform -translate-x-1/2 whitespace-nowrap opacity-0 group-hover:opacity-100"
@@ -4745,7 +4814,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                 </div>
               </motion.div>
             </motion.div>
-            
+
             {/* 智能体信息 */}
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-1">
@@ -4755,7 +4824,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
               </div>
               <p className="text-sm text-gray-600">{selectedAgent.description}</p>
             </div>
-            
+
             {/* 模型标识 */}
             <div className="text-right">
               <span className="inline-block bg-purple-500/10 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
@@ -4776,25 +4845,25 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                 <h3 className="text-lg font-bold text-gray-900 drop-shadow-sm">👋 你好！我是{selectedAgent.name}</h3>
                 <p className="text-sm text-gray-800 max-w-md font-medium drop-shadow-sm">{selectedAgent.description}</p>
               </div>
-              
+
               <div className="w-full max-w-md">
                 {selectedAgent.id === 'kaleidoscope-agent' && <KaleidoscopeAnimation />}
               </div>
-              
+
               <div className="flex flex-wrap gap-2 justify-center">
-                <button 
+                <button
                   onClick={() => setInputMessage('帮我设计一个现代化的用户界面')}
                   className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
                 >
                   设计界面
                 </button>
-                <button 
+                <button
                   onClick={() => setInputMessage('分析一下我的项目进度')}
                   className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
                 >
                   项目分析
                 </button>
-                <button 
+                <button
                   onClick={() => setInputMessage('帮我制定技术方案')}
                   className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
                 >
@@ -4817,9 +4886,44 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg rounded-br-md shadow-md'
                     : 'bg-white/20 border border-gray-200/50 rounded-lg rounded-bl-md shadow-md backdrop-blur-sm'
                     } p-3`}>
+                    {message.role === 'user' ? (
                     <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{message.content}</pre>
-                    <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-purple-100' : 'text-gray-500'}`}>
-                      {new Date(Number(message.timestamp)).toLocaleTimeString()}
+                  ) : (
+                    <div className="markdown-content">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: ({children}) => <h1 className="text-lg font-bold text-gray-900 mb-3 border-b pb-1">{children}</h1>,
+                          h2: ({children}) => <h2 className="text-base font-semibold text-gray-800 mb-2 mt-4">{children}</h2>,
+                          h3: ({children}) => <h3 className="text-sm font-medium text-gray-700 mb-2 mt-3">{children}</h3>,
+                          p: ({children}) => <p className="text-sm text-gray-700 leading-relaxed mb-2">{children}</p>,
+                          ul: ({children}) => <ul className="list-disc list-inside text-sm text-gray-700 mb-2 space-y-1">{children}</ul>,
+                          ol: ({children}) => <ol className="list-decimal list-inside text-sm text-gray-700 mb-2 space-y-1">{children}</ol>,
+                          li: ({children}) => <li className="ml-1">{children}</li>,
+                          code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800">{children}</code>,
+                          pre: ({children}) => <pre className="bg-gray-100 p-2 rounded text-xs font-mono overflow-x-auto mb-2">{children}</pre>,
+                          blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-3 py-1 bg-blue-50 text-gray-700 mb-2">{children}</blockquote>,
+                          strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                          em: ({children}) => <em className="italic text-gray-700">{children}</em>,
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+                    <div className={`flex items-center justify-between mt-2 ${message.role === 'user' ? 'text-purple-100' : 'text-gray-500'}`}>
+                      <div className="text-xs">
+                        {new Date(Number(message.timestamp)).toLocaleTimeString()}
+                      </div>
+                      {message.role === 'assistant' && isPRDContent(message.content) && (
+                        <button
+                          onClick={() => handlePRDPreview(message.content)}
+                          className="px-2 py-1 text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center space-x-1 ml-2"
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>预览效果</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -4881,7 +4985,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
             border: '1px solid rgba(148, 163, 184, 0.08)',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9)'
           }}>
-            
+
             {/* 文件上传按钮 */}
             <input
               type="file"
@@ -4902,7 +5006,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
             >
               <Paperclip className="w-4 h-4 text-gray-500" />
             </label>
-            
+
             <input
               type="text"
               value={inputMessage}
@@ -4945,7 +5049,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
               onClick={() => setIsAgentSelectorExpanded(false)}
             />
-            
+
             {/* 模态窗内容 */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -4954,7 +5058,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
               transition={{ duration: 0.3, ease: "easeOut" }}
               className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none"
             >
-              <motion.div 
+              <motion.div
                 className="pointer-events-auto bg-white/40 rounded-3xl shadow-2xl border border-white/30 overflow-hidden backdrop-blur-xl"
                 style={{
                   background: 'linear-gradient(145deg, rgba(255,255,255,0.35) 0%, rgba(248,250,252,0.25) 100%)',
@@ -4968,7 +5072,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
                   {/* 标题区域 */}
-                  <div 
+                  <div
                     className="px-8 py-6 border-b border-gray-100/50"
                     style={{
                       background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(236, 72, 153, 0.05) 100%)'
@@ -4976,7 +5080,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div 
+                        <div
                           className="w-10 h-10 rounded-2xl flex items-center justify-center"
                           style={{
                             background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
@@ -5002,7 +5106,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                       </button>
                     </div>
                   </div>
-                  
+
                   {/* 简洁九宫格智能体选择器 */}
                   <div className="p-8">
                     {/* 当前选中的智能体 */}
@@ -5047,7 +5151,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
                           >
-                            <div 
+                            <div
                               className={`
                                 w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold
                                 ${isSelected 
@@ -5072,6 +5176,13 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
         )}
       </AnimatePresence>
 
+      {/* PRD预览模态框 */}
+      <PRDPreview
+        isOpen={prdPreviewOpen}
+        onClose={() => setPrdPreviewOpen(false)}
+        content={prdPreviewContent}
+        title="万花筒PRD设计方案预览"
+      />
 
     </div>
   );
