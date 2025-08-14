@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({
         return {
           metrics: [
             { label: '今日沟通客户', value: '18', icon: Users, color: 'text-blue-600' },
-            { label: '本月收入', value: '¥2,350,000', icon: DollarSign, color: 'text-green-600' },
+            { label: '本月收入', value: '¥4,350,000', icon: DollarSign, color: 'text-green-600' },
             { label: '本月业绩回款还剩', value: '¥850,000', icon: TrendingUp, color: 'text-orange-600' },
           ],
           reminders: [
@@ -98,7 +98,7 @@ const Header: React.FC<HeaderProps> = ({
         return {
           metrics: [
             { label: '今日沟通客户', value: '18', icon: Users, color: 'text-blue-600' },
-            { label: '本月收入', value: '¥2,350,000', icon: DollarSign, color: 'text-green-600' },
+            { label: '本月收入', value: '¥6,350,000', icon: DollarSign, color: 'text-green-600' },
             { label: '本月业绩回款还剩', value: '¥850,000', icon: TrendingUp, color: 'text-orange-600' },
           ],
           reminders: []
