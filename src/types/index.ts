@@ -120,6 +120,9 @@ export interface ModuleConfig {
   name: string;
   component: React.ComponentType<any>;
   position: 'left' | 'center' | 'right';
+  icon?: React.ComponentType<any>;
+  color?: string;
+  bgColor?: string;
   props?: any;
 }
 

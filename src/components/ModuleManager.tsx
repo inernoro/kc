@@ -45,114 +45,14 @@ import ChatArea from './ChatArea';
 import CustomerPanel from './CustomerPanel';
 import PRDPreview from './PRDPreview';
 import Sidebar from './Sidebar';
+import DemandPool from './DemandPool';
 
 // 导入类型
 import { ModuleConfig, DepartmentConfig, ModuleManagerProps } from '../types';
+import { ProductDemand, ProductProject, TechnicalStandard, TechnicalTask, TechnicalReport } from '../types/moduleTypes';
 
-// 在文件开头添加产品需求的类型定义
-interface ProductDemand {
-  id: string;
-  title: string;
-  source: '商户需求' | '代理伙伴' | '内部团队';
-  priority: 'High' | 'Middle' | 'Low' | 'Nice to have';
-  status: '待评审' | '待规划' | '已立项' | '开发中' | '已上线' | '已拒绝';
-  submitter: string;
-  reviewer: string;
-  submitTime: string;
-  reviewTime?: string;
-  description: string;
-  businessValue: number; // 业务价值评分
-  developmentCost: number; // 开发成本评分
-  customer: string;
-  urgency: '紧急' | '不紧急';
-  importance: '重要' | '不重要';
-}
 
-interface ProductProject {
-  id: string;
-  name: string;
-  version: string; // 如：V2.3.6 或 T2.3.7
-  versionType: '大版本' | '中版本' | '小版本';
-  status: '一稿设计' | '二稿设计' | '三稿设计' | 'UI设计' | '开发中' | '测试中' | '验收中' | '已上线';
-  progress: number;
-  currentStage: '需求管理' | '产品规划' | '产品立项' | '开发跟踪' | '产品验收' | '上线发布' | '产品总结';
-  manager: string; // 产品经理
-  developer?: string; // 技术负责人
-  tester?: string; // 测试负责人
-  relatedSystems: string[]; // 涉及的系统/应用
-  demandId?: string; // 关联的需求ID
-  deadline: string;
-  createTime: string;
-  prototype?: {
-    draft1?: string; // 一稿原型链接
-    draft2?: string; // 二稿原型链接
-    draft3?: string; // 三稿原型链接
-  };
-  reviewRecords: {
-    stage: '一稿' | '二稿' | '三稿';
-    reviewer: string;
-    result: '通过' | '不通过' | '待评审';
-    feedback: string;
-    time: string;
-  }[];
-}
 
-// 基础研发部相关类型定义
-interface TechnicalStandard {
-  id: string;
-  title: string;
-  category: '前端开发' | '后端API' | '数据库设计' | '架构设计' | '代码规范' | '测试标准';
-  version: string;
-  status: '草案' | '评审中' | '已发布' | '已废弃';
-  creator: string;
-  reviewer: string;
-  createTime: string;
-  updateTime?: string;
-  description: string;
-  priority: 'High' | 'Medium' | 'Low';
-  complexity: number; // 1-10复杂度评分
-  impact: string[]; // 影响的系统/项目
-  downloadUrl?: string;
-}
-
-interface TechnicalReport {
-  id: string;
-  title: string;
-  type: '周报' | '月报' | '季报' | '年报' | '专题简报' | '技术洞察';
-  publishDate: string;
-  author: string;
-  department: string;
-  summary: string;
-  content: {
-    highlights: string[];
-    metrics: {
-      label: string;
-      value: string;
-      trend?: 'up' | 'down' | 'stable';
-    }[];
-    challenges: string[];
-    nextPlans: string[];
-  };
-  readCount: number;
-  status: '草稿' | '待审核' | '已发布';
-}
-
-interface TechnicalTask {
-  id: string;
-  title: string;
-  type: '规范制定' | '架构优化' | '技术债务' | '工具建设' | '培训分享' | '质量提升';
-  assignee: string;
-  reporter: string;
-  priority: 'P0' | 'P1' | 'P2' | 'P3';
-  status: '待开始' | '进行中' | '待评审' | '已完成' | '已延期';
-  createTime: string;
-  deadline: string;
-  progress: number;
-  description: string;
-  relatedStandards: string[];
-  estimatedHours: number;
-  actualHours?: number;
-}
 
 // 米多产品体系四级结构
 const MIDO_PRODUCT_STRUCTURE = {
@@ -661,143 +561,6 @@ const technicalTasks: TechnicalTask[] = [
   }
 ];
 
-// 需求管理池组件（左侧）
-// 需求管理池组件（左侧）
-const DemandPool = ({ selectedDemand, onDemandSelect }: { selectedDemand: ProductDemand | null, onDemandSelect: (demand: ProductDemand) => void }) => {
-  // 计算四象限数据
-  const getQuadrantStats = () => {
-    const stats = {
-      urgent_important: productDemands.filter(d => d.urgency === '紧急' && d.importance === '重要').length,
-      important_not_urgent: productDemands.filter(d => d.urgency === '不紧急' && d.importance === '重要').length,
-      urgent_not_important: productDemands.filter(d => d.urgency === '紧急' && d.importance === '不重要').length,
-      not_urgent_not_important: productDemands.filter(d => d.urgency === '不紧急' && d.importance === '不重要').length
-    };
-    return stats;
-  };
-
-  const quadrantStats = getQuadrantStats();
-
-  return (
-    <div className="h-full flex flex-col p-6">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">TAPD需求管理池</h3>
-        <p className="text-sm text-gray-600">基于"七步成诗"法的需求全生命周期管理</p>
-        
-      </div>
-
-      {/* 四象限矩阵 */}
-      <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-          <Target className="w-4 h-4 mr-2 text-slate-600" />
-          紧急重要象限分析
-        </h4>
-        <div className="grid grid-cols-2 gap-2.5 p-3 bg-gradient-to-br from-slate-50 to-gray-50 rounded-lg border border-gray-200">
-          {/* 重要紧急 - 改为更柔和的红色调 */}
-          <div className="bg-gradient-to-br from-red-50 to-rose-100 p-2.5 rounded-md border border-red-200/60 shadow-sm">
-            <div className="text-xs font-medium text-red-800 mb-1 opacity-90">重要紧急</div>
-            <div className="text-lg font-bold text-red-900">{quadrantStats.urgent_important}</div>
-            <div className="text-xs text-red-700 opacity-75">立即处理</div>
-          </div>
-
-          {/* 重要不紧急 - 改为更柔和的绿色调 */}
-          <div className="bg-gradient-to-br from-emerald-50 to-green-100 p-2.5 rounded-md border border-emerald-200/60 shadow-sm">
-            <div className="text-xs font-medium text-emerald-800 mb-1 opacity-90">重要不紧急</div>
-            <div className="text-lg font-bold text-emerald-900">{quadrantStats.important_not_urgent}</div>
-            <div className="text-xs text-emerald-700 opacity-75">计划安排</div>
-          </div>
-
-          {/* 紧急不重要 - 改为更柔和的黄色调 */}
-          <div className="bg-gradient-to-br from-amber-50 to-yellow-100 p-2.5 rounded-md border border-amber-200/60 shadow-sm">
-            <div className="text-xs font-medium text-amber-800 mb-1 opacity-90">紧急不重要</div>
-            <div className="text-lg font-bold text-amber-900">{quadrantStats.urgent_not_important}</div>
-            <div className="text-xs text-amber-700 opacity-75">授权处理</div>
-          </div>
-
-          {/* 不重要不紧急 - 改为更柔和的灰色调 */}
-          <div className="bg-gradient-to-br from-slate-50 to-gray-100 p-2.5 rounded-md border border-slate-200/60 shadow-sm">
-            <div className="text-xs font-medium text-slate-700 mb-1 opacity-90">不重要不紧急</div>
-            <div className="text-lg font-bold text-slate-800">{quadrantStats.not_urgent_not_important}</div>
-            <div className="text-xs text-slate-600 opacity-75">稍后处理</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3 flex-1 overflow-y-auto">
-        {productDemands.map((demand) => (
-          <button
-            key={demand.id}
-            onClick={() => onDemandSelect(demand)}
-            className={`
-              w-full text-left p-3 rounded-lg border transition-all duration-200
-              ${selectedDemand?.id === demand.id
-                ? 'border-slate-300 bg-slate-50 shadow-sm'
-                : 'border-gray-200 hover:border-slate-300 hover:bg-gray-50'
-              }
-            `}
-          >
-            {/* 需求标题和优先级 */}
-            <div className="flex items-start justify-between mb-2">
-              <h4 className="font-medium text-gray-900 text-sm leading-tight pr-2">{demand.title}</h4>
-              <span className={`
-                px-2 py-1 text-xs rounded-full whitespace-nowrap flex-shrink-0
-                ${demand.priority === 'High' ? 'bg-red-50 text-red-700 border border-red-200' :
-                  demand.priority === 'Middle' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                    demand.priority === 'Low' ? 'bg-slate-50 text-slate-700 border border-slate-200' :
-                      'bg-gray-50 text-gray-700 border border-gray-200'
-                }
-              `}>
-                {demand.priority}
-              </span>
-            </div>
-
-            {/* 需求状态和评审信息 */}
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="flex items-center">
-                <div className={`w-2 h-2 rounded-full mr-2 ${demand.status === '待评审' ? 'bg-amber-500' :
-                  demand.status === '待规划' ? 'bg-slate-500' :
-                    demand.status === '已立项' ? 'bg-emerald-500' :
-                      demand.status === '开发中' ? 'bg-violet-500' :
-                        demand.status === '已上线' ? 'bg-blue-500' : 'bg-rose-500'
-                  }`} />
-                {demand.status}
-              </span>
-              <span className="text-gray-500">{demand.submitTime}</span>
-            </div>
-
-            {/* 客户和来源 */}
-            <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
-              <span>{demand.customer}</span>
-              <span className={`px-2 py-1 rounded border ${demand.source === '商户需求' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                demand.source === '代理伙伴' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                  'bg-slate-50 text-slate-700 border-slate-200'
-                }`}>
-                {demand.source}
-              </span>
-            </div>
-
-            {/* 紧急重要象限 */}
-            <div className="flex items-center space-x-2 text-xs">
-              <span className={`px-2 py-1 rounded border ${demand.urgency === '紧急' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-50 text-gray-700 border-gray-200'
-                }`}>
-                {demand.urgency}
-              </span>
-              <span className={`px-2 py-1 rounded border ${demand.importance === '重要' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-700 border-gray-200'
-                }`}>
-                {demand.importance}
-              </span>
-              <div className="ml-auto">
-                <span className="text-gray-500">优先级:</span>
-                <span className="text-emerald-600 font-medium ml-1">
-                  {Math.round(demand.businessValue / demand.developmentCost * 10) / 10}
-                </span>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 // 产品立项流程组件（中间）
 const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand | null }) => {
@@ -2844,9 +2607,100 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
     </div>
   );
 
-  const AssessmentCenterPanel = () => (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-gray-100">
+  const AssessmentCenterPanel = ({ customerSuccessMode = 'normal' }: { customerSuccessMode?: 'normal' | 'assessment' }) => (
+    <div className={`h-full flex flex-col relative overflow-hidden backdrop-blur-sm ${
+      customerSuccessMode === 'assessment' 
+        ? 'bg-gradient-to-br from-orange-50/30 via-yellow-50/30 to-pink-50/30'
+        : 'bg-gradient-to-br from-purple-50/30 via-blue-50/30 to-indigo-50/30'
+    }`}>
+      {/* 客户成功背景动画 - 根据模式切换颜色 */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="xMidYMid slice"
+          className="w-full h-full"
+          style={{ opacity: 0.25 }}
+        >
+          <defs>
+            {customerSuccessMode === 'assessment' ? (
+              // 考核模式：阳光橙色主题
+              <>
+                <radialGradient id="CustomerGradient1" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+                  <animate attributeName="fx" dur="26s" values="0%;3%;0%" repeatCount="indefinite" />
+                  <stop offset="0%" stopColor="#F97316" />
+                  <stop offset="100%" stopColor="#F9731600" />
+                </radialGradient>
+                <radialGradient id="CustomerGradient2" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+                  <animate attributeName="fx" dur="17s" values="0%;3%;0%" repeatCount="indefinite" />
+                  <stop offset="0%" stopColor="#FCD34D" />
+                  <stop offset="100%" stopColor="#FCD34D00" />
+                </radialGradient>
+                <radialGradient id="CustomerGradient3" cx="50%" cy="50%" fx="50%" fy="50%" r=".5">
+                  <animate attributeName="fx" dur="21s" values="0%;3%;0%" repeatCount="indefinite" />
+                  <stop offset="0%" stopColor="#EC4899" />
+                  <stop offset="100%" stopColor="#EC489900" />
+                </radialGradient>
+              </>
+            ) : (
+              // 普通模式：紫色主题
+              <>
+                <radialGradient id="CustomerGradient1" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+                  <animate attributeName="fx" dur="26s" values="0%;3%;0%" repeatCount="indefinite" />
+                  <stop offset="0%" stopColor="#8B5CF6" />
+                  <stop offset="100%" stopColor="#8B5CF600" />
+                </radialGradient>
+                <radialGradient id="CustomerGradient2" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+                  <animate attributeName="fx" dur="17s" values="0%;3%;0%" repeatCount="indefinite" />
+                  <stop offset="0%" stopColor="#3B82F6" />
+                  <stop offset="100%" stopColor="#3B82F600" />
+                </radialGradient>
+                <radialGradient id="CustomerGradient3" cx="50%" cy="50%" fx="50%" fy="50%" r=".5">
+                  <animate attributeName="fx" dur="21s" values="0%;3%;0%" repeatCount="indefinite" />
+                  <stop offset="0%" stopColor="#EC4899" />
+                  <stop offset="100%" stopColor="#EC489900" />
+                </radialGradient>
+              </>
+            )}
+          </defs>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#CustomerGradient1)">
+            <animate attributeName="x" dur="16s" values="25%;0%;25%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="18s" values="0%;25%;0%" repeatCount="indefinite" />
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur="13s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#CustomerGradient2)">
+            <animate attributeName="x" dur="19s" values="-25%;0%;-25%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="22s" values="25%;-25%;25%" repeatCount="indefinite" />
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="-360 50 50"
+              dur="16s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#CustomerGradient3)">
+            <animate attributeName="x" dur="23s" values="0%;50%;0%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="11s" values="0%;25%;0%" repeatCount="indefinite" />
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur="20s"
+              repeatCount="indefinite"
+            />
+          </rect>
+        </svg>
+      </div>
+      <div className="relative z-10 p-4 border-b border-gray-100/60 bg-white/50 backdrop-blur-sm">
         <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
           <User className="w-5 h-5 text-purple-600 mr-2" />
           考核进行状态
@@ -2854,9 +2708,9 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         <div className="text-sm text-gray-600">当前正在进行的能力评估与考核</div>
       </div>
 
-      <div className="flex-1 p-3 overflow-y-auto">
+      <div className="relative z-10 flex-1 p-3 overflow-y-auto">
         {/* 主要考核状态卡片 - 突出显示 */}
-        <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-lg p-4 mb-4 border-2 border-blue-200 shadow-sm">
+        <div className="bg-gradient-to-br from-blue-50/60 via-purple-50/60 to-pink-50/60 rounded-lg p-4 mb-4 border-2 border-blue-200/60 shadow-sm backdrop-blur-sm">
           <div className="text-center mb-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
               <ClipboardCheck className="w-8 h-8 text-white" />
@@ -2909,7 +2763,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         {/* 当前考核项详情 - 青春阳光版 */}
         <div className={`rounded-lg p-4 mb-3 transition-all duration-700 transform ${customerSuccessMode === 'assessment'
           ? `${sunshineTheme.cardBg} border-2 border-gradient-to-r from-orange-300 to-pink-300 ${sunshineTheme.glow} ${isTransitioning ? 'scale-105' : 'hover:scale-102'}`
-          : 'bg-white border border-gray-200 shadow-sm'
+          : 'bg-white/60 border border-gray-200/60 shadow-sm backdrop-blur-sm'
           }`}>
           <div className="flex items-center justify-between mb-4">
             <h4 className={`font-semibold text-lg transition-all duration-700 ${customerSuccessMode === 'assessment' ? sunshineTheme.textPrimary : 'text-gray-900'
@@ -2973,10 +2827,10 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         </div>
 
         {/* 考核模块进度 - 简化展示 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+        <div className="bg-white/60 rounded-lg border border-gray-200/60 p-4 shadow-sm backdrop-blur-sm">
           <h5 className="font-medium text-gray-900 mb-4">考核模块进度</h5>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+            <div className="flex items-center justify-between p-3 bg-green-50/60 rounded-lg border-l-4 border-green-400/60 backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <div>
@@ -2987,7 +2841,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
               <span className="text-xs text-green-600 font-semibold px-2 py-1 bg-green-100 rounded">已完成</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+            <div className="flex items-center justify-between p-3 bg-blue-50/60 rounded-lg border-l-4 border-blue-400/60 backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <Timer className="w-5 h-5 text-blue-600" />
                 <div>
@@ -2998,7 +2852,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
               <span className="text-xs text-blue-600 font-semibold px-2 py-1 bg-blue-100 rounded">进行中</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border-l-4 border-purple-400">
+            <div className="flex items-center justify-between p-3 bg-purple-50/60 rounded-lg border-l-4 border-purple-400/60 backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <Activity className="w-5 h-5 text-purple-600" />
                 <div>
@@ -3568,7 +3422,9 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         };
       // 考核模式的组件不需要额外props
       case 'assessment-center':
-        return {};
+        return {
+          customerSuccessMode: customerSuccessMode
+        };
       case 'assessment-left':
         return {};
       case 'assessment-right':
@@ -3633,6 +3489,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
           : currentConfig.theme.background
       }}
     >
+      
 
 
       {/* 模块区域 - 固定高度防止切换时塌陷 */}
@@ -3674,7 +3531,7 @@ const TechnicalStandardLibrary = ({ selectedStandard, onStandardSelect }: {
   onStandardSelect: (standard: TechnicalStandard) => void
 }) => {
   return (
-    <div className="h-full flex flex-col p-6 bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="h-full flex flex-col p-6 bg-gradient-to-br from-green-50/40 to-blue-50/40 backdrop-blur-sm">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
           <Code className="w-5 h-5 text-green-600 mr-2" />
@@ -3689,8 +3546,8 @@ const TechnicalStandardLibrary = ({ selectedStandard, onStandardSelect }: {
             key={standard.id}
             onClick={() => onStandardSelect(standard)}
             className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${selectedStandard?.id === standard.id
-              ? 'border-green-300 bg-green-50 shadow-sm'
-              : 'border-gray-200 hover:border-green-200 hover:bg-gray-50'
+              ? 'border-green-300/60 bg-green-50/60 shadow-sm backdrop-blur-sm'
+              : 'border-gray-200/60 hover:border-green-200/60 hover:bg-gray-50/60 backdrop-blur-sm'
               }`}
           >
             <h4 className="font-medium text-gray-900 text-sm mb-1">{standard.title}</h4>
@@ -3708,7 +3565,7 @@ const TechnicalStandardLibrary = ({ selectedStandard, onStandardSelect }: {
 // 任务跟踪管理组件（右侧）
 const TechnicalTaskTracker = ({ selectedStandard }: { selectedStandard: TechnicalStandard | null }) => {
   return (
-    <div className="h-full flex flex-col p-6 bg-gradient-to-br from-blue-50 to-green-50">
+    <div className="h-full flex flex-col p-6 bg-gradient-to-br from-blue-50/40 to-green-50/40 backdrop-blur-sm">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
           <Activity className="w-5 h-5 text-blue-600 mr-2" />
@@ -4374,11 +4231,75 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
   };
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+    <div className="h-full flex flex-col relative overflow-hidden bg-gradient-to-br from-green-50/30 via-blue-50/30 to-purple-50/30 backdrop-blur-sm">
+      {/* 技术代码流背景动画 */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="xMidYMid slice"
+          className="w-full h-full"
+          style={{ opacity: 0.3 }}
+        >
+          <defs>
+            <radialGradient id="TechGradient1" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="28s" values="0%;3%;0%" repeatCount="indefinite" />
+              <stop offset="0%" stopColor="#10B981" />
+              <stop offset="100%" stopColor="#10B98100" />
+            </radialGradient>
+            <radialGradient id="TechGradient2" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="19s" values="0%;3%;0%" repeatCount="indefinite" />
+              <stop offset="0%" stopColor="#059669" />
+              <stop offset="100%" stopColor="#05966900" />
+            </radialGradient>
+            <radialGradient id="TechGradient3" cx="50%" cy="50%" fx="50%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="23s" values="0%;3%;0%" repeatCount="indefinite" />
+              <stop offset="0%" stopColor="#34D399" />
+              <stop offset="100%" stopColor="#34D39900" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#TechGradient1)">
+            <animate attributeName="x" dur="18s" values="25%;0%;25%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="20s" values="0%;25%;0%" repeatCount="indefinite" />
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur="15s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#TechGradient2)">
+            <animate attributeName="x" dur="21s" values="-25%;0%;-25%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="24s" values="25%;-25%;25%" repeatCount="indefinite" />
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="-360 50 50"
+              dur="18s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#TechGradient3)">
+            <animate attributeName="x" dur="25s" values="0%;50%;0%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="12s" values="0%;25%;0%" repeatCount="indefinite" />
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur="22s"
+              repeatCount="indefinite"
+            />
+          </rect>
+        </svg>
+      </div>
+      
       {/* 主对话区域 */}
       <div className="flex-1 flex flex-col min-h-0">
         {/* 当前智能体简化信息 */}
-        <div className="bg-gradient-to-r from-white/90 to-green-50/80 backdrop-blur-sm border-b border-green-100 p-2 flex-shrink-0">
+        <div className="bg-gradient-to-r from-white/50 to-green-50/40 backdrop-blur-sm border-b border-green-100 p-2 flex-shrink-0">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center text-lg shadow-sm">
               {selectedAgent.avatar}
@@ -4461,7 +4382,7 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
         </div>
 
         {/* 智能体选择器 */}
-        <div className="border-t border-gray-200 bg-white/95 p-3 flex-shrink-0">
+        <div className="border-t border-gray-200/50 bg-white/50 p-3 flex-shrink-0 backdrop-blur-sm">
           <div className="flex items-center space-x-2 mb-3">
             <span className="text-xs font-medium text-gray-600">选择智能体:</span>
           </div>
@@ -4489,8 +4410,8 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
         </div>
 
         {/* 输入区域 */}
-        <div className="border-t border-gray-200 bg-white p-3 flex-shrink-0">
-          <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-2">
+        <div className="border-t border-gray-200/50 bg-white/50 p-3 flex-shrink-0 backdrop-blur-sm">
+          <div className="flex items-center space-x-2 bg-gray-50/50 rounded-lg p-2 backdrop-blur-sm">
             <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center text-sm shadow-sm">
               {selectedAgent.avatar}
             </div>

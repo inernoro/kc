@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Paperclip, Mic, Bot, User, Lightbulb, Copy, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Send, Paperclip, Mic, Bot, User, Lightbulb, Copy, ThumbsUp, ThumbsDown, Users, BarChart3, FileText, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Customer } from '../types/customer';
 import KnowledgeSelector from './KnowledgeSelector';
 import { aiAPI } from '../services/api'; // 使用统一的API服务
@@ -30,55 +31,120 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
   const [typingSpeed, setTypingSpeed] = useState(80); // 打字速度，毫秒
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 初始化欢迎消息
+  // 欢迎万花筒动画组件 - 类似品牌域设计
+  const CustomerSuccessKaleidoscope: React.FC = () => {
+    const [animationStep, setAnimationStep] = useState(0);
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setAnimationStep((prev) => (prev + 1) % 4);
+      }, 2000);
+      return () => clearInterval(interval);
+    }, []);
+
+    return (
+      <div className="bg-gradient-to-r from-purple-50/50 to-blue-50/50 rounded-xl p-6 border border-purple-200/60 backdrop-blur-lg shadow-lg">
+        <div className="text-center">
+          <h4 className="font-bold text-purple-800 mb-4 flex items-center justify-center drop-shadow-sm">
+            <Sparkles className="w-4 h-4 mr-2" />
+            米多智库服务转换
+          </h4>
+          
+          {/* 动画容器 */}
+          <div className="relative h-32 flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              {animationStep === 0 && (
+                <motion.div
+                  key="step1"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.5 }}
+                  className="absolute flex flex-col items-center"
+                >
+                  <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center mb-2">
+                    <Users className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-xs text-gray-600">客户查询</p>
+                </motion.div>
+              )}
+
+              {animationStep === 1 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.5 }}
+                  className="absolute flex flex-col items-center"
+                >
+                  <div className="w-16 h-16 bg-purple-100 rounded-lg shadow-lg flex items-center justify-center mb-2">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <BarChart3 className="w-8 h-8 text-purple-500" />
+                    </motion.div>
+                  </div>
+                  <p className="text-xs text-gray-600">需求分析</p>
+                </motion.div>
+              )}
+
+              {animationStep === 2 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.5 }}
+                  className="absolute flex flex-col items-center"
+                >
+                  <div className="w-16 h-16 bg-blue-100 rounded-lg shadow-lg flex items-center justify-center mb-2">
+                    <FileText className="w-8 h-8 text-blue-500" />
+                  </div>
+                  <p className="text-xs text-gray-600">解决方案</p>
+                </motion.div>
+              )}
+
+              {animationStep === 3 && (
+                <motion.div
+                  key="step4"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.5 }}
+                  className="absolute flex flex-col items-center"
+                >
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg shadow-lg flex items-center justify-center mb-2 border-2 border-purple-200">
+                    <motion.div
+                      animate={{ 
+                        scale: [1, 1.2, 1],
+                        rotate: [0, 180, 360]
+                      }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      <Sparkles className="w-8 h-8 text-purple-600" />
+                    </motion.div>
+                  </div>
+                  <p className="text-xs text-purple-600 font-medium">智能服务</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          
+          <p className="text-sm text-gray-600 mt-4 leading-relaxed">
+            从客户查询到需求分析，再到解决方案生成，<br/>
+            一站式智能化客户成功服务体验
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  // 初始化欢迎状态 - 不再使用消息格式
   useEffect(() => {
-    const knowledgeTypeMap: { [key: string]: string } = {
-      'general': '通用知识库',
-      'product': '产品知识库', 
-      'customer': '客户知识库',
-      'sales': '销售知识库',
-      'solution': '解决方案',
-      'technical': '技术知识库'
-    };
-    
-    const welcomeMessage: Message = {
-      id: 'welcome-' + selectedKnowledge,
-      type: 'ai',
-      content: `# 👋 欢迎使用米多智库AI助手
-
-**当前连接**: ${knowledgeTypeMap[selectedKnowledge]}
-
-## 🚀 主要功能
-
-我可以为您提供以下服务：
-
-- **客户信息查询** - 快速获取客户详细档案
-- **需求分析** - 深度分析客户业务需求  
-- **解决方案建议** - 提供专业的解决方案
-- **数据报表** - 生成各类分析报表
-
-## 📊 示例用法
-
-\`\`\`bash
-# 查询客户信息
-搜索客户：华为技术有限公司
-
-# 分析需求
-分析该客户的采购需求和预算范围
-\`\`\`
-
-> 💡 **提示**: 您可以直接输入问题，我会根据知识库为您提供准确的回答！
-
----
-
-请问有什么可以帮助您的吗？`,
-      timestamp: new Date(),
-      suggestions: ['查询客户档案', '一键群发消息', '分析客户需求', '生成解决方案', '查看历史记录']
-    };
-    
-    // 只保留欢迎消息，清空其他所有消息
-    setMessages([welcomeMessage]);
-  }, [selectedKnowledge]); // 当选择的知识库改变时更新欢迎消息
+    setMessages([]); // 清空所有消息，显示万花筒欢迎界面
+  }, [selectedKnowledge]);
 
   // 滚动到底部 - 监听消息变化和流式消息变化
   useEffect(() => {
@@ -342,9 +408,72 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative overflow-hidden bg-gradient-to-br from-purple-50/30 via-blue-50/30 to-indigo-50/30 backdrop-blur-sm">
+      {/* 客户成功部紫色背景动画 */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="xMidYMid slice"
+          className="w-full h-full"
+          style={{ opacity: 0.25 }}
+        >
+          <defs>
+            <radialGradient id="CustomerChatGradient1" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="26s" values="0%;3%;0%" repeatCount="indefinite" />
+              <stop offset="0%" stopColor="#8B5CF6" />
+              <stop offset="100%" stopColor="#8B5CF600" />
+            </radialGradient>
+            <radialGradient id="CustomerChatGradient2" cx="50%" cy="50%" fx="10%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="17s" values="0%;3%;0%" repeatCount="indefinite" />
+              <stop offset="0%" stopColor="#3B82F6" />
+              <stop offset="100%" stopColor="#3B82F600" />
+            </radialGradient>
+            <radialGradient id="CustomerChatGradient3" cx="50%" cy="50%" fx="50%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="21s" values="0%;3%;0%" repeatCount="indefinite" />
+              <stop offset="0%" stopColor="#EC4899" />
+              <stop offset="100%" stopColor="#EC489900" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#CustomerChatGradient1)">
+            <animate attributeName="x" dur="16s" values="25%;0%;25%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="18s" values="0%;25%;0%" repeatCount="indefinite" />
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur="13s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#CustomerChatGradient2)">
+            <animate attributeName="x" dur="19s" values="-25%;0%;-25%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="22s" values="25%;-25%;25%" repeatCount="indefinite" />
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="-360 50 50"
+              dur="16s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#CustomerChatGradient3)">
+            <animate attributeName="x" dur="23s" values="0%;50%;0%" repeatCount="indefinite" />
+            <animate attributeName="y" dur="11s" values="0%;25%;0%" repeatCount="indefinite" />
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur="20s"
+              repeatCount="indefinite"
+            />
+          </rect>
+        </svg>
+      </div>
       {/* 聊天头部 */}
-      <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+      <div className="relative z-10 p-4 border-b border-gray-200/60 bg-white/50 flex-shrink-0 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3 min-w-0 flex-1">
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -389,7 +518,50 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
       </div>
 
       {/* 消息区域 */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg">
+              <Bot className="w-8 h-8 text-white" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-gray-900 drop-shadow-sm">👋 欢迎使用米多智库AI助手</h3>
+              <p className="text-sm text-gray-800 max-w-md font-medium drop-shadow-sm">为您提供智能化客户成功服务支持</p>
+            </div>
+
+            <div className="w-full max-w-md">
+              <CustomerSuccessKaleidoscope />
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-center">
+              <button
+                onClick={() => handleSuggestionClick('查询客户档案')}
+                className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
+              >
+                📁 查询客户档案
+              </button>
+              <button
+                onClick={() => handleSuggestionClick('分析客户需求')}
+                className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
+              >
+                📊 分析客户需求
+              </button>
+              <button
+                onClick={() => handleSuggestionClick('生成解决方案')}
+                className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
+              >
+                💡 生成解决方案
+              </button>
+              <button
+                onClick={() => handleSuggestionClick('查看历史记录')}
+                className="px-3 py-1.5 bg-purple-100/80 hover:bg-purple-200/90 text-purple-800 text-xs rounded-full transition-colors backdrop-blur-sm border border-purple-200/50 font-medium shadow-sm"
+              >
+                📅 查看历史记录
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`flex items-start space-x-3 max-w-[70%] ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
@@ -402,8 +574,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
                 </div>
               <div className={`rounded-lg px-4 py-3 ${
                     message.type === 'user'
-                      ? 'bg-primary-500 text-white'
-                  : 'bg-white border border-gray-200 text-gray-900'
+                      ? 'bg-primary-500/90 text-white backdrop-blur-sm'
+                  : 'bg-white/50 border border-gray-200/50 text-gray-900 backdrop-blur-sm'
                   }`}>
                 {message.type === 'user' ? (
                   <div className="text-sm whitespace-pre-wrap break-words">
@@ -468,6 +640,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
             </div>
           </div>
         ))}
+        </>
+        )}
         
         {/* AI正在输入指示器 */}
         {isTyping && (
@@ -476,7 +650,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                 <Bot className="w-4 h-4 text-white" />
               </div>
-              <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+              <div className="bg-white/40 border border-gray-200/40 rounded-lg px-4 py-3 backdrop-blur-sm">
                 <div className="flex items-center space-x-1">
                   {useStreamMode ? (
                     <>
@@ -501,12 +675,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
         
         {/* 建议快捷回复 */}
         {messages.length > 0 && messages[messages.length - 1].type === 'ai' && messages[messages.length - 1].suggestions && (
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-4 relative z-10">
             {messages[messages.length - 1].suggestions!.map((suggestion, index) => (
               <button
                 key={index}
                 onClick={() => handleSuggestionClick(suggestion)}
-                className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors flex items-center space-x-1"
+                className="px-3 py-1 text-xs bg-gray-100/50 text-gray-700 rounded-full hover:bg-gray-200/50 transition-colors flex items-center space-x-1 backdrop-blur-sm"
               >
                 <Lightbulb className="w-3 h-3" />
                 <span>{suggestion}</span>
@@ -519,7 +693,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
       </div>
 
       {/* 输入区域 */}
-      <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+      <div className="relative z-10 p-4 border-t border-gray-200/40 bg-white/30 flex-shrink-0 backdrop-blur-sm">
         <div className="flex items-start space-x-3">
           <div className="flex-1">
             <div className="relative">
@@ -533,7 +707,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
                   }
                 }}
                 placeholder="输入您的问题或需求..."
-                className="w-full p-3 pr-12 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full p-3 pr-12 border border-gray-300/50 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/70 backdrop-blur-sm"
                 rows={1}
                 style={{ minHeight: '44px', maxHeight: '120px' }}
               />
@@ -550,7 +724,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
           <button
             onClick={handleSendMessage}
             disabled={!inputValue.trim()}
-            className="flex-shrink-0 w-11 h-11 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            className="flex-shrink-0 w-11 h-11 bg-primary-500/90 text-white rounded-lg hover:bg-primary-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center backdrop-blur-sm"
             style={{ minHeight: '44px' }}
           >
             <Send className="w-4 h-4" />
