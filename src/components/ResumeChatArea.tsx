@@ -241,7 +241,7 @@ const ResumeChatArea: React.FC<Props> = ({
     <div className="h-full flex flex-col">
       {messages.length === 0 ? (
         /* 简历筛选界面 - 添加顶部信息栏和背景动画 */
-        <div className="h-full bg-gradient-to-br from-pink-200/60 via-orange-200/50 via-purple-200/40 to-yellow-200/30 p-4 overflow-y-auto backdrop-blur-xl relative">
+        <div className="h-full bg-gradient-to-br from-pink-200/60 via-orange-200/50 via-purple-200/40 to-yellow-200/30 p-4 overflow-y-auto backdrop-blur-xl relative flex flex-col">
           {/* 背景装饰动画 - 调整位置避免与主内容重叠 */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <motion.div
@@ -309,10 +309,67 @@ const ResumeChatArea: React.FC<Props> = ({
               }}
               className="absolute bottom-40 right-80 w-3 h-3 bg-green-300/18 rounded-full"
             />
+            
+            {/* 额外的背景动效装饰 */}
+            <motion.div
+              animate={{ 
+                x: [0, -70, 0],
+                y: [0, 60, 0],
+                rotate: [0, 270, 360],
+                scale: [1, 1.4, 1]
+              }}
+              transition={{ 
+                duration: 28,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+              className="absolute top-32 right-40 w-4 h-4 bg-gradient-to-br from-purple-400/15 to-pink-400/10 rounded-full"
+            />
+            <motion.div
+              animate={{ 
+                x: [0, 45, 0],
+                y: [0, -70, 0],
+                rotate: [0, -120, -240]
+              }}
+              transition={{ 
+                duration: 35,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+              className="absolute bottom-32 left-60 w-2 h-2 bg-gradient-to-br from-orange-400/20 to-yellow-400/15 rounded-full"
+            />
+            <motion.div
+              animate={{ 
+                x: [0, -25, 0],
+                y: [0, 40, 0],
+                scale: [1, 1.8, 1],
+                opacity: [0.3, 0.1, 0.3]
+              }}
+              transition={{ 
+                duration: 30,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+              className="absolute top-80 left-32 w-3 h-3 bg-gradient-to-br from-blue-400/12 to-indigo-400/8 rounded-full"
+            />
+            <motion.div
+              animate={{ 
+                x: [0, 35, 0],
+                y: [0, -45, 0],
+                rotate: [0, 180, 360],
+                scale: [1, 1.3, 1]
+              }}
+              transition={{ 
+                duration: 26,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+              className="absolute bottom-80 right-60 w-2 h-2 bg-gradient-to-br from-pink-400/18 to-rose-400/12 rounded-full"
+            />
           </div>
 
           {/* 顶部智能体信息栏 */}
-          <div className="flex items-center justify-between mb-4 bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/30 shadow-lg relative z-10">
+          <div className="flex items-center justify-between mb-8 bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/30 shadow-lg relative z-10 flex-shrink-0">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-xl">
                 <span className="text-xl">✨</span>
@@ -334,16 +391,16 @@ const ResumeChatArea: React.FC<Props> = ({
           </div>
 
           {/* 居中的核心动画卡片 - 调小尺寸 */}
-          <div className="flex items-center justify-center flex-1">
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-white/60 shadow-2xl ring-1 ring-white/30 max-w-md relative z-10">
+          <div className="flex items-center justify-center flex-1 min-h-0">
+            <div className="bg-white/50 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-lg ring-1 ring-white/20 w-full max-w-lg relative z-10">
               <div className="text-center">
-                <div className="flex items-center justify-center mb-6">
+                <div className="flex items-center justify-center mb-8">
                   <Sparkles className="w-5 h-5 text-purple-600 mr-2" />
-                  <h3 className="text-lg font-bold text-purple-600">简历筛选转换</h3>
+                  <h3 className="text-xl font-bold text-purple-600">简历筛选转换</h3>
                 </div>
 
                 {/* 动画区域 - 调整高度 */}
-                <div className="relative h-24 flex items-center justify-center mb-4">
+                <div className="relative h-32 flex items-center justify-center mb-8">
                   <AnimatePresence mode="wait">
                     {animationStep === 0 && (
                       <motion.div
@@ -440,7 +497,7 @@ const ResumeChatArea: React.FC<Props> = ({
                 <p className="text-sm text-gray-800 mb-4 font-semibold">专业的简历筛选可视化设计助手</p>
                 
                 {/* 三个功能特点 */}
-                <div className="flex items-center justify-center space-x-6 text-gray-700 font-medium mb-6">
+                <div className="flex items-center justify-center space-x-8 text-gray-700 font-medium mb-8">
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="w-5 h-5 text-green-500" />
                     <span className="text-sm">多格式支持</span>
@@ -455,12 +512,6 @@ const ResumeChatArea: React.FC<Props> = ({
                   </div>
                 </div>
 
-                {/* 底部按钮 */}
-                <div className="flex justify-center space-x-3">
-                  <button className="px-4 py-2 border border-purple-300 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors text-xs font-medium">设计界面</button>
-                  <button className="px-4 py-2 border border-purple-300 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors text-xs font-medium">项目分析</button>
-                  <button className="px-4 py-2 border border-purple-300 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors text-xs font-medium">技术方案</button>
-                </div>
               </div>
             </div>
           </div>

@@ -2362,8 +2362,133 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
           : currentConfig.theme.background
       }}
     >
-      
-
+      {/* HR部门背景动画效果 */}
+      {currentDepartment === 'HR' && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            animate={{ 
+              x: [0, 80, 0],
+              y: [0, -60, 0],
+              rotate: [0, 180, 360]
+            }}
+            transition={{ 
+              duration: 20,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="absolute top-10 left-10 w-3 h-3 bg-blue-300/20 rounded-full"
+          />
+          <motion.div
+            animate={{ 
+              x: [0, -60, 0],
+              y: [0, 80, 0],
+              rotate: [0, -180, -360]
+            }}
+            transition={{ 
+              duration: 25,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="absolute top-20 right-20 w-4 h-4 bg-green-300/15 rounded-full"
+          />
+          <motion.div
+            animate={{ 
+              x: [0, 40, 0],
+              y: [0, -40, 0],
+              scale: [1, 1.3, 1]
+            }}
+            transition={{ 
+              duration: 15,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="absolute bottom-20 left-20 w-2 h-2 bg-purple-300/20 rounded-full"
+          />
+          <motion.div
+            animate={{ 
+              x: [0, -30, 0],
+              y: [0, 50, 0],
+              rotate: [0, 90, 180]
+            }}
+            transition={{ 
+              duration: 18,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="absolute top-60 left-80 w-2 h-2 bg-orange-300/15 rounded-full"
+          />
+          <motion.div
+            animate={{ 
+              x: [0, 50, 0],
+              y: [0, -30, 0],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{ 
+              duration: 22,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="absolute bottom-40 right-80 w-3 h-3 bg-red-300/18 rounded-full"
+          />
+          
+          {/* 额外的HR专属背景动效 */}
+          <motion.div
+            animate={{ 
+              x: [0, -70, 0],
+              y: [0, 60, 0],
+              rotate: [0, 270, 360],
+              scale: [1, 1.4, 1]
+            }}
+            transition={{ 
+              duration: 28,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="absolute top-32 right-40 w-4 h-4 bg-gradient-to-br from-blue-400/15 to-cyan-400/10 rounded-full"
+          />
+          <motion.div
+            animate={{ 
+              x: [0, 45, 0],
+              y: [0, -70, 0],
+              rotate: [0, -120, -240]
+            }}
+            transition={{ 
+              duration: 35,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="absolute bottom-32 left-60 w-2 h-2 bg-gradient-to-br from-green-400/20 to-emerald-400/15 rounded-full"
+          />
+          <motion.div
+            animate={{ 
+              x: [0, -25, 0],
+              y: [0, 40, 0],
+              scale: [1, 1.8, 1],
+              opacity: [0.3, 0.1, 0.3]
+            }}
+            transition={{ 
+              duration: 30,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="absolute top-80 left-32 w-3 h-3 bg-gradient-to-br from-indigo-400/12 to-purple-400/8 rounded-full"
+          />
+          <motion.div
+            animate={{ 
+              x: [0, 35, 0],
+              y: [0, -45, 0],
+              rotate: [0, 180, 360],
+              scale: [1, 1.3, 1]
+            }}
+            transition={{ 
+              duration: 26,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="absolute bottom-80 right-60 w-2 h-2 bg-gradient-to-br from-teal-400/18 to-cyan-400/12 rounded-full"
+          />
+        </div>
+      )}
 
       {/* 模块区域 - 固定高度防止切换时塌陷 */}
       <div className="flex-1 grid grid-cols-[320px_1fr_320px] gap-0 overflow-hidden relative z-10 min-h-0" style={{ height: 'calc(100vh - 120px)' }}>
