@@ -46,10 +46,14 @@ import CustomerPanel from './CustomerPanel';
 import PRDPreview from './PRDPreview';
 import Sidebar from './Sidebar';
 import DemandPool from './DemandPool';
+import ResumeAgentCenter from './ResumeAgentCenter';
+import ResumeAgentSidebar from './ResumeAgentSidebar';
+import ResumeChatArea from './ResumeChatArea';
+import ResumeRanking from './ResumeRanking';
 
 // 导入类型
 import { ModuleConfig, DepartmentConfig, ModuleManagerProps } from '../types';
-import { ProductDemand, ProductProject, TechnicalStandard, TechnicalTask, TechnicalReport } from '../types/moduleTypes';
+import { ProductDemand, ProductProject, TechnicalStandard, TechnicalTask } from '../types/moduleTypes';
 
 
 
@@ -388,80 +392,7 @@ const technicalStandards: TechnicalStandard[] = [
   }
 ];
 
-const technicalReports: TechnicalReport[] = [
-  {
-    id: 'RPT-001',
-    title: '基础研发部2024年2月技术月报',
-    type: '月报',
-    publishDate: '2024-03-01',
-    author: '李架构师',
-    department: '基础研发部',
-    summary: '2月份技术规范制定、架构优化、团队建设等工作总结',
-    content: {
-      highlights: [
-        '完成前端React组件开发规范V3.2制定',
-        'API接口标准化改造覆盖率达到78%',
-        '代码质量评分提升至92.5%',
-        '团队技术分享会举办3场，参与人数85人'
-      ],
-      metrics: [
-        { label: '规范文档发布', value: '3个', trend: 'up' },
-        { label: '代码质量评分', value: '92.5%', trend: 'up' },
-        { label: '技术债务处理', value: '8个', trend: 'down' },
-        { label: '培训参与率', value: '95%', trend: 'stable' }
-      ],
-      challenges: [
-        '老项目技术栈升级进度缓慢',
-        '跨团队协作规范执行不一致',
-        '部分开发人员对新规范适应需要时间'
-      ],
-      nextPlans: [
-        '推进TypeScript代码质量规范评审',
-        '启动微服务架构设计原则制定',
-        '组织React18新特性技术分享',
-        '建立代码质量监控仪表板'
-      ]
-    },
-    readCount: 156,
-    status: '已发布'
-  },
-  {
-    id: 'RPT-002',
-    title: 'React18技术升级专题简报',
-    type: '专题简报',
-    publishDate: '2024-02-15',
-    author: '张技术',
-    department: '基础研发部',
-    summary: 'React18新特性分析及升级方案建议',
-    content: {
-      highlights: [
-        'React18核心特性：并发渲染、自动批处理、Suspense改进',
-        '现有项目升级评估：3个高优先级、5个中优先级',
-        '性能提升预期：首屏加载时间减少15-20%',
-        '团队培训计划：分3批次进行，预计3周完成'
-      ],
-      metrics: [
-        { label: '适用项目数', value: '8个', trend: 'stable' },
-        { label: '预期性能提升', value: '18%', trend: 'up' },
-        { label: '升级工期预估', value: '6周', trend: 'stable' }
-      ],
-      challenges: [
-        '第三方库兼容性需要逐一验证',
-        '现有代码中部分模式需要重构',
-        '开发团队学习成本较高'
-      ],
-      nextPlans: [
-        '制定详细的升级时间表',
-        '准备兼容性测试用例',
-        '编写升级操作手册',
-        '安排分阶段技术培训'
-      ]
-    },
-    readCount: 89,
-    status: '已发布'
-  }
-];
-
+// 技术任务数据
 const technicalTasks: TechnicalTask[] = [
   {
     id: 'TASK-001',
@@ -561,829 +492,7 @@ const technicalTasks: TechnicalTask[] = [
   }
 ];
 
-
 // 产品立项流程组件（中间）
-const ProductProjectFlow = ({ selectedDemand }: { selectedDemand: ProductDemand | null }) => {
-  const [messages, setMessages] = useState<any[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('process');
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [dragOver, setDragOver] = useState(false);
-
-  // 文件处理函数（增强版，支持意图识别）
-  const handleFileUpload = async (files: FileList | null) => {
-    if (!files) return;
-    const newFiles = Array.from(files).filter(file => 
-      file.type.startsWith('image/') || 
-      file.type === 'application/pdf' ||
-      file.type.includes('document') ||
-      file.type.includes('text/')
-    );
-    
-    setUploadedFiles(prev => [...prev, ...newFiles]);
-
-    // 对文本文件进行意图识别（需要通过父组件处理）
-    const textFiles = newFiles.filter(file => 
-      file.type.includes('text/') || file.name.endsWith('.md') || file.name.endsWith('.txt')
-    );
-
-    // 暂时注释掉，因为需要访问父组件的状态
-    // textFiles.forEach(file => processFileForIntentRecognition(file));
-  };
-
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSendMessage = () => {
-    if ((!inputMessage.trim() && uploadedFiles.length === 0) || !selectedDemand) return;
-
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: inputMessage || '上传了文件',
-      files: uploadedFiles.map(file => ({
-        name: file.name,
-        size: file.size,
-        type: file.type
-      })),
-      timestamp: new Date().toLocaleTimeString()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-
-    // 生成AI回复
-    setTimeout(() => {
-      const aiResponse = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: generateAIResponse(inputMessage, selectedDemand, relatedProject),
-        timestamp: new Date().toLocaleTimeString()
-      };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
-
-    setInputMessage('');
-    setUploadedFiles([]);
-  };
-
-  const generateAIResponse = (userMessage: string, demand: ProductDemand, project?: ProductProject | null): string => {
-    if (!project) {
-      return `基于需求「${demand.title}」，我建议首先进行详细的技术可行性分析。这个需求的业务价值评分为${demand.businessValue}/10，开发成本为${demand.developmentCost}/10。
-
-建议的项目规划：
-1. **需求分析阶段**（3-5天）：深入理解${demand.customer}的具体需求
-2. **技术方案设计**（5-7天）：制定详细的技术实现方案
-3. **资源评估**（2-3天）：评估所需的人力和时间成本
-4. **立项决策**：基于以上分析决定是否立项
-
-您希望我详细分析哪个方面？`;
-    }
-
-    const currentStage = project.currentStage;
-    const progress = project.progress;
-
-    switch (currentStage) {
-      case '需求管理':
-        return `当前项目「${project.name}」正处于需求管理阶段。
-
-📋 **阶段重点**：
-- 需求收集完整性：已完成客户访谈和需求文档整理
-- 需求优先级排序：按业务价值和紧急程度分类
-- 可行性初步评估：技术团队已确认方案可行
-
-✅ **已完成**：
-- 客户需求调研（${demand.customer}）
-- 竞品分析和市场调研
-- 需求文档撰写和评审
-
-🎯 **下一步**：进入产品规划阶段，制定详细的产品路线图`;
-
-      case '产品规划':
-        return `项目「${project.name}」产品规划进展顺利，当前进度${progress}%。
-
-🎨 **设计方案**：
-- 用户体验流程设计已完成
-- 功能模块架构设计中
-- 界面原型设计进行中
-
-📊 **关键指标**：
-- 预期用户满意度：>95%
-- 功能完整度目标：100%
-- 性能指标：响应时间<200ms
-
-🚀 **即将启动**：产品立项评审会议，预计3个工作日内完成`;
-
-      case '产品立项':
-        return `恭喜！项目「${project.name}」已正式立项，进入实施阶段。
-
-🎉 **立项成果**：
-- 项目预算已获批：${project.relatedSystems.length}个系统模块
-- 团队组建完成：产品经理${project.manager}
-- 开发周期确定：预计${project.deadline}前完成
-
-📅 **关键里程碑**：
-- 技术方案评审：本周五
-- 开发环境搭建：下周一
-- 第一版原型：${project.deadline}
-
-💡 **风险提醒**：请关注跨系统集成的复杂度，建议提前与相关团队沟通`;
-
-      case '开发跟踪':
-        return `项目「${project.name}」开发阶段进展报告：
-
-⚡ **开发进度**：${progress}%
-- 后端接口开发：95%完成
-- 前端页面开发：80%完成  
-- 数据库设计：100%完成
-- 第三方集成：60%完成
-
-🐛 **质量指标**：
-- 代码覆盖率：85%
-- 已修复Bug：23个
-- 待解决问题：3个（非阻塞性）
-
-👥 **团队状态**：
-- 开发团队士气良好
-- 无关键人员变动
-- 与${demand.customer}沟通顺畅
-
-📈 **预期交付**：按计划将于${project.deadline}完成开发`;
-
-      case '产品验收':
-        return `项目「${project.name}」进入验收阶段，各项指标良好：
-
-✅ **功能验收**：
-- 核心功能：100%完成并通过测试
-- 边界场景：95%覆盖
-- 用户体验：客户试用满意度98%
-
-🔧 **技术验收**：
-- 性能测试：达到预期指标
-- 安全测试：无高危漏洞
-- 兼容性测试：支持主流浏览器
-
-📋 **文档交付**：
-- 用户操作手册：已完成
-- 系统维护文档：已完成
-- 培训材料：准备中
-
-🎯 **验收计划**：预计3个工作日内完成最终验收`;
-
-      case '上线发布':
-        return `项目「${project.name}」准备上线发布：
-
-🚀 **发布准备**：
-- 生产环境部署：已完成
-- 数据迁移：已验证
-- 监控系统：已配置
-- 应急预案：已制定
-
-📊 **上线指标**：
-- 目标用户：${demand.customer}及相关团队
-- 预期访问量：日活跃用户500+
-- 成功率目标：>99.9%
-
-⚠️ **风险控制**：
-- 灰度发布策略：先10%用户，逐步扩量
-- 回滚机制：5分钟内可完成
-- 7×24小时技术支持待命
-
-🎉 **发布后**：将进入产品总结阶段，收集用户反馈并优化`;
-
-      case '产品总结':
-        return `项目「${project.name}」圆满完成，总结如下：
-
-🎯 **项目成果**：
-- 按时交付：✅
-- 质量达标：✅  
-- 用户满意：✅（${demand.customer}评分9.5/10）
-- 预算控制：✅
-
-📈 **业务价值**：
-- 提升工作效率：40%
-- 降低操作成本：30%
-- 用户体验改善：显著提升
-
-🔄 **经验沉淀**：
-- 技术方案可复用性：高
-- 团队协作模式：已优化
-- 项目管理经验：已文档化
-
-💡 **后续计划**：基于用户反馈，规划V2.0版本功能迭代`;
-
-      default:
-        return `项目「${project.name}」当前状态：${currentStage}，进度${progress}%。请告诉我您希望了解的具体信息，我会为您提供详细的分析和建议。`;
-    }
-  };
-
-  // 获取相关项目
-  const relatedProject = selectedDemand ? productProjects.find(p => p.demandId === selectedDemand.id) : null;
-
-  // 七步成诗流程定义
-  const sevenStepsPoetry = [
-    {
-      id: '需求管理',
-      name: '需求管理',
-      icon: User,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      description: '收集整理客户需求，明确项目目标'
-    },
-    {
-      id: '产品规划',
-      name: '产品规划',
-      icon: Target,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      description: '制定产品方案，设计用户体验'
-    },
-    {
-      id: '产品立项',
-      name: '产品立项',
-      icon: Lightbulb,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
-      description: '项目评审通过，正式启动开发'
-    },
-    {
-      id: '开发跟踪',
-      name: '开发跟踪',
-      icon: Code,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-200',
-      description: '监控开发进度，确保质量交付'
-    },
-    {
-      id: '产品验收',
-      name: '产品验收',
-      icon: CheckCircle,
-      color: 'text-teal-600',
-      bgColor: 'bg-teal-50',
-      borderColor: 'border-teal-200',
-      description: '功能测试验收，确认交付标准'
-    },
-    {
-      id: '上线发布',
-      name: '上线发布',
-      icon: Rocket,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      description: '正式上线部署，用户开始使用'
-    },
-    {
-      id: '产品总结',
-      name: '产品总结',
-      icon: Star,
-      color: 'text-pink-600',
-      bgColor: 'bg-pink-50',
-      borderColor: 'border-pink-200',
-      description: '项目复盘总结，沉淀最佳实践'
-    }
-  ];
-
-  const getStepStatus = (stepId: string) => {
-    if (!relatedProject) return 'pending';
-    const currentIndex = sevenStepsPoetry.findIndex(s => s.id === relatedProject.currentStage);
-    const stepIndex = sevenStepsPoetry.findIndex(s => s.id === stepId);
-
-    if (stepIndex < currentIndex) return 'completed';
-    if (stepIndex === currentIndex) return 'current';
-    return 'pending';
-  };
-
-  // 页签配置
-  const tabs = [
-    {
-      id: 'process',
-      name: '立项流程',
-      icon: Layers,
-      description: '七步成诗项目管理流程'
-    },
-    {
-      id: 'ai-assistant',
-      name: 'AI助手',
-      icon: Bot,
-      description: '智能项目助手对话'
-    }
-  ];
-
-  return (
-    <div className="h-full flex flex-col">
-      <div className="p-2 border-b border-gray-100 bg-gray-50/50">
-        {/* 紧凑页签导航 */}
-        <div className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm">
-          {tabs.map((tab) => {
-            const IconComponent = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'bg-purple-100 text-purple-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-                title={tab.description}
-              >
-                <IconComponent className="w-3 h-3" />
-                <span>{tab.name}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="flex-1 p-4 overflow-y-auto">
-        {selectedDemand ? (
-          <>
-            {/* 页签内容区域 */}
-            {activeTab === 'process' && (
-              <>
-                {/* 简化的项目概览 - 仅在立项流程页签中显示 */}
-                {relatedProject && (
-                  <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center space-x-4">
-                        <span className="font-medium text-gray-900">{relatedProject.currentStage}</span>
-                        <span className="text-blue-600 font-medium">{relatedProject.progress}%</span>
-                        <span className="text-gray-600">{relatedProject.manager}</span>
-                      </div>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${selectedDemand.priority === 'High' ? 'bg-red-100 text-red-700' :
-                        selectedDemand.priority === 'Middle' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                        {selectedDemand.priority}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* 七步成诗流程 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-                  <div className="flex items-center justify-between mb-6">
-                    <h4 className="font-semibold text-gray-900">🎋 七步成诗流程</h4>
-                    <div className="text-xs text-gray-500">传统项目管理哲学</div>
-                  </div>
-
-                  {/* 步骤进度展示 */}
-                  <div className="mb-6">
-                    {/* 步骤指示点与连接线 */}
-                    <div className="relative mb-2">
-                      <div className="flex justify-between items-start">
-                        {sevenStepsPoetry.map((step, index) => {
-                          const status = getStepStatus(step.id);
-                          const IconComponent = step.icon;
-                          
-                          return (
-                            <div key={step.id} className="flex flex-col items-center relative z-10">
-                              {/* 指示点 */}
-                              <div className={`w-4 h-4 rounded-full flex items-center justify-center border-2 transition-all duration-500 shadow-lg ${
-                                status === 'completed' 
-                                  ? 'bg-emerald-500 border-emerald-400 text-white scale-110' 
-                                  : status === 'current'
-                                  ? 'bg-blue-500 border-blue-400 text-white scale-125 animate-pulse'
-                                  : 'bg-white border-gray-300 text-gray-400'
-                              }`}>
-                                {status === 'completed' ? (
-                                  <CheckCircle className="w-2.5 h-2.5" />
-                                ) : status === 'current' ? (
-                                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                                ) : (
-                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                )}
-                              </div>
-                              
-                              {/* 步骤标签 */}
-                              <div className={`text-xs mt-2 text-center max-w-16 leading-tight transition-all duration-300 ${
-                                status === 'completed' ? 'text-emerald-700 font-semibold' : 
-                                status === 'current' ? 'text-blue-700 font-semibold scale-105' : 
-                                'text-gray-500 font-medium'
-                              }`}>
-                                {step.name}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      
-                      {/* 连接线 */}
-                      <div className="absolute top-2 left-2 right-2 h-0.5 bg-gray-200" style={{ transform: 'translateY(-50%)' }}>
-                        <div 
-                          className="h-full bg-gradient-to-r from-emerald-400 via-blue-500 to-violet-600 transition-all duration-700 ease-out"
-                          style={{ 
-                            width: `${Math.max(0, (sevenStepsPoetry.findIndex(s => s.id === (relatedProject?.currentStage || '需求管理')) / (sevenStepsPoetry.length - 1)) * 100)}%`
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    {/* 进度统计 */}
-                    <div className="flex justify-between items-center mt-8 text-xs">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1">
-                          <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                          <span className="text-emerald-700 font-medium">已完成 {sevenStepsPoetry.filter(s => getStepStatus(s.id) === 'completed').length}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                          <span className="text-blue-700 font-medium">进行中 {sevenStepsPoetry.filter(s => getStepStatus(s.id) === 'current').length}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                          <span className="text-gray-600">待开始 {sevenStepsPoetry.filter(s => getStepStatus(s.id) === 'pending').length}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                          {Math.round(((sevenStepsPoetry.findIndex(s => s.id === (relatedProject?.currentStage || '需求管理')) + 1) / sevenStepsPoetry.length) * 100)}%
-                        </div>
-                        <div className="text-gray-500 font-medium">整体进度</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 当前阶段详情卡片 - 重新设计 */}
-                  {relatedProject && (
-                    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100 shadow-sm">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          {(() => {
-                            const currentStep = sevenStepsPoetry.find(s => s.id === relatedProject.currentStage);
-                            const IconComponent = currentStep?.icon || User;
-                            return (
-                              <>
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                                  <IconComponent className="w-5 h-5 text-white" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-gray-900 text-base">{currentStep?.name}</div>
-                                  <div className="text-sm text-blue-600 font-medium">当前阶段</div>
-                                </div>
-                              </>
-                            );
-                          })()}
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-blue-600">
-                            {relatedProject.progress}%
-                          </div>
-                          <div className="text-xs text-gray-500">完成度</div>
-                        </div>
-                      </div>
-                      
-                      {/* 阶段进度条 - 紧凑设计 */}
-                      <div className="mb-3">
-                        <div className="flex justify-between text-xs text-gray-500 mb-2">
-                          <span>阶段进度</span>
-                          <span className="text-blue-600 font-medium">{relatedProject.progress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                          <div 
-                            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out relative"
-                            style={{ width: `${relatedProject.progress}%` }}
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-60"></div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* 阶段描述 */}
-                      <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
-                        <div className="text-sm text-gray-700 leading-relaxed">
-                          <span className="text-blue-600 font-medium">📋 阶段说明：</span>
-                          {sevenStepsPoetry.find(s => s.id === relatedProject.currentStage)?.description}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 步骤列表 - 现代化卡片设计 */}
-                  <div className="mt-6 space-y-3">
-                    {sevenStepsPoetry.map((step, index) => {
-                      const status = getStepStatus(step.id);
-                      const IconComponent = step.icon;
-
-                        return (
-                          <div key={step.id} className={`group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-md ${
-                            status === 'current' ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm scale-[1.02]' : 
-                            status === 'completed' ? 'bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 shadow-sm' :
-                            'bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                          }`}>
-                            {/* 左侧装饰条 */}
-                            <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ${
-                              status === 'current' ? 'bg-gradient-to-b from-blue-400 to-indigo-600' : 
-                              status === 'completed' ? 'bg-gradient-to-b from-emerald-400 to-green-600' :
-                              'bg-transparent group-hover:bg-gray-300'
-                            }`}></div>
-                            
-                            <div className="flex items-center px-4 py-3">
-                              <div className="flex items-center space-x-4 flex-1">
-                                {/* 状态图标 */}
-                                <div className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                                  status === 'completed' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' :
-                                  status === 'current' ? 'bg-blue-500 text-white shadow-lg shadow-blue-200 animate-pulse' : 
-                                  'bg-gray-200 text-gray-600 group-hover:bg-gray-300'
-                                }`}>
-                                  {status === 'completed' ? (
-                                    <CheckCircle className="w-4 h-4" />
-                                  ) : status === 'current' ? (
-                                    <IconComponent className="w-4 h-4" />
-                                  ) : (
-                                    <span className="text-xs font-bold">{index + 1}</span>
-                                  )}
-                                  
-                                  {/* 当前步骤的光环效果 */}
-                                  {status === 'current' && (
-                                    <div className="absolute inset-0 rounded-lg bg-blue-400 animate-ping opacity-20"></div>
-                                  )}
-                                </div>
-                                
-                                {/* 步骤信息 */}
-                                <div className="flex-1">
-                                  <div className={`font-medium transition-all duration-300 ${
-                                    status === 'completed' ? 'text-emerald-900' : 
-                                    status === 'current' ? 'text-blue-900 text-base' : 
-                                    'text-gray-700 group-hover:text-gray-900'
-                                  }`}>
-                                    {step.name}
-                                  </div>
-                                  <div className={`text-xs mt-0.5 transition-all duration-300 ${
-                                    status === 'completed' ? 'text-emerald-600' :
-                                    status === 'current' ? 'text-blue-600' :
-                                    'text-gray-500'
-                                  }`}>
-                                    {step.description}
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              {/* 状态标签 */}
-                              <div className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
-                                status === 'completed' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
-                                status === 'current' ? 'bg-blue-100 text-blue-700 border border-blue-200 animate-pulse' :
-                                'bg-gray-100 text-gray-600 border border-gray-200'
-                              }`}>
-                                {status === 'completed' ? '✅ 已完成' : 
-                                 status === 'current' ? '🚀 进行中' : '⏳ 待开始'}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {activeTab === 'ai-assistant' && (
-              <>
-                {/* AI助手对话区域 - 重新设计 */}
-                <div className="relative flex flex-col h-full bg-white rounded-lg border border-gray-200">
-                  {/* 紧凑助手头部 */}
-                  <div className="flex items-center justify-between p-2 border-b border-gray-100 bg-blue-50/30">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                        <Bot className="w-3 h-3 text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 text-sm">AI助手</h4>
-                        <p className="text-xs text-gray-500">七步成诗法</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-700">在线</span>
-                    </div>
-                  </div>
-
-                  {/* 对话区域 */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 pb-32">
-                    {messages.length === 0 ? (
-                      <div className="text-center text-gray-500 text-sm py-6">
-                        <Bot className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                        <p className="text-gray-600 text-xs">开始提问吧！我会基于七步成诗法为您提供项目建议</p>
-                      </div>
-                ) : (
-                      messages.map((message) => (
-                        <div key={message.id} className={`flex items-start space-x-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          {message.type === 'ai' && (
-                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                              <Bot className="w-4 h-4 text-blue-600" />
-                            </div>
-                          )}
-                          <div className={`max-w-[75%] rounded-lg p-3 ${message.type === 'user'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                            }`}>
-                            {/* 文件显示 */}
-                            {message.files && message.files.length > 0 && (
-                              <div className="mb-2 space-y-1">
-                                {message.files.map((file: any, index: number) => (
-                                  <div key={index} className={`flex items-center space-x-2 p-2 rounded ${message.type === 'user' ? 'bg-blue-500' : 'bg-white border'}`}>
-                                    {file.type.startsWith('image/') ? (
-                                      <Image className="w-4 h-4" />
-                                    ) : (
-                                      <FileText className="w-4 h-4" />
-                                    )}
-                                    <span className="text-xs truncate">{file.name}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            {message.type === 'user' ? (
-                              <div className="whitespace-pre-wrap text-sm">{message.content}</div>
-                            ) : (
-                              <div className="markdown-content">
-                                <ReactMarkdown 
-                                  remarkPlugins={[remarkGfm]}
-                                  components={{
-                                    h1: ({children}) => <h1 className="text-base font-bold text-gray-900 mb-2 border-b pb-1">{children}</h1>,
-                                    h2: ({children}) => <h2 className="text-sm font-semibold text-gray-800 mb-1 mt-2">{children}</h2>,
-                                    h3: ({children}) => <h3 className="text-sm font-medium text-gray-700 mb-1 mt-2">{children}</h3>,
-                                    p: ({children}) => <p className="text-sm text-gray-700 leading-relaxed mb-1">{children}</p>,
-                                    ul: ({children}) => <ul className="list-disc list-inside text-sm text-gray-700 mb-1 space-y-0.5">{children}</ul>,
-                                    ol: ({children}) => <ol className="list-decimal list-inside text-sm text-gray-700 mb-1 space-y-0.5">{children}</ol>,
-                                    li: ({children}) => <li className="ml-1">{children}</li>,
-                                    code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800">{children}</code>,
-                                    pre: ({children}) => <pre className="bg-gray-100 p-2 rounded text-xs font-mono overflow-x-auto mb-1">{children}</pre>,
-                                    blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-2 py-1 bg-blue-50 text-gray-700 mb-1">{children}</blockquote>,
-                                    strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                                    em: ({children}) => <em className="italic text-gray-700">{children}</em>,
-                                  }}
-                                >
-                                  {message.content}
-                                </ReactMarkdown>
-                              </div>
-                            )}
-                            <div className={`text-xs mt-2 ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
-                              {message.timestamp}
-                            </div>
-                          </div>
-                          {message.type === 'user' && (
-                            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                              <User className="w-4 h-4 text-white" />
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* 悬浮的输入区域 */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-b-lg z-20">
-                    {/* 快速问题（仅在首次显示，紧贴输入框上方） */}
-                    {messages.length === 0 && (
-                      <div className="px-4 pt-3 pb-2 border-b border-gray-100/30 bg-gray-50/20 backdrop-blur-sm">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => setInputMessage('当前项目有什么风险？')}
-                            className="inline-flex items-center px-3 py-1.5 bg-white/30 border border-blue-200/50 text-blue-700 text-sm rounded-full hover:bg-blue-50/40 hover:border-blue-300/60 transition-all duration-200 shadow-sm backdrop-blur-sm"
-                          >
-                            💡 当前项目有什么风险？
-                          </button>
-                          <button
-                            onClick={() => setInputMessage('下一步计划是什么？')}
-                            className="inline-flex items-center px-3 py-1.5 bg-white/30 border border-green-200/50 text-green-700 text-sm rounded-full hover:bg-green-50/40 hover:border-green-300/60 transition-all duration-200 shadow-sm backdrop-blur-sm"
-                          >
-                            📋 下一步计划是什么？
-                          </button>
-                          <button
-                            onClick={() => setInputMessage('项目进度正常吗？')}
-                            className="inline-flex items-center px-3 py-1.5 bg-white/30 border border-orange-200/50 text-orange-700 text-sm rounded-full hover:bg-orange-50/40 hover:border-orange-300/60 transition-all duration-200 shadow-sm backdrop-blur-sm"
-                          >
-                            ⏰ 项目进度正常吗？
-                          </button>
-                          <button
-                            onClick={() => setInputMessage('需要额外资源支持吗？')}
-                            className="inline-flex items-center px-3 py-1.5 bg-white/30 border border-purple-200/50 text-purple-700 text-sm rounded-full hover:bg-purple-50/40 hover:border-purple-300/60 transition-all duration-200 shadow-sm backdrop-blur-sm"
-                          >
-                            🚀 需要额外资源支持吗？
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 上传的文件预览 */}
-                    {uploadedFiles.length > 0 && (
-                      <div className="p-3 border-b border-gray-100/30 bg-gray-50/20 backdrop-blur-sm">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-gray-600 font-medium">已添加文件 ({uploadedFiles.length})</span>
-                          <button
-                            onClick={() => setUploadedFiles([])}
-                            className="text-xs text-red-600 hover:text-red-700"
-                          >
-                            清空全部
-                          </button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {uploadedFiles.map((file, index) => (
-                            <div key={index} className="flex items-center space-x-2 bg-white/20 border border-gray-200/50 rounded-lg p-2 text-xs backdrop-blur-sm">
-                              {file.type.startsWith('image/') ? (
-                                <Image className="w-3 h-3 text-blue-600" />
-                              ) : (
-                                <FileText className="w-3 h-3 text-gray-600" />
-                              )}
-                              <span className="truncate max-w-24">{file.name}</span>
-                              <button
-                                onClick={() => removeFile(index)}
-                                className="text-red-500 hover:text-red-700 ml-1"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 输入区域 */}
-                    <div className="border-t border-gray-200/50 bg-white/20 p-3 flex-shrink-0 backdrop-blur-sm">
-                      <div className="flex items-center space-x-2 bg-gray-50/20 rounded-lg p-2 backdrop-blur-sm">
-                        {/* 多媒体上传按钮 */}
-                        <div className="flex items-center space-x-1 shrink-0">
-                          <input
-                            type="file"
-                            id="ai-file-upload"
-                            multiple
-                            onChange={(e) => handleFileUpload(e.target.files)}
-                            className="hidden"
-                          />
-                          <label
-                            htmlFor="ai-file-upload"
-                            className="flex items-center justify-center w-8 h-8 bg-white/30 hover:bg-gray-100/40 rounded-lg cursor-pointer transition-colors border border-gray-200/50 backdrop-blur-sm"
-                            title="上传文件"
-                          >
-                            <Paperclip className="w-3 h-3 text-gray-600" />
-                          </label>
-                          
-                          <input
-                            type="file"
-                            id="ai-image-upload"
-                            multiple
-                            onChange={(e) => handleFileUpload(e.target.files)}
-                            className="hidden"
-                          />
-                          <label
-                            htmlFor="ai-image-upload"
-                            className="flex items-center justify-center w-8 h-8 bg-white/30 hover:bg-gray-100/40 rounded-lg cursor-pointer transition-colors border border-gray-200/50 backdrop-blur-sm"
-                            title="上传图片"
-                          >
-                            <Image className="w-3 h-3 text-gray-600" />
-                          </label>
-
-                        </div>
-                        
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-sm shadow-sm">
-                          🤖
-                        </div>
-
-                        <input
-                          type="text"
-                          value={inputMessage}
-                          onChange={(e) => setInputMessage(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }}
-                          placeholder="询问项目相关问题..."
-                          className="flex-1 h-9 px-3 bg-transparent border-0 focus:outline-none text-sm placeholder-gray-500"
-                        />
-
-                        <button
-                          onClick={handleSendMessage}
-                          disabled={!inputMessage.trim() && uploadedFiles.length === 0}
-                          className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                        >
-                          <Send className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center text-gray-500">
-              <Layers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h4 className="text-lg font-medium mb-2">选择需求开始项目管理</h4>
-              <p className="text-sm">从左侧选择一个需求，查看对应的七步成诗项目流程</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 // 版本管理与开发跟踪组件（右侧）
 const VersionManagement = ({ selectedDemand }: { selectedDemand: ProductDemand | null }) => {
@@ -1859,7 +968,7 @@ const FlipModule: React.FC<{
       case 'left':
         return 'bg-gradient-to-br from-white to-gray-50/30 border-r border-gray-200/60 shadow-sm h-full overflow-hidden min-h-full backdrop-blur-sm';
       case 'center':
-        return 'flex flex-col min-w-0 h-full overflow-hidden bg-gray-50 px-4 min-h-full';
+        return 'flex flex-col min-w-0 h-full bg-gray-50 px-4 min-h-full';
       case 'right':
         return 'bg-gradient-to-br from-white to-gray-50/30 border-l border-gray-200/60 shadow-sm h-full overflow-hidden min-h-full backdrop-blur-sm';
       default:
@@ -1943,275 +1052,6 @@ const FlipModule: React.FC<{
               })}
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-// 顶部信息栏翻转容器
-const FlipTopBar: React.FC<{
-  currentConfig: DepartmentConfig | null;
-  previousConfig: DepartmentConfig | null;
-  isFlipping: boolean;
-}> = ({ currentConfig, previousConfig, isFlipping }) => {
-  // 与模块翻转保持一致的简单动效，快速切换
-  const topBarFlipVariants = {
-    initial: {
-      opacity: 0,
-      scale: 0.95,
-      y: -10,
-    },
-    enter: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: {
-        duration: 0.15,
-        ease: [0.25, 0.46, 0.45, 0.94] as any,
-        opacity: { duration: 0.12 },
-        scale: { duration: 0.15 },
-        y: { duration: 0.15 }
-      }
-    },
-    exit: {
-      opacity: 0,
-      scale: 0.95,
-      y: -10,
-      transition: {
-        duration: 0.1,
-        ease: [0.4, 0.0, 0.6, 1] as any,
-        opacity: { duration: 0.08 },
-        scale: { duration: 0.1 },
-        y: { duration: 0.1 }
-      }
-    }
-  };
-
-  if (!currentConfig?.topBarInfo) return null;
-
-  return (
-    <div className="border-b border-gray-200">
-      <AnimatePresence>
-        {currentConfig.topBarInfo && (
-          <motion.div
-            key={`topbar-${currentConfig.id}`}
-            className="bg-white px-6 py-4"
-            variants={topBarFlipVariants}
-            initial="initial"
-            animate="enter"
-            exit="exit"
-          >
-            <div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900">{currentConfig.topBarInfo.title}</h1>
-                  <p className="text-sm text-gray-500 mt-1">{currentConfig.topBarInfo.description}</p>
-                </div>
-                <div className="flex items-center space-x-6">
-                  {currentConfig.topBarInfo.stats.map((stat, index) => {
-                    const IconComponent = stat.icon;
-                    return (
-                      <div key={index} className="text-center">
-                        <div className="flex items-center justify-center space-x-2 mb-1">
-                          <IconComponent className="w-4 h-4" style={{ color: currentConfig.theme.primary }} />
-                          <span className="text-lg font-bold" style={{ color: currentConfig.theme.primary }}>
-                            {stat.value}
-                          </span>
-                          {stat.trend === 'up' && (
-                            <TrendingUp className="w-3 h-3 text-green-500" />
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-500">{stat.label}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-// 简单的模态窗智能体选择器
-const CircularAgentSelector: React.FC<{
-  agents: AIAgent[];
-  selectedAgent: AIAgent;
-  onSelectAgent: (agent: AIAgent) => void;
-  isExpanded: boolean;
-  onToggle: () => void;
-}> = ({ agents, selectedAgent, onSelectAgent, isExpanded, onToggle }) => {
-  return (
-    <div className="relative">
-      {/* 主按钮 */}
-      <motion.button
-        onClick={onToggle}
-        className="relative w-10 h-10 rounded-full overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-          boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1)'
-        }}
-        whileHover={{ 
-          scale: 1.05,
-          boxShadow: '0 8px 25px rgba(139, 92, 246, 0.4), 0 4px 15px rgba(0, 0, 0, 0.15)'
-        }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ duration: 0.2 }}
-      >
-        <div className="flex items-center justify-center w-full h-full text-white">
-          <div className="text-lg font-medium">{selectedAgent.avatar}</div>
-        </div>
-      </motion.button>
-
-      {/* 模态窗 */}
-      <AnimatePresence>
-        {isExpanded && (
-          <>
-            {/* 背景遮罩 */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
-              onClick={onToggle}
-            />
-            
-            {/* 模态窗内容 */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none"
-            >
-              <div className="pointer-events-auto">
-              <div 
-                className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden"
-                style={{
-                  background: 'linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%)',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-                  width: '420px'
-                }}
-              >
-                {/* 精美的标题区域 */}
-                <div 
-                  className="px-8 py-6 border-b border-gray-100/50"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(236, 72, 153, 0.05) 100%)'
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div 
-                        className="w-10 h-10 rounded-2xl flex items-center justify-center"
-                        style={{
-                          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-                          boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)'
-                        }}
-                      >
-                        <span className="text-white text-lg">✨</span>
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">AI智能体</h3>
-                        <p className="text-sm text-gray-500 mt-0.5">选择您的专属助手</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={onToggle}
-                      className="p-2 hover:bg-gray-100/80 rounded-xl transition-all duration-200 group"
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.8)',
-                        border: '1px solid rgba(229, 231, 235, 0.5)'
-                      }}
-                    >
-                      <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-                    </button>
-                  </div>
-                </div>
-                
-                {/* 智能体网格 */}
-                <div className="p-8">
-                  <div className="grid grid-cols-3 gap-5">
-                    {agents.map((agent) => {
-                      const isSelected = agent.id === selectedAgent.id;
-                      return (
-                        <motion.button
-                          key={agent.id}
-                          onClick={() => {
-                            onSelectAgent(agent);
-                            onToggle();
-                          }}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          className={`
-                            flex flex-col items-center p-5 rounded-2xl transition-all duration-300 group relative overflow-hidden
-                            ${isSelected 
-                              ? 'ring-2 ring-blue-400/60 ring-offset-2' 
-                              : 'hover:shadow-lg'
-                            }
-                          `}
-                          style={{
-                            background: isSelected 
-                              ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 50%, rgba(236, 72, 153, 0.08) 100%)'
-                              : 'rgba(255, 255, 255, 0.8)',
-                            border: isSelected 
-                              ? '1px solid rgba(99, 102, 241, 0.2)' 
-                              : '1px solid rgba(229, 231, 235, 0.5)',
-                            boxShadow: isSelected 
-                              ? '0 8px 25px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)' 
-                              : '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
-                          }}
-                        >
-                          {/* 选中状态的背景光效 */}
-                          {isSelected && (
-                            <div 
-                              className="absolute inset-0 opacity-20"
-                              style={{
-                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-                                filter: 'blur(20px)'
-                              }}
-                            />
-                          )}
-                          
-                          <div 
-                            className={`
-                              relative w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold mb-3
-                              transition-all duration-300 group-hover:scale-110
-                            `}
-                            style={{
-                              background: isSelected 
-                                ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)'
-                                : 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.9) 100%)',
-                              color: isSelected ? 'white' : '#374151',
-                              boxShadow: isSelected 
-                                ? '0 8px 25px rgba(139, 92, 246, 0.3)' 
-                                : '0 4px 12px rgba(0, 0, 0, 0.08)',
-                              border: isSelected ? 'none' : '1px solid rgba(229, 231, 235, 0.8)'
-                            }}
-                          >
-                            {agent.avatar}
-                          </div>
-                          <span 
-                            className={`
-                              text-sm font-semibold text-center leading-tight relative
-                              ${isSelected ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'}
-                            `}
-                          >
-                            {agent.name}
-                          </span>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              </div>
-            </motion.div>
-          </>
         )}
       </AnimatePresence>
     </div>
@@ -3375,6 +2215,38 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
         secondary: '#D1FAE5',
         background: '#F0FDF4'
       }
+    },
+    'HR': {
+      id: 'hr',
+      name: 'HR',
+      modules: [
+        {
+          id: 'resume-agent-sidebar',
+          name: '简历智能体',
+          component: ResumeAgentSidebar,
+          position: 'left',
+          props: {}
+        },
+        {
+          id: 'resume-chat-area',
+          name: '智能体对话',
+          component: ResumeChatArea,
+          position: 'center',
+          props: {}
+        },
+        {
+          id: 'resume-ranking',
+          name: '候选人排序',
+          component: ResumeRanking,
+          position: 'right',
+          props: {}
+        }
+      ],
+      theme: {
+        primary: '#EA580C',
+        secondary: '#FED7AA',
+        background: '#FFF7ED'
+      }
     }
   }), [customerSuccessMode]);
 
@@ -3397,7 +2269,8 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
       case 'demand-pool':
         return {
           selectedDemand: selectedDemand,
-          onDemandSelect: setSelectedDemand
+          onDemandSelect: setSelectedDemand,
+          productDemands: productDemands
         };
       case 'project-flow':
         return {
@@ -3995,6 +2868,14 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
+  // 文件上传处理
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles = Array.from(files);
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+  };
 
   // 当切换智能体时重置对话
   useEffect(() => {
@@ -4010,7 +2891,7 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
   }, [selectedAgent]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isTyping) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -4409,26 +3290,67 @@ const TechnicalAgentCenter = ({ selectedStandard }: { selectedStandard: Technica
           </div>
         </div>
 
-        {/* 输入区域 */}
-        <div className="border-t border-gray-200/50 bg-white/50 p-3 flex-shrink-0 backdrop-blur-sm">
-          <div className="flex items-center space-x-2 bg-gray-50/50 rounded-lg p-2 backdrop-blur-sm">
-            <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center text-sm shadow-sm">
+        {/* 输入区域 - 统一品牌域风格 */}
+        <div className="bg-white/20 backdrop-blur-md p-4 flex-shrink-0 relative z-20 border-t border-gray-100/30">
+          <div className="flex items-center space-x-3 bg-gradient-to-r from-gray-50/80 to-white/90 backdrop-blur-sm rounded-xl p-3 shadow-sm" style={{
+            border: '1px solid rgba(148, 163, 184, 0.08)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9)'
+          }}>
+
+            {/* 智能体头像 */}
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl text-lg" style={{
+              background: 'linear-gradient(135deg, #10B981 0%, #3B82F6 100%)',
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
+            }}>
               {selectedAgent.avatar}
             </div>
+
+            {/* 文件上传按钮 */}
+            <input
+              type="file"
+              id="tech-file-upload"
+              multiple
+              onChange={(e) => handleFileUpload && handleFileUpload(e.target.files)}
+              className="hidden"
+            />
+            <label
+              htmlFor="tech-file-upload"
+              className="flex items-center justify-center w-10 h-10 rounded-xl cursor-pointer transition-all duration-200 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04)',
+                border: '1px solid rgba(148, 163, 184, 0.12)'
+              }}
+              title="上传技术文档"
+            >
+              <Paperclip className="w-4 h-4 text-gray-500" />
+            </label>
+
+            {/* 输入框 */}
             <input
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-              placeholder={`向${selectedAgent.name}提问...`}
-              className="flex-1 h-9 px-3 bg-transparent border-0 focus:outline-none text-sm placeholder-gray-500"
+              placeholder={`向${selectedAgent.name}咨询技术问题...`}
+              className="flex-1 h-11 px-4 bg-transparent border-0 focus:outline-none text-sm placeholder-gray-500 rounded-lg"
             />
+
+            {/* 发送按钮 */}
             <button
               onClick={handleSendMessage}
               disabled={!inputMessage.trim() || isTyping}
-              className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              style={{
+                background: !inputMessage.trim() || isTyping 
+                  ? 'linear-gradient(135deg, #D1D5DB 0%, #9CA3AF 100%)'
+                  : 'linear-gradient(135deg, #10B981 0%, #3B82F6 100%)',
+                boxShadow: !inputMessage.trim() || isTyping 
+                  ? '0 2px 8px rgba(156, 163, 175, 0.25)'
+                  : '0 2px 8px rgba(16, 185, 129, 0.4), 0 4px 16px rgba(59, 130, 246, 0.3)'
+              }}
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5 text-white" />
             </button>
           </div>
         </div>

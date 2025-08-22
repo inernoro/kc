@@ -1,0 +1,648 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Activity,
+  AlertTriangle,
+  BookOpen,
+  Bot,
+  Bug,
+  CheckCircle,
+  ClipboardCheck,
+  Clock,
+  Code,
+  Crown,
+  Database,
+  Eye,
+  FileText,
+  Image,
+  Layers,
+  Lightbulb,
+  MessageSquare,
+  Monitor,
+  Package,
+  Palette,
+  Paperclip,
+  Pause,
+  PieChart,
+  Play,
+  Rocket,
+  Send,
+  Smartphone,
+  Sparkles,
+  Star,
+  Target,
+  Timer,
+  TrendingUp,
+  User,
+  X,
+  Zap
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+// 导入组件
+import ChatArea from './ChatArea';
+import CustomerPanel from './CustomerPanel';
+import PRDPreview from './PRDPreview';
+import Sidebar from './Sidebar';
+import DemandPool from './DemandPool';
+import ProductProjectFlow from './ProductProjectFlow';
+import VersionManagement from './VersionManagement';
+import KaleidoscopeAnimation from './KaleidoscopeAnimation';
+import TechnicalStandardLibrary from './TechnicalStandardLibrary';
+import TechnicalTaskTracker from './TechnicalTaskTracker';
+import BrandAgentCenter from './BrandAgentCenter';
+import TechnicalAgentCenter from './TechnicalAgentCenter';
+import { AssessmentLeftPanel, AssessmentCenterPanel, AssessmentRightPanel } from './AssessmentComponents';
+
+// 导入类型
+import { ModuleConfig, DepartmentConfig, ModuleManagerProps } from '../types';
+import { ProductDemand, ProductProject, TechnicalStandard, TechnicalTask, TechnicalReport } from '../types/moduleTypes';
+
+// 米多产品体系四级结构
+const MIDO_PRODUCT_STRUCTURE = {
+  platform: '米多平台',
+  systems: ['大数据引擎', '无界分销（规划中）', '智慧零售（规划中）'],
+  applications: ['社交云店', '防窜物流', '智能营销', '积分商城', '会员管理'],
+  plugins: ['签到', '抽奖', '问卷', '投票', '拼团', '砍价', '分销'],
+  channelRouters: ['新经销助手', '万能零售助手', '业务帮帮', '金牌导购员']
+};
+
+// 产品需求数据（基于TAPD需求管理池）
+const productDemands: ProductDemand[] = [
+  {
+    id: 'demand-001',
+    title: '智能营销指定门店发奖功能优化',
+    source: '商户需求',
+    priority: 'High',
+    status: '已立项',
+    submitter: '张产品',
+    reviewer: '李评审',
+    submitTime: '2024-01-15',
+    reviewTime: '2024-01-18',
+    description: '优化智能营销中的指定门店发奖功能，提升商户使用体验和奖励发放效率',
+    businessValue: 8,
+    developmentCost: 6,
+    customer: '某知名连锁餐饮品牌',
+    urgency: '紧急',
+    importance: '重要'
+  },
+  {
+    id: 'demand-002',
+    title: '会员管理多级分销佣金体系',
+    source: '代理伙伴',
+    priority: 'High',
+    status: '开发中',
+    submitter: '王业务',
+    reviewer: '赵评审',
+    submitTime: '2024-01-10',
+    reviewTime: '2024-01-12',
+    description: '构建完善的多级分销佣金管理体系，支持代理商层级管理和佣金自动结算',
+    businessValue: 9,
+    developmentCost: 8,
+    customer: '头部代理商联盟',
+    urgency: '紧急',
+    importance: '重要'
+  },
+  {
+    id: 'demand-003',
+    title: '社交云店装修组件升级',
+    source: '内部团队',
+    priority: 'Middle',
+    status: '待规划',
+    submitter: '刘设计',
+    reviewer: '陈评审',
+    submitTime: '2024-01-20',
+    description: '升级社交云店的装修组件，增加更多模板和自定义选项',
+    businessValue: 6,
+    developmentCost: 5,
+    customer: '中小商户群体',
+    urgency: '不紧急',
+    importance: '重要'
+  },
+  {
+    id: 'demand-004',
+    title: '积分商城奖励机制优化',
+    source: '商户需求',
+    priority: 'Low',
+    status: '待评审',
+    submitter: '周运营',
+    reviewer: '吴评审',
+    submitTime: '2024-01-25',
+    description: '优化积分商城的奖励机制，提高用户参与度和留存率',
+    businessValue: 5,
+    developmentCost: 4,
+    customer: '全平台商户',
+    urgency: '不紧急',
+    importance: '不重要'
+  },
+  {
+    id: 'demand-005',
+    title: '防窜物流代理商体系完善',
+    source: '代理伙伴',
+    priority: 'High',
+    status: '已上线',
+    submitter: '孙物流',
+    reviewer: '钱评审',
+    submitTime: '2023-12-01',
+    reviewTime: '2023-12-03',
+    description: '完善防窜物流的代理商管理体系，加强货物流向监控',
+    businessValue: 8,
+    developmentCost: 7,
+    customer: '大型品牌方',
+    urgency: '不紧急',
+    importance: '重要'
+  }
+];
+
+// 产品项目数据
+const productProjects: ProductProject[] = [
+  {
+    id: 'project-001',
+    name: '智能营销T2.3.6',
+    version: 'T2.3.6',
+    versionType: '小版本',
+    status: '开发中',
+    progress: 75,
+    currentStage: '开发跟踪',
+    manager: '张产品',
+    developer: '李技术',
+    tester: '王测试',
+    relatedSystems: ['智能营销', '会员管理'],
+    demandId: 'demand-001',
+    deadline: '2024-02-15',
+    createTime: '2024-01-18',
+    reviewRecords: [
+      {
+        stage: '一稿',
+        reviewer: '李评审',
+        result: '通过',
+        feedback: '需求明确，技术方案可行',
+        time: '2024-01-19'
+      }
+    ]
+  },
+  {
+    id: 'project-002',
+    name: '会员管理T2.1.5',
+    version: 'T2.1.5',
+    versionType: '中版本',
+    status: '测试中',
+    progress: 90,
+    currentStage: '产品验收',
+    manager: '赵产品',
+    developer: '刘技术',
+    tester: '陈测试',
+    relatedSystems: ['会员管理', '防窜物流'],
+    demandId: 'demand-002',
+    deadline: '2024-01-30',
+    createTime: '2024-01-12',
+    reviewRecords: [
+      {
+        stage: '一稿',
+        reviewer: '赵评审',
+        result: '通过',
+        feedback: '架构设计合理',
+        time: '2024-01-13'
+      },
+      {
+        stage: '二稿',
+        reviewer: '赵评审',
+        result: '通过',
+        feedback: '细节优化到位',
+        time: '2024-01-15'
+      }
+    ]
+  }
+];
+
+// 技术规范数据
+const technicalStandards: TechnicalStandard[] = [
+  {
+    id: 'std-001',
+    title: 'React组件开发规范',
+    category: '前端开发',
+    version: 'v2.1',
+    status: '已发布',
+    creator: '前端团队',
+    reviewer: '架构师',
+    createTime: '2024-01-01',
+    updateTime: '2024-01-15',
+    description: 'React组件开发的标准规范，包括命名、结构、性能优化等',
+    priority: 'High',
+    complexity: 7,
+    impact: ['智能营销', '会员管理', '社交云店'],
+    downloadUrl: '/standards/react-component-v2.1.pdf'
+  },
+  {
+    id: 'std-002',
+    title: 'API接口设计规范',
+    category: '后端API',
+    version: 'v1.8',
+    status: '已发布',
+    creator: '后端团队',
+    reviewer: '技术总监',
+    createTime: '2023-12-01',
+    updateTime: '2024-01-10',
+    description: 'RESTful API设计规范，包括URL设计、状态码、错误处理等',
+    priority: 'High',
+    complexity: 8,
+    impact: ['所有系统'],
+    downloadUrl: '/standards/api-design-v1.8.pdf'
+  }
+];
+
+// 技术任务数据
+const technicalTasks: TechnicalTask[] = [
+  {
+    id: 'task-001',
+    title: '智能营销组件性能优化',
+    type: '技术债务',
+    assignee: '李技术',
+    reporter: '张产品',
+    priority: 'P1',
+    status: '进行中',
+    createTime: '2024-01-20',
+    deadline: '2024-02-05',
+    progress: 60,
+    description: '优化智能营销核心组件的渲染性能',
+    relatedStandards: ['std-001'],
+    estimatedHours: 40,
+    actualHours: 24
+  },
+  {
+    id: 'task-002',
+    title: '数据库索引优化',
+    type: '质量提升',
+    assignee: '王DBA',
+    reporter: '李技术',
+    priority: 'P2',
+    status: '待开始',
+    createTime: '2024-01-22',
+    deadline: '2024-02-10',
+    progress: 0,
+    description: '优化核心业务表的查询索引',
+    relatedStandards: ['std-002'],
+    estimatedHours: 20
+  }
+];
+
+// 技术报告数据
+const technicalReports: TechnicalReport[] = [
+  {
+    id: 'report-001',
+    title: '2024年1月技术架构优化报告',
+    type: '月报',
+    publishDate: '2024-01-31',
+    author: '技术团队',
+    department: '基础研发部',
+    summary: '本月完成了核心系统的性能优化，API响应时间平均提升30%',
+    content: {
+      highlights: [
+        '完成智能营销核心组件重构',
+        '上线新版API网关',
+        '数据库查询性能提升35%'
+      ],
+      metrics: [
+        { label: 'API平均响应时间', value: '120ms', trend: 'down' },
+        { label: '系统可用性', value: '99.95%', trend: 'up' },
+        { label: '代码覆盖率', value: '85%', trend: 'up' }
+      ],
+      challenges: [
+        '微服务间通信延迟问题',
+        '数据一致性保障机制需完善'
+      ],
+      nextPlans: [
+        '推进服务网格架构升级',
+        '建立统一的监控告警体系'
+      ]
+    },
+    readCount: 156,
+    status: '已发布'
+  }
+];
+
+const ModuleManager: React.FC<ModuleManagerProps> = ({
+  currentDepartment,
+  onCustomerSelect,
+  selectedCustomer,
+  customerSuccessMode = 'normal'
+}) => {
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [previousDepartment, setPreviousDepartment] = useState<string | null>(null);
+  const [selectedDemand, setSelectedDemand] = useState<ProductDemand>(productDemands[0]);
+  const [selectedStandard, setSelectedStandard] = useState<TechnicalStandard>(technicalStandards[0]);
+  const [previousMode, setPreviousMode] = useState<'normal' | 'assessment'>('normal');
+  
+  // 青春阳光主题配置
+  const sunshineTheme = {
+    background: 'bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50',
+    primary: 'from-orange-400 via-yellow-400 to-pink-400',
+    secondary: 'from-pink-400 via-rose-400 to-red-400',
+    accent: 'from-yellow-300 via-orange-300 to-pink-300',
+    cardBg: 'bg-gradient-to-br from-white/80 via-orange-50/30 to-pink-50/50',
+    glow: 'shadow-2xl shadow-orange-200/50',
+    sparkle: 'animate-pulse'
+  };
+
+  // 处理部门切换
+  useEffect(() => {
+    if (previousDepartment !== currentDepartment) {
+      setIsTransitioning(true);
+      setPreviousDepartment(currentDepartment);
+      
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
+    }
+  }, [currentDepartment, previousDepartment]);
+
+  // 处理考核模式切换
+  useEffect(() => {
+    if (previousMode !== customerSuccessMode) {
+      setPreviousMode(customerSuccessMode);
+    }
+  }, [customerSuccessMode, previousMode]);
+
+  // 获取当前部门配置
+  const getCurrentModules = (): ModuleConfig[] => {
+    const departmentConfigs: Record<string, ModuleConfig[]> = {
+      '客户成功部': customerSuccessMode === 'assessment' ? [
+        {
+          id: 'assessment-left',
+          name: '考核管理',
+          component: AssessmentLeftPanel,
+          position: 'left',
+          icon: BookOpen,
+          color: 'text-orange-600',
+          bgColor: 'bg-orange-50/80'
+        },
+        {
+          id: 'assessment-center',
+          name: '考核进行状态',
+          component: AssessmentCenterPanel,
+          position: 'center',
+          icon: Target,
+          color: 'text-orange-600',
+          bgColor: 'bg-orange-50/80'
+        },
+        {
+          id: 'assessment-right',
+          name: '能力分析',
+          component: AssessmentRightPanel,
+          position: 'right',
+          icon: TrendingUp,
+          color: 'text-orange-600',
+          bgColor: 'bg-orange-50/80'
+        }
+      ] : [
+        {
+          id: 'customer-list',
+          name: '客户列表',
+          component: Sidebar,
+          position: 'left',
+          icon: User,
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50/80'
+        },
+        {
+          id: 'chat-area',
+          name: '对话区域',
+          component: ChatArea,
+          position: 'center',
+          icon: MessageSquare,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50/80'
+        },
+        {
+          id: 'customer-panel',
+          name: '客户面板',
+          component: CustomerPanel,
+          position: 'right',
+          icon: FileText,
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50/80'
+        }
+      ],
+      '品牌域': [
+        {
+          id: 'demand-pool',
+          name: 'TAPD需求池',
+          component: DemandPool,
+          position: 'left',
+          icon: Target,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50/80'
+        },
+        {
+          id: 'brand-agent-center',
+          name: '品牌域智能体中心',
+          component: BrandAgentCenter,
+          position: 'center',
+          icon: Bot,
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50/80'
+        },
+        {
+          id: 'version-management',
+          name: '版本管理',
+          component: VersionManagement,
+          position: 'right',
+          icon: Crown,
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50/80'
+        }
+      ],
+      '产品域': [
+        {
+          id: 'demand-pool',
+          name: 'TAPD需求管理池',
+          component: DemandPool,
+          position: 'left',
+          icon: Target,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50/80'
+        },
+        {
+          id: 'project-flow',
+          name: '产品立项流程',
+          component: ProductProjectFlow,
+          position: 'center',
+          icon: Layers,
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50/80'
+        },
+        {
+          id: 'version-management',
+          name: '智能版本管理',
+          component: VersionManagement,
+          position: 'right',
+          icon: Crown,
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50/80'
+        }
+      ],
+      '基础研发部': [
+        {
+          id: 'technical-standards',
+          name: '技术规范管理库',
+          component: TechnicalStandardLibrary,
+          position: 'left',
+          icon: Code,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50/80'
+        },
+        {
+          id: 'technical-agent-center',
+          name: '技术智能体中心',
+          component: TechnicalAgentCenter,
+          position: 'center',
+          icon: Bot,
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50/80'
+        },
+        {
+          id: 'task-tracker',
+          name: '任务跟踪管理',
+          component: TechnicalTaskTracker,
+          position: 'right',
+          icon: Activity,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50/80'
+        }
+      ]
+    };
+
+    return departmentConfigs[currentDepartment] || [];
+  };
+
+  const currentModules = getCurrentModules();
+
+  // 获取模块属性
+  const getModuleProps = (moduleId: string) => {
+    const baseProps = { key: moduleId };
+    
+    switch (moduleId) {
+      case 'customer-list':
+        return {
+          ...baseProps,
+          onCustomerSelect,
+          selectedCustomer
+        };
+      case 'chat-area':
+        return {
+          ...baseProps,
+          selectedCustomer,
+          customerSuccessMode
+        };
+      case 'customer-panel':
+        return {
+          ...baseProps,
+          selectedCustomer,
+          customerSuccessMode
+        };
+      case 'assessment-left':
+        return {
+          ...baseProps,
+          customerSuccessMode
+        };
+      case 'assessment-center':
+        return {
+          ...baseProps,
+          customerSuccessMode
+        };
+      case 'assessment-right':
+        return {
+          ...baseProps,
+          customerSuccessMode
+        };
+      case 'demand-pool':
+        return {
+          ...baseProps,
+          selectedDemand,
+          onDemandSelect: setSelectedDemand,
+          productDemands
+        };
+      case 'brand-agent-center':
+        return {
+          ...baseProps,
+          selectedDemand
+        };
+      case 'project-flow':
+        return {
+          ...baseProps,
+          selectedDemand,
+          productProjects
+        };
+      case 'version-management':
+        return {
+          ...baseProps,
+          selectedDemand,
+          productProjects,
+          MIDO_PRODUCT_STRUCTURE
+        };
+      case 'technical-standards':
+        return {
+          ...baseProps,
+          selectedStandard,
+          onStandardSelect: setSelectedStandard,
+          technicalStandards
+        };
+      case 'technical-agent-center':
+        return {
+          ...baseProps,
+          selectedStandard
+        };
+      case 'task-tracker':
+        return {
+          ...baseProps,
+          selectedStandard,
+          technicalTasks
+        };
+      default:
+        return baseProps;
+    }
+  };
+
+  return (
+    <div className={`h-full flex transition-all duration-700 ease-in-out ${
+      customerSuccessMode === 'assessment' ? sunshineTheme.background : 'bg-gray-50'
+    }`}>
+      {currentModules.map((module) => {
+        const moduleProps = getModuleProps(module.id);
+        
+        return (
+          <div
+            key={module.id}
+            className={`
+              ${module.position === 'left' ? 'w-80' : 
+                module.position === 'center' ? 'flex-1 min-w-0' : 'w-80'}
+              ${module.position === 'left' ? 'bg-gradient-to-br from-white to-gray-50/30 border-r border-gray-200/60 shadow-sm' :
+                module.position === 'center' ? 'bg-gray-50 px-4' : 
+                'bg-gradient-to-br from-white to-gray-50/30 border-l border-gray-200/60 shadow-sm'}
+              h-full overflow-hidden backdrop-blur-sm
+            `}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${module.id}-${currentDepartment}`}
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                transition={{ 
+                  duration: 0.15,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
+                className="h-full"
+              >
+                {React.createElement(module.component, moduleProps)}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default ModuleManager;

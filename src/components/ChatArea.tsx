@@ -182,185 +182,172 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
     typeNextChar();
   };
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+  // 客户成功部demo响应生成器
+  const getCustomerSuccessResponse = (userInput: string, customer: Customer | null): string => {
+    const customerName = customer?.name || '客户';
+    const companyName = customer?.company || '贵公司';
+    
+    // 根据输入内容的关键词生成不同类型的响应
+    if (userInput.includes('续费') || userInput.includes('合同') || userInput.includes('价格')) {
+      return `## 📋 续费方案建议
 
+感谢您咨询${customerName}的续费事宜！根据${companyName}的使用情况，我为您准备了以下续费建议：
+
+### 🎯 续费优势分析
+• **使用频率**：过去一年${companyName}的系统使用率达到**92%**
+• **功能依赖**：核心业务模块使用率高，替换成本大
+• **数据积累**：已积累大量业务数据，迁移风险较高
+
+### 💰 续费方案推荐
+1. **标准续费** - 维持现有功能，优惠15%
+2. **升级续费** - 新增高级功能，整体优惠20%
+3. **长期合作** - 签署3年协议，享受25%优惠
+
+### 🚀 增值服务
+• 专属客户成功经理一对一服务
+• 优先技术支持和培训
+• 新功能抢先体验权
+
+**建议下周安排详细的续费沟通会议，我来协助您制定最优方案！**`;
+    }
+    
+    if (userInput.includes('功能') || userInput.includes('需求') || userInput.includes('开发')) {
+      return `## 🔧 功能需求分析
+
+针对您提到的功能需求，我来帮您分析一下实现方案：
+
+### 📊 需求评估
+• **业务价值**：高 - 能够显著提升${companyName}的操作效率
+• **开发复杂度**：中等 - 预计需要2-3个开发周期
+• **优先级建议**：建议纳入下个版本规划
+
+### 🛠️ 技术实现方案
+1. **前端改进**：优化用户界面，提升操作便捷性
+2. **后端逻辑**：增强数据处理能力，支持更多业务场景  
+3. **数据库优化**：确保新功能的性能和稳定性
+
+### 📅 项目规划
+• **需求确认**：1-2周
+• **设计开发**：4-6周  
+• **测试上线**：2-3周
+
+我会协调产品和技术团队，为您提供详细的需求评估报告和开发排期！`;
+    }
+    
+    if (userInput.includes('问题') || userInput.includes('故障') || userInput.includes('错误')) {
+      return `## 🚨 问题解决方案
+
+我来帮您快速定位和解决这个问题：
+
+### 🔍 问题诊断
+根据您的描述，初步判断可能的原因：
+• **系统负载**：当前时段用户访问量较大
+• **网络环境**：${companyName}的网络连接可能存在波动
+• **浏览器缓存**：本地缓存数据可能需要清理
+
+### ⚡ 即时解决方案
+1. **立即操作**：清理浏览器缓存并重新登录
+2. **网络检查**：确认网络连接稳定性
+3. **替代方案**：使用移动端或其他设备尝试访问
+
+### 🛡️ 预防措施
+• 建议在非高峰期进行重要操作
+• 定期清理浏览器数据
+• 保持系统和浏览器版本更新
+
+**如果问题仍未解决，我会立即联系技术团队为您提供专门支持！**
+
+需要我现在就联系技术支持为您处理吗？`;
+    }
+    
+    if (userInput.includes('培训') || userInput.includes('学习') || userInput.includes('操作')) {
+      return `## 🎓 培训服务方案
+
+很高兴为${companyName}提供专业的系统培训服务！
+
+### 📚 培训内容设计
+**基础操作培训**
+• 系统登录和界面导航
+• 核心功能模块使用
+• 常用操作流程演示
+
+**高级功能培训**  
+• 数据分析和报表生成
+• 自定义设置和配置
+• 高效操作技巧分享
+
+### 👥 培训方式
+• **现场培训**：派遣专业讲师到贵公司
+• **在线培训**：远程视频培训，灵活安排
+• **录制课程**：提供培训视频，随时学习
+
+### 📅 培训安排
+• **培训时长**：2-4小时（可分多次进行）
+• **参训人数**：建议10-15人为一组
+• **培训资料**：提供操作手册和培训证书
+
+**我来为您安排最适合的培训方案，确保团队能够熟练使用系统！**`;
+    }
+    
+    // 默认响应
+    return `## 👋 客户成功服务
+
+您好${customerName}！我是您的专属客户成功经理，很高兴为您服务。
+
+### 🌟 关于您的问题："${userInput}"
+
+我理解您的需求，让我为${companyName}提供专业的解决方案：
+
+### 📊 当前服务状态
+• **系统运行状态**：正常 ✅
+• **服务响应时间**：< 2秒 ⚡
+• **本月支持工单**：3个已解决，1个处理中
+
+### 🎯 建议的后续步骤
+1. **详细需求沟通**：安排30分钟的深度沟通
+2. **方案定制**：基于您的具体情况制定解决方案  
+3. **实施跟进**：全程协助确保效果达预期
+
+### 📞 联系方式
+• **微信**：随时在线沟通
+• **电话**：400-xxx-xxxx  
+• **邮箱**：support@mido.com
+
+**我会持续关注您的使用体验，确保${companyName}从我们的产品中获得最大价值！**`;
+  };
+
+  const handleSendMessage = useCallback(async () => {
+    if (!inputValue.trim() || isTyping) return;
+
+    const currentInput = inputValue.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputValue.trim(),
+      content: currentInput,
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    const currentInput = inputValue.trim();
+    // 确保输入框立即清空 - 避免React批处理导致的竞争条件
     setInputValue('');
     setIsTyping(true);
-    setStreamingMessage('');
 
-    try {
-      if (useStreamMode) {
-        // 流式模式
-        let currentStreamMessage = '';
-        let streamMessageId = (Date.now() + 1).toString();
-        
-        // 先添加一个空的AI消息框
-        const initialMessage: Message = {
-          id: streamMessageId,
-          type: 'ai',
-          content: '',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, initialMessage]);
-        
-        console.log('🔥 开始流式调用，参数:', {
-          message: currentInput,
-          conversationId,
-          knowledgeBase: selectedKnowledge,
-          customerId: selectedCustomer?.id
-        });
-        
-        await aiAPI.chatStream(
-          {
-            message: currentInput,
-            conversationId,
-            knowledgeBase: selectedKnowledge,
-            customerId: selectedCustomer?.id
-          },
-          // onMessage回调
-          (data) => {
-            console.log('🔄 收到流式数据:', data);
-            
-            if (data.type === 'start') {
-              if (data.conversationId) {
-                setConversationId(data.conversationId);
-              }
-            } else if (data.type === 'delta' && data.content) {
-              currentStreamMessage += data.content;
-              console.log('📝 更新流式内容，当前长度:', currentStreamMessage.length);
-              
-              // 使用React 18的flushSync强制同步更新，确保立即渲染
-              setMessages(prev => {
-                const newMessages = prev.map(msg => 
-                  msg.id === streamMessageId 
-                    ? { ...msg, content: currentStreamMessage }
-                    : msg
-                );
-                return newMessages;
-              });
-            } else if (data.type === 'done') {
-              // 流式完成，更新最终消息和建议
-              setMessages(prev => 
-                prev.map(msg => 
-                  msg.id === streamMessageId 
-                    ? { 
-                        ...msg, 
-                        content: data.fullResponse || currentStreamMessage,
-                        suggestions: data.suggestions || generateSuggestions(currentInput)
-                      }
-                    : msg
-                )
-              );
-              setStreamingMessage('');
-            } else if (data.type === 'error') {
-              console.error('流式响应错误:', data.error);
-              setMessages(prev => 
-                prev.map(msg => 
-                  msg.id === streamMessageId 
-                    ? { ...msg, content: '## ⚠️ 服务异常\n\n抱歉，服务出现了问题，请稍后再试。\n\n**可能的解决方案：**\n- 检查网络连接\n- 稍后重试\n- 联系技术支持' }
-                    : msg
-                )
-              );
-            } else if (data.type === 'fallback') {
-              setMessages(prev => 
-                prev.map(msg => 
-                  msg.id === streamMessageId 
-                    ? { 
-                        ...msg, 
-                        content: data.content,
-                        suggestions: data.suggestions || generateSuggestions(currentInput)
-                      }
-                    : msg
-                )
-              );
-            }
-          },
-          // onError回调
-          (error) => {
-            console.error('流式请求错误:', error);
-            setMessages(prev => 
-              prev.map(msg => 
-                msg.id === streamMessageId 
-                  ? { ...msg, content: '## ⚠️ 服务异常\n\n抱歉，服务出现了问题，请稍后再试。\n\n**可能的解决方案：**\n- 检查网络连接\n- 稍后重试\n- 联系技术支持' }
-                  : msg
-              )
-            );
-          },
-          // onComplete回调
-          () => {
-            setIsTyping(false);
-          }
-        );
-      } else {
-        // 普通模式 - 使用打字机效果
-        const response = await aiAPI.chat({
-          message: currentInput,
-          conversationId,
-          knowledgeBase: selectedKnowledge,
-          customerId: selectedCustomer?.id
-        });
-        
-        // 检查响应数据结构
-        let aiContent = '';
-        if (response.data && response.data.response) {
-          aiContent = response.data.response;
-        } else if (response.reply) {
-          aiContent = response.reply;
-        } else if (response.answer) {
-          aiContent = response.answer;
-        } else {
-          aiContent = '抱歉，我暂时无法回答这个问题。';
-        }
-        
-        // 先创建一个空的AI消息
-        const aiMessageId = (Date.now() + 1).toString();
-        const aiMessage: Message = {
-          id: aiMessageId,
-          type: 'ai',
-          content: '',
-          timestamp: new Date(),
-          suggestions: response.data?.suggestions || generateSuggestions(currentInput)
-        };
+    // 然后添加用户消息
+    setMessages(prev => [...prev, userMessage]);
 
-        setMessages(prev => [...prev, aiMessage]);
-        
-        // 开始打字机效果
-        typeWriterEffect(aiMessageId, aiContent, () => {
-          setIsTyping(false);
-        });
-        
-        if (response.data?.conversationId) {
-          setConversationId(response.data.conversationId);
-        }
-      }
-    } catch (error) {
-      console.error('AI对话出错:', error);
-      const errorMessage: Message = {
+    // 模拟AI处理时间，使用demo响应
+    setTimeout(() => {
+      const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: '## ⚠️ 服务异常\n\n抱歉，服务出现了问题，请稍后再试。\n\n**可能的解决方案：**\n- 检查网络连接\n- 稍后重试\n- 联系技术支持',
-        timestamp: new Date()
+        content: getCustomerSuccessResponse(currentInput, selectedCustomer),
+        timestamp: new Date(),
+        suggestions: generateSuggestions(currentInput)
       };
-      setMessages(prev => [...prev, errorMessage]);
+      
+      setMessages(prev => [...prev, aiMessage]);
       setIsTyping(false);
-      setCurrentTypingMessageId(null);
-    } finally {
-      // 不在这里设置setIsTyping(false)，因为打字机效果会在完成时自动设置
-      // 只有流式模式在出错时才需要在这里设置
-    }
-  };
-
-  const generateSuggestions = (input: string) => {
+    }, 2000);
+  }, [inputValue, isTyping, selectedCustomer]);  const generateSuggestions = (input: string) => {
     const suggestionsByKnowledge: { [key: string]: string[] } = {
       'general': [
         '酒水行业趋势分析',
@@ -692,42 +679,78 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedCustomer }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 输入区域 */}
-      <div className="relative z-10 p-4 border-t border-gray-200/40 bg-white/30 flex-shrink-0 backdrop-blur-sm">
-        <div className="flex items-start space-x-3">
-          <div className="flex-1">
-            <div className="relative">
-              <textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="输入您的问题或需求..."
-                className="w-full p-3 pr-12 border border-gray-300/50 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/70 backdrop-blur-sm"
-                rows={1}
-                style={{ minHeight: '44px', maxHeight: '120px' }}
-              />
-              <div className="absolute right-2 bottom-2 flex items-center space-x-1">
-                <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                  <Paperclip className="w-4 h-4" />
-                </button>
-                <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                  <Mic className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+      {/* 输入区域 - 统一品牌域风格 */}
+      <div className="bg-white/20 backdrop-blur-md p-4 flex-shrink-0 relative z-20 border-t border-gray-100/30">
+        <div className="flex items-center space-x-3 bg-gradient-to-r from-gray-50/80 to-white/90 backdrop-blur-sm rounded-xl p-3 shadow-sm" style={{
+          border: '1px solid rgba(148, 163, 184, 0.08)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9)'
+        }}>
+
+          {/* 客户头像/用户图标 */}
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl" style={{
+            background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.25)'
+          }}>
+            <User className="w-5 h-5 text-white" />
           </div>
+
+          {/* 文件上传按钮 */}
+          <label
+            className="flex items-center justify-center w-10 h-10 rounded-xl cursor-pointer transition-all duration-200 hover:scale-105"
+            style={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04)',
+              border: '1px solid rgba(148, 163, 184, 0.12)'
+            }}
+            title="上传文件"
+          >
+            <Paperclip className="w-4 h-4 text-gray-500" />
+          </label>
+
+          {/* 语音按钮 */}
+          <button
+            className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 hover:scale-105"
+            style={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04)',
+              border: '1px solid rgba(148, 163, 184, 0.12)'
+            }}
+            title="语音输入"
+          >
+            <Mic className="w-4 h-4 text-gray-500" />
+          </button>
+
+          {/* 输入框 */}
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+            placeholder="输入您的问题或需求..."
+            className="flex-1 h-11 px-4 bg-transparent border-0 focus:outline-none text-sm placeholder-gray-500 rounded-lg"
+            style={{ minHeight: '44px' }}
+          />
+
+          {/* 发送按钮 */}
           <button
             onClick={handleSendMessage}
-            disabled={!inputValue.trim()}
-            className="flex-shrink-0 w-11 h-11 bg-primary-500/90 text-white rounded-lg hover:bg-primary-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center backdrop-blur-sm"
-            style={{ minHeight: '44px' }}
+            disabled={!inputValue.trim() || isTyping}
+            className="flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            style={{
+              background: !inputValue.trim() || isTyping 
+                ? 'linear-gradient(135deg, #D1D5DB 0%, #9CA3AF 100%)'
+                : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+              boxShadow: !inputValue.trim() || isTyping 
+                ? '0 2px 8px rgba(156, 163, 175, 0.25)'
+                : '0 2px 8px rgba(59, 130, 246, 0.4), 0 4px 16px rgba(59, 130, 246, 0.2)'
+            }}
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5 text-white" />
           </button>
         </div>
         

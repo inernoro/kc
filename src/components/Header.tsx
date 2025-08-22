@@ -43,6 +43,14 @@ const Header: React.FC<HeaderProps> = ({
       icon: Palette,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
+    },
+    {
+      id: 'HR',
+      name: 'HR',
+      shortName: 'HR',
+      icon: User,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50'
     }
   ];
 
@@ -91,6 +99,21 @@ const Header: React.FC<HeaderProps> = ({
             { customer: 'API接口标准化', days: 8, value: '标准化改造', type: '架构优化' },
             { customer: '代码质量检查工具', days: 12, value: '工具升级', type: '工具建设' },
             { customer: '技术分享培训会', days: 15, value: 'React18新特性', type: '知识分享' },
+          ]
+        };
+      
+      case 'HR':
+        return {
+          metrics: [
+            { label: '今日处理简历', value: '156', icon: User, color: 'text-orange-600' },
+            { label: '匹配成功率', value: '87.5%', icon: Target, color: 'text-green-600' },
+            { label: '待面试候选人', value: '23', icon: Calendar, color: 'text-blue-600' },
+          ],
+          reminders: [
+            { customer: '高级前端工程师岗位', days: 2, value: '张伟', type: '面试安排' },
+            { customer: '产品经理岗位', days: 5, value: '李娜', type: '背景调查' },
+            { customer: 'UI设计师岗位', days: 7, value: '陈丽', type: '作品评估' },
+            { customer: '全栈工程师岗位', days: 10, value: '王强', type: '技术测试' },
           ]
         };
       
@@ -149,6 +172,7 @@ const Header: React.FC<HeaderProps> = ({
       case '基础研发部': return '评审';
       case '平台运营部': return '执行';
       case '客户成功部': return '到期';
+      case 'HR': return '进行';
       default: return '执行';
     }
   };
@@ -235,7 +259,7 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           
           {/* 部门切换器 */}
-          <div className="relative flex bg-gray-100/70 backdrop-blur-sm rounded-xl p-1 shadow-inner" style={{ width: '420px' }}>
+          <div className="relative flex bg-gray-100/70 backdrop-blur-sm rounded-xl p-1 shadow-inner" style={{ width: '560px' }}>
             {/* 滑动背景 - 使用固定宽度确保完全一致 */}
             <div 
               className="absolute bg-white rounded-lg shadow-sm"
