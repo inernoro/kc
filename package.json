@@ -2,6 +2,7 @@
   "name": "miduo-zhiku",
   "version": "1.0.0",
   "description": "米多智库前端应用 - 酒水行业客户成功管理系统",
+  "homepage": "https://YOUR_USERNAME.github.io/miduo-zhiku",
   "main": "src/index.tsx",
   "scripts": {
     "dev": "PORT=10288 react-scripts start",
