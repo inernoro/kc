@@ -2491,7 +2491,7 @@ const ModuleManager: React.FC<ModuleManagerProps> = ({
       )}
 
       {/* 模块区域 - 固定高度防止切换时塌陷 */}
-      <div className="flex-1 grid grid-cols-[320px_1fr_320px] gap-0 overflow-hidden relative z-10 min-h-0" style={{ height: 'calc(100vh - 120px)' }}>
+      <div className="flex-1 grid grid-cols-[280px_1fr_280px] gap-0 overflow-hidden relative z-10 min-h-0" style={{ height: 'calc(100vh - 64px)' }}>
         {/* 左侧模块 */}
         <FlipModule
           position="left"
@@ -3696,7 +3696,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
       {/* 主对话区域 */}
       <div className="flex-1 flex flex-col min-h-0 relative z-10">
         {/* 常驻智能体显示区域 */}
-        <div className="bg-gradient-to-r from-white/30 to-purple-50/30 backdrop-blur-sm border-b border-purple-100/30 p-6 flex-shrink-0">
+        <div className="bg-gradient-to-r from-white/30 to-purple-50/30 backdrop-blur-sm border-b border-purple-100/30 p-3 flex-shrink-0">
           <div className="flex items-center space-x-4">
             {/* 智能体头像 - 增强可感知性 */}
             <motion.div
@@ -3948,7 +3948,7 @@ const BrandAgentCenter = ({ selectedDemand }: { selectedDemand: ProductDemand | 
 
 
         {/* 输入区域 - 更精致无边框设计 */}
-        <div className="bg-white/20 backdrop-blur-md p-4 flex-shrink-0 relative z-20 border-t border-gray-100/30">
+        <div className="bg-white/20 backdrop-blur-md p-3 flex-shrink-0 relative z-20 border-t border-gray-100/30">
           <div className="flex items-center space-x-3 bg-gradient-to-r from-gray-50/80 to-white/90 backdrop-blur-sm rounded-xl p-3 shadow-sm" style={{
             border: '1px solid rgba(148, 163, 184, 0.08)',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9)'
