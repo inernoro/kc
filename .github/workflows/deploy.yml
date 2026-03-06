@@ -3,7 +3,7 @@ name: 部署到 GitHub Pages
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 permissions:
@@ -35,7 +35,7 @@ jobs:
         run: npm run build
         env:
           CI: false
-          PUBLIC_URL: /miduo-zhiku
+          PUBLIC_URL: /kc
 
       - name: 上传构建产物
         uses: actions/upload-pages-artifact@v2

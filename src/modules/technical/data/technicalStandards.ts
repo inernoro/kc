@@ -1,0 +1,80 @@
+import { TechnicalStandard } from '../../../types/moduleTypes';
+
+export const technicalStandards: TechnicalStandard[] = [
+  {
+    id: 'STD-001',
+    title: '前端React组件开发规范V3.2',
+    category: '前端开发',
+    version: 'V3.2',
+    status: '评审中',
+    creator: '张技术',
+    reviewer: '李架构师',
+    createTime: '2024-01-15',
+    updateTime: '2024-02-01',
+    description: '规范React组件的命名、结构、Props定义、状态管理、生命周期使用等最佳实践',
+    priority: 'High',
+    complexity: 8,
+    impact: ['社交云店', '智能营销', '会员管理'],
+    downloadUrl: 'https://docs.mido.com/frontend-react-v3.2.pdf'
+  },
+  {
+    id: 'STD-002',
+    title: 'RESTful API接口设计标准',
+    category: '后端API',
+    version: 'V2.1',
+    status: '已发布',
+    creator: '王后端',
+    reviewer: '姚帆',
+    createTime: '2024-01-10',
+    description: '统一API接口设计规范，包括URL设计、HTTP状态码、错误处理、版本控制等',
+    priority: 'High',
+    complexity: 9,
+    impact: ['大数据引擎', '智能营销', '防窜物流', '积分商城'],
+    downloadUrl: 'https://docs.mido.com/api-design-v2.1.pdf'
+  },
+  {
+    id: 'STD-003',
+    title: 'MySQL数据库表设计规范',
+    category: '数据库设计',
+    version: 'V1.8',
+    status: '已发布',
+    creator: '陈数据',
+    reviewer: '李架构师',
+    createTime: '2024-01-05',
+    description: '数据库表结构设计、索引优化、命名规范、性能优化指导原则',
+    priority: 'Medium',
+    complexity: 7,
+    impact: ['所有业务系统'],
+    downloadUrl: 'https://docs.mido.com/db-design-v1.8.pdf'
+  },
+  {
+    id: 'STD-004',
+    title: 'TypeScript代码质量规范',
+    category: '代码规范',
+    version: 'V2.0',
+    status: '草案',
+    creator: '赵前端',
+    reviewer: '张技术',
+    createTime: '2024-02-01',
+    description: 'TypeScript编码风格、类型定义、ESLint配置、代码审查checklist',
+    priority: 'Medium',
+    complexity: 6,
+    impact: ['前端项目'],
+    downloadUrl: undefined
+  },
+  {
+    id: 'STD-005',
+    title: '微服务架构设计原则',
+    category: '架构设计',
+    version: 'V1.5',
+    status: '评审中',
+    creator: '李架构师',
+    reviewer: '姚帆',
+    createTime: '2024-01-20',
+    description: '微服务拆分原则、服务边界定义、API网关设计、服务治理策略',
+    priority: 'High',
+    complexity: 10,
+    impact: ['整体架构'],
+    downloadUrl: undefined
+  }
+];
