@@ -89,20 +89,57 @@ yarn install
 ### 开发模式
 
 ```bash
-# 启动前端开发服务器（端口: 10288）
-npm run dev
+# 复制环境变量模板
+cp .env.example .env
 
-# 启动后端服务器
-npm run backend
+# 启动后端 API（默认端口: 10255）
+ADMIN_PASSWORD=change-this-password JWT_SECRET=change-this-jwt-secret npm run backend
+
+# 新开一个终端，启动前端开发服务器（默认端口: 10288）
+npm run dev
+```
+
+前端默认请求 `http://localhost:10255/api`。如需改地址，设置：
+
+```bash
+REACT_APP_API_URL=http://localhost:10255/api npm run dev
+```
+
+### 后端 API
+
+本仓库包含一个轻量 Express API，覆盖本地开发需要的健康检查、mock 业务数据、AI 对话/SSE 和 admin 登录。
+
+```bash
+# 健康检查
+curl http://localhost:10255/api/health
+
+# admin 登录，返回 JWT
+curl -X POST http://localhost:10255/api/admin/login \
+  -H 'Content-Type: application/json' \
+  --data '{"username":"admin","password":"change-this-password"}'
 ```
 
 ### 生产构建
 
 ```bash
 npm run build
+ADMIN_PASSWORD=change-this-password JWT_SECRET=change-this-jwt-secret npm run backend:prod
 ```
 
 构建产物将生成在 `build/` 目录下。
+
+### Docker
+
+```bash
+docker build -t kc .
+docker run --rm -p 10255:10255 \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD=change-this-password \
+  -e JWT_SECRET=change-this-jwt-secret \
+  kc
+```
+
+容器会用 `server.js` 同时提供 `/api/*` 和 React `build/` 静态文件。
 
 ## 🔧 GitHub Pages 配置说明
 

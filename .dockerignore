@@ -73,7 +73,6 @@ docs/
 # 配置文件（开发用）
 .prettierrc
 .eslintrc*
-tsconfig.json
 
 # 测试文件
 __tests__/
@@ -84,4 +83,4 @@ __tests__/
 
 # 备份文件
 *.bak
-*.backup 
+*.backup
